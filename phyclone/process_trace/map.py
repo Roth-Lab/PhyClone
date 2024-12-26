@@ -7,7 +7,7 @@ def get_map_node_ccfs_and_clonal_prev_dicts(tree):
     graph = compute_map_tree_features(tree, root_node_name)
 
     ccf_dict = get_map_node_ccfs_dict(graph, root_node_name)
-    clonal_prev_dict = get_map_node_clonal_prevs_dict(ccf_dict, graph, root_node_name)
+    clonal_prev_dict = get_map_node_clonal_prevs_dict(graph, root_node_name)
 
     del ccf_dict[root_node_name]
     del clonal_prev_dict[root_node_name]
@@ -28,21 +28,27 @@ def get_map_node_ccfs_dict(graph, root_node_name):
     return ccf_dict
 
 
-def get_map_node_clonal_prevs_dict(ccf_dict, graph, root_node_name):
+def get_map_node_clonal_prevs_dict(graph, root_node_name):
     clonal_prev_dict = {}
-    get_map_clonal_prev(graph, root_node_name, ccf_dict, clonal_prev_dict)
+
+    num_dims = graph.nodes[root_node_name]["log_R"].shape[1]
+    num_dims -= 1
+
+    get_map_clonal_prev(graph, root_node_name, clonal_prev_dict, num_dims)
     return clonal_prev_dict
 
 
-def get_map_clonal_prev(tree, node, ccf_dict, result):
-    clonal_prev = ccf_dict[node].copy()
+def get_map_clonal_prev(tree, node, result_dict, num_dims):
+    clonal_prev = tree.nodes[node]["max_idx"].astype(np.float64)
 
     for child in tree.successors(node):
-        clonal_prev -= ccf_dict[child]
+        clonal_prev -= tree.nodes[child]["max_idx"]
+        get_map_clonal_prev(tree, child, result_dict, num_dims)
 
-        get_map_clonal_prev(tree, child, ccf_dict, result)
+    clonal_prev.clip(0.0, None, out=clonal_prev)
+    clonal_prev /= num_dims
 
-    result[node] = clonal_prev
+    result_dict[node] = clonal_prev
 
 
 def compute_max_likelihood(graph, node_id):
