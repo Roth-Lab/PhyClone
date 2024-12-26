@@ -312,8 +312,8 @@ def get_clone_table(data, samples, tree, clusters=None):
             group["ccf"] = ccfs[clone_id][samples_idx_dict[sample_id]]
             group["clonal_prev"] = clonal_prev_dict[clone_id][samples_idx_dict[sample_id]]
         else:
-            group["ccf"] = -1
-            group["clonal_prev"] = -1
+            group["ccf"] = 0.0
+            group["clonal_prev"] = 0.0
 
         df_list.append(group)
 
