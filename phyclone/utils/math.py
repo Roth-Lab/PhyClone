@@ -280,3 +280,71 @@ def non_log_conv(child_log_R, prev_log_D_n):
     result[result <= 0] = 1e-100
 
     return np.log(result) + log_D_max + log_R_max
+
+
+@numba.jit(nopython=True)
+def log_pyclone_beta_binomial_pdf(data, f, s):
+    t = data.t
+
+    C = len(data.cn)
+
+    population_prior = np.zeros(3)
+    population_prior[0] = 1 - t
+    population_prior[1] = t * (1 - f)
+    population_prior[2] = t * f
+
+    ll = np.ones(C, dtype=np.float64) * np.inf * -1
+
+    for c in range(C):
+        e_vaf = 0
+
+        norm_const = 0
+
+        for i in range(3):
+            e_cn = population_prior[i] * data.cn[c, i]
+
+            e_vaf += e_cn * data.mu[c, i]
+
+            norm_const += e_cn
+
+        e_vaf /= norm_const
+
+        a = e_vaf * s
+
+        b = s - a
+
+        ll[c] = data.log_pi[c] + log_beta_binomial_pdf(data.a + data.b, data.b, a, b)
+
+    return log_sum_exp(ll)
+
+
+@numba.jit(nopython=True)
+def log_pyclone_binomial_pdf(data, f):
+    t = data.t
+
+    C = len(data.cn)
+
+    population_prior = np.zeros(3)
+    population_prior[0] = 1 - t
+    population_prior[1] = t * (1 - f)
+    population_prior[2] = t * f
+
+    ll = np.ones(C, dtype=np.float64) * np.inf * -1
+
+    for c in range(C):
+        e_vaf = 0
+
+        norm_const = 0
+
+        for i in range(3):
+            e_cn = population_prior[i] * data.cn[c, i]
+
+            e_vaf += e_cn * data.mu[c, i]
+
+            norm_const += e_cn
+
+        e_vaf /= norm_const
+
+        ll[c] = data.log_pi[c] + log_binomial_pdf(data.a + data.b, data.b, e_vaf)
+
+    return log_sum_exp(ll)

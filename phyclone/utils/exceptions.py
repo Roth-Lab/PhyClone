@@ -9,7 +9,7 @@ class MajorCopyNumberError(Exception):
 
 class InputFormatError(Exception):
     def __init__(self, errors_list):
-        error_msg = "\n"
+        error_msg = "\n\n"
         for error in errors_list:
             error_msg += str(error) + "\n\n"
         super().__init__(error_msg)
