@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PhyClone Cluster Input Schema",
+  "description": "PhyClone cluster data .tsv file validation schema",
+  "type": "object",
+  "properties": {
+    "mutation_id": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
+    },
+    "sample_id": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
+    },
+    "cluster_id": {
+      "type": "integer"
+    },
+    "cellular_prevalence": {
+      "type": "number"
+    },
+    "chrom": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ]
+    }
+  },
+  "required": [
+    "mutation_id",
+    "sample_id",
+    "cluster_id"
+  ]
+}

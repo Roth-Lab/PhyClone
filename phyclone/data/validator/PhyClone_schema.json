@@ -7,14 +7,16 @@
     "mutation_id": {
       "type": [
         "number",
-        "string"
+        "string",
+        "integer"
       ],
       "minLength": 1
     },
     "sample_id": {
       "type": [
         "number",
-        "string"
+        "string",
+        "integer"
       ],
       "minLength": 1
     },
@@ -51,7 +53,8 @@
     "chrom": {
       "type": [
         "number",
-        "string"
+        "string",
+        "integer"
       ]
     }
   },
