@@ -1,6 +1,9 @@
+import os
+import tempfile
 import unittest
 from phyclone.data.validator.input_validator import InputValidator
 from phyclone.data.validator.schema_error_builder import SchemaErrors
+from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 import pandas as pd
 from unittest.mock import MagicMock
 from phyclone.utils.exceptions import InputFormatError
@@ -14,6 +17,124 @@ class TesterInputValidator(InputValidator):
         self.column_rules = schema["properties"]
         self.error_helper = SchemaErrors()
 
+class TestInputValidatorLoaders(unittest.TestCase):
+
+    def test_data_validator_loads(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "ref_counts": [20, 4, 104],
+                "alt_counts": [8, 16, 45],
+                "major_cn": [2, 2, 4],
+                "minor_cn": [1, 2, 3],
+                "normal_cn": [2, 2, 2],
+                "tumour_content": [1.0, 0.2, 0.3],
+                "error_rate": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads__trigger_delim_warning(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "ref_counts": [20, 4, 104],
+                "alt_counts": [8, 16, 45],
+                "major_cn": [2, 2, 4],
+                "minor_cn": [1, 2, 3],
+                "normal_cn": [2, 2, 2],
+                "tumour_content": [1.0, 0.2, 0.3],
+                "error_rate": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path)
+            with self.assertWarns(UserWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
+        print(w.warning)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_extra_col(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "ref_counts": [20, 4, 104],
+                "alt_counts": [8, 16, 45],
+                "major_cn": [2, 2, 4],
+                "minor_cn": [1, 2, 3],
+                "normal_cn": [2, 2, 2],
+                "tumour_content": [1.0, 0.2, 0.3],
+                "error_rate": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+                "extra_col": [1, 2, 3]
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads__invalid_data(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "ref_counts": [20, -4, 104],
+                "alt_counts": [8, 16, 45],
+                "major_cn": [2, 2, 4],
+                "minor_cn": [1, 2, 3],
+                "normal_cn": [2, 2, 2],
+                "tumour_content": [1.0, 0.2, 0.3],
+                "error_rate": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            input_validator = create_data_input_validator_instance(file_path)
+        with self.assertRaises(InputFormatError) as error:
+            input_validator.validate()
+        print(error.exception)
+
+    def test_cluster_validator_loads(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "cluster_id": [20, 4, 104],
+                "cellular_prevalence": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "cluster.tsv")
+            df.to_csv(file_path, sep="\t")
+            input_validator = create_cluster_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_cluster_validator_loads__invalid_data(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["", "s2", "s3"],
+                "cluster_id": [20, None, 104],
+                "cellular_prevalence": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "cluster.tsv")
+            df.to_csv(file_path, sep="\t")
+            input_validator = create_cluster_input_validator_instance(file_path)
+        with self.assertRaises(InputFormatError) as error:
+            input_validator.validate()
+        print(error.exception)
 
 class BaseTest(object):
     class TestInputValidatorMethods(unittest.TestCase):
@@ -447,7 +568,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
     def test_validate_all_invalid_cols_one_req_missing(self):
         df_dict = {
             "mutation_id": [True, False, True],
-            # "sample_id": [True, False, True],
             "ref_counts": [-20, -4, -104],
             "alt_counts": [-8, -16, -45],
             "major_cn": [-2, -2, -4],

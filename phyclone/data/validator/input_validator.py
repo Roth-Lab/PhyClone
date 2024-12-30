@@ -22,15 +22,14 @@ class InputValidator(object):
 
     @staticmethod
     def load_df(file_path):
-        csv_delim = ','
         with open(file_path, 'r') as csv_file:
             dialect = csv.Sniffer().sniff(csv_file.readline())
             csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
-            warnings.warn("Input should be tab-delimited, supplied file is delimited by {}\n"
-                          "Will attempt parsing with the current delimiter\n".format(repr(csv_delim)),
-                          stacklevel=2)
+            warnings.warn("Input should be tab-delimited, supplied file is delimited by {delim}\n"
+                          "Will attempt parsing with the current delimiter, {delim}\n".format(delim=repr(csv_delim)),
+                          stacklevel=2, category=UserWarning)
         return pd.read_csv(file_path, sep=csv_delim)
 
     def validate(self):
@@ -48,8 +47,10 @@ class InputValidator(object):
 
     def _validate_all_columns(self):
         curr_cols = self.df.columns
+        all_defined_cols = self.optional_columns.union(self.required_columns)
+        all_defined_cols = all_defined_cols.intersection(set(curr_cols))
         are_all_cols_valid = True
-        for col in curr_cols:
+        for col in all_defined_cols:
             is_curr_col_valid = self._validate_column(col)
             are_all_cols_valid = are_all_cols_valid and is_curr_col_valid
         return are_all_cols_valid
@@ -100,10 +101,11 @@ class InputValidator(object):
         invalid_type_msg = "Column minimum value/length violation"
         if "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
             min_value = col_rule["minimum"]
-            is_min_valid = (self.df[column] >= min_value).all()
+            is_min_valid = (self.df[column] >= min_value).all(skipna=False)
             invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(min_value)
         elif "minLength" in col_rule and col_type == "string":
             min_length = col_rule["minLength"]
+            self.df[column] = self.df[column].fillna(value="")
             is_min_valid = self.df[column].str.len().ge(min_length).all(skipna=False)
             invalid_type_msg = "Column contains elements that violate the required minimum string length of {}".format(min_length)
         if not is_min_valid:
