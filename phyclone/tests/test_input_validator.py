@@ -1,7 +1,9 @@
 import unittest
 from phyclone.data.validator.input_validator import InputValidator
+from phyclone.data.validator.schema_error_builder import SchemaErrors
 import pandas as pd
 from unittest.mock import MagicMock
+from phyclone.utils.exceptions import InputFormatError
 
 
 class TesterInputValidator(InputValidator):
@@ -10,6 +12,7 @@ class TesterInputValidator(InputValidator):
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
+        self.error_helper = SchemaErrors()
 
 
 class BaseTest(object):
@@ -33,64 +36,64 @@ class BaseTest(object):
             df = pd.DataFrame({self.integer_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
             with self.assertRaises(NotImplementedError):
-                input_validator.validate_base_type("bool", self.integer_col)
+                input_validator._validate_base_type("bool", self.integer_col)
 
         def test_validate_base_type_integer_valid_input(self):
             df = pd.DataFrame({self.integer_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_base_type("integer", self.integer_col))
+            self.assertTrue(input_validator._validate_base_type("integer", self.integer_col))
 
         def test_validate_base_type_integer_invalid_input_float(self):
             df = pd.DataFrame({self.integer_col: [1.5, 2.5, 3.5]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("integer", self.integer_col))
+            self.assertFalse(input_validator._validate_base_type("integer", self.integer_col))
 
         def test_validate_base_type_integer_invalid_input_string(self):
             df = pd.DataFrame({self.integer_col: ["1.5", "2.5", "3.5"]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("integer", self.integer_col))
+            self.assertFalse(input_validator._validate_base_type("integer", self.integer_col))
 
         def test_validate_base_type_number_valid_input(self):
             df = pd.DataFrame({self.float_col: [1.5, 2.5, 3.5]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_base_type("number", self.float_col))
+            self.assertTrue(input_validator._validate_base_type("number", self.float_col))
 
         def test_validate_base_type_number_invalid_input_integer(self):
             df = pd.DataFrame({self.float_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("number", self.float_col))
+            self.assertFalse(input_validator._validate_base_type("number", self.float_col))
 
         def test_validate_base_type_number_invalid_input_string(self):
             df = pd.DataFrame({self.float_col: ["1", "2", "3"]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("number", self.float_col))
+            self.assertFalse(input_validator._validate_base_type("number", self.float_col))
 
         def test_validate_base_type_string_valid_input(self):
             df = pd.DataFrame({self.string_col: ["m1", "m2", "m3"]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_base_type("string", self.string_col))
+            self.assertTrue(input_validator._validate_base_type("string", self.string_col))
 
         def test_validate_base_type_string_invalid_input_integer(self):
             df = pd.DataFrame({self.string_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("string", self.string_col))
+            self.assertFalse(input_validator._validate_base_type("string", self.string_col))
 
         def test_validate_base_type_string_invalid_input_float(self):
             df = pd.DataFrame({self.string_col: [1.5, 2.5, 3.5]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_base_type("string", self.string_col))
+            self.assertFalse(input_validator._validate_base_type("string", self.string_col))
 
         def test_validate_column_simple_type_valid(self):
             df = pd.DataFrame({self.integer_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            input_validator.validate_base_type = MagicMock(return_value=True)
-            self.assertTrue(input_validator.validate_column(self.integer_col))
+            input_validator._validate_base_type = MagicMock(return_value=True)
+            self.assertTrue(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_simple_type_invalid(self):
             df = pd.DataFrame({self.integer_col: ["1", "2", "3"]})
             input_validator = self.create_input_validator_instance(df)
-            input_validator.validate_base_type = MagicMock(return_value=False)
-            self.assertFalse(input_validator.validate_column(self.integer_col))
+            input_validator._validate_base_type = MagicMock(return_value=False)
+            self.assertFalse(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_list_type_valid(self):
             df = pd.DataFrame({self.list_type_schema_col: [1, 2, 3]})
@@ -99,8 +102,8 @@ class BaseTest(object):
             type_list_len = len(col_rule_dict["type"])
             side_effect_list = [False] * type_list_len
             side_effect_list[-1] = True
-            input_validator.validate_base_type = MagicMock(side_effect=side_effect_list)
-            self.assertTrue(input_validator.validate_column(self.list_type_schema_col))
+            input_validator._validate_base_type = MagicMock(side_effect=side_effect_list)
+            self.assertTrue(input_validator._validate_column(self.list_type_schema_col))
 
         def test_validate_column_list_type_invalid(self):
             df = pd.DataFrame({self.list_type_schema_col: [1, 2, 3]})
@@ -108,53 +111,53 @@ class BaseTest(object):
             col_rule_dict = self.column_rules[self.list_type_schema_col]
             type_list_len = len(col_rule_dict["type"])
             side_effect_list = [False] * type_list_len
-            input_validator.validate_base_type = MagicMock(side_effect=side_effect_list)
-            self.assertFalse(input_validator.validate_column(self.list_type_schema_col))
+            input_validator._validate_base_type = MagicMock(side_effect=side_effect_list)
+            self.assertFalse(input_validator._validate_column(self.list_type_schema_col))
 
         def test_validate_column_simple_type_valid_integration(self):
             df = pd.DataFrame({self.integer_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_column(self.integer_col))
+            self.assertTrue(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_simple_type_invalid_integration(self):
             df = pd.DataFrame({self.integer_col: ["1", "2", "3"]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_column(self.integer_col))
+            self.assertFalse(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_list_type_valid_integration(self):
             df = pd.DataFrame({self.list_type_schema_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_column(self.list_type_schema_col))
+            self.assertTrue(input_validator._validate_column(self.list_type_schema_col))
 
         def test_validate_column_list_type_invalid_integration(self):
             df = pd.DataFrame({self.list_type_schema_col: [True, False, True]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_column(self.list_type_schema_col))
+            self.assertFalse(input_validator._validate_column(self.list_type_schema_col))
 
         def test_validate_column_minLength_valid(self):
             df = pd.DataFrame({self.string_col: ["1", "2", "3"]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_column(self.string_col))
+            self.assertTrue(input_validator._validate_column(self.string_col))
 
         def test_validate_column_minLength_invalid(self):
             df = pd.DataFrame({self.string_col: ["1", "2", ""]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_column(self.string_col))
+            self.assertFalse(input_validator._validate_column(self.string_col))
 
         def test_validate_column_minimum_valid(self):
             df = pd.DataFrame({self.integer_col: [1, 2, 3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_column(self.integer_col))
+            self.assertTrue(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_minimum_valid_all_zero(self):
             df = pd.DataFrame({self.integer_col: [0, 0, 0]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_column(self.integer_col))
+            self.assertTrue(input_validator._validate_column(self.integer_col))
 
         def test_validate_column_minimum_invalid(self):
             df = pd.DataFrame({self.integer_col: [1, 2, -3]})
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_column(self.integer_col))
+            self.assertFalse(input_validator._validate_column(self.integer_col))
 
         def test_validate_required_column_presence_all_present(self):
             df_dict = {}
@@ -164,7 +167,7 @@ class BaseTest(object):
                 df_dict[opt_col] = [True]
             df = pd.DataFrame(df_dict)
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_required_column_presence())
+            self.assertTrue(input_validator._validate_required_column_presence())
 
         def test_validate_required_column_presence_only_req_present(self):
             df_dict = {}
@@ -172,7 +175,7 @@ class BaseTest(object):
                 df_dict[col] = [True]
             df = pd.DataFrame(df_dict)
             input_validator = self.create_input_validator_instance(df)
-            self.assertTrue(input_validator.validate_required_column_presence())
+            self.assertTrue(input_validator._validate_required_column_presence())
 
         def test_validate_required_column_presence_only_opt_present(self):
             df_dict = {}
@@ -180,7 +183,7 @@ class BaseTest(object):
                 df_dict[opt_col] = [True]
             df = pd.DataFrame(df_dict)
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_required_column_presence())
+            self.assertFalse(input_validator._validate_required_column_presence())
 
         def test_validate_required_column_presence_some_req_missing(self):
             df_dict = {}
@@ -194,7 +197,12 @@ class BaseTest(object):
                 df_dict[opt_col] = [True]
             df = pd.DataFrame(df_dict)
             input_validator = self.create_input_validator_instance(df)
-            self.assertFalse(input_validator.validate_required_column_presence())
+            self.assertFalse(input_validator._validate_required_column_presence())
+
+        def _run_raise_error_on_validate_test(self, input_validator):
+            with self.assertRaises(InputFormatError) as error:
+                input_validator.validate()
+            print(error.exception)
 
 
 class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
@@ -223,6 +231,49 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         self.list_type_schema_col = "sample_id"
         self.column_rules = self.schema["properties"]
 
+    def test_validate_valid_and_present(self):
+        df_dict = {
+            "mutation_id": ["m1", "m2", "m3"],
+            "sample_id": ["s1", "s2", "s3"],
+            "ref_counts": [20, 4, 104],
+            "alt_counts": [8, 16, 45],
+            "major_cn": [2, 2, 4],
+            "minor_cn": [1, 2, 3],
+            "normal_cn": [2, 2, 2],
+            "tumour_content": [1.0, 0.2, 0.3],
+            "error_rate": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self.assertTrue(input_validator.validate())
+
+    def test_validate_valid_one_req_col_missing(self):
+        df_dict = {
+            "sample_id": ["s1", "s2", "s3"],
+            "ref_counts": [20, 4, 104],
+            "alt_counts": [8, 16, 45],
+            "major_cn": [2, 2, 4],
+            "minor_cn": [1, 2, 3],
+            "normal_cn": [2, 2, 2],
+            "tumour_content": [1.0, 0.2, 0.3],
+            "error_rate": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_valid_all_req_col_missing(self):
+        df_dict = {
+            "tumour_content": [1.0, 0.2, 0.3],
+            "error_rate": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
     def test_validate_all_columns_valid_string_cols_used(self):
         df_dict = {
             "mutation_id": ["m1", "m2", "m3"],
@@ -238,7 +289,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_number_cols_used(self):
         df_dict = {
@@ -255,7 +306,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_integer_cols_used(self):
         df_dict = {
@@ -272,7 +323,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_mixed_cols_used(self):
         df_dict = {
@@ -289,7 +340,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_one_invalid_col(self):
         df_dict = {
@@ -306,7 +357,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
 
     def test_validate_all_columns_two_invalid_cols(self):
         df_dict = {
@@ -323,7 +374,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
 
     def test_validate_all_columns_all_invalid_cols(self):
         df_dict = {
@@ -340,7 +391,75 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
+
+    def test_validate_one_invalid_col(self):
+        df_dict = {
+            "mutation_id": ["m1", "m2", "m3"],
+            "sample_id": ["s1", "s2", "s3"],
+            "ref_counts": [-20, 4, 104],
+            "alt_counts": [8, 16, 45],
+            "major_cn": [2, 2, 4],
+            "minor_cn": [1, 2, 3],
+            "normal_cn": [2, 2, 2],
+            "tumour_content": [1.0, 0.2, 0.3],
+            "error_rate": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_two_invalid_cols(self):
+        df_dict = {
+            "mutation_id": ["m1", "m2", "m3"],
+            "sample_id": ["s1", "s2", "s3"],
+            "ref_counts": [-20, -4, -104],
+            "alt_counts": [-8, -16, -45],
+            "major_cn": [2, 2, 4],
+            "minor_cn": [1, 2, 3],
+            "normal_cn": [2, 2, 2],
+            "tumour_content": [1.0, 0.2, 0.3],
+            "error_rate": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_all_invalid_cols(self):
+        df_dict = {
+            "mutation_id": [True, False, True],
+            "sample_id": [True, False, True],
+            "ref_counts": [-20, -4, -104],
+            "alt_counts": [-8, -16, -45],
+            "major_cn": [-2, -2, -4],
+            "minor_cn": [-1, -2, -3],
+            "normal_cn": [-2, -2, -2],
+            "tumour_content": [1, 2, 3],
+            "error_rate": ["0.001", "0.002", "0.001"],
+            "chrom": [True, False, True],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_all_invalid_cols_one_req_missing(self):
+        df_dict = {
+            "mutation_id": [True, False, True],
+            # "sample_id": [True, False, True],
+            "ref_counts": [-20, -4, -104],
+            "alt_counts": [-8, -16, -45],
+            "major_cn": [-2, -2, -4],
+            "minor_cn": [-1, -2, -3],
+            "normal_cn": [-2, -2, -2],
+            "tumour_content": [1, 2, 3],
+            "error_rate": ["0.001", "0.002", "0.001"],
+            "chrom": ["", None, True],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
 
 
 class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
@@ -367,6 +486,38 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
     def test_validate_column_minimum_invalid(self):
         self.skipTest("Cluster schema lacks integer col with defined minimum")
 
+    def test_validate_valid_and_present(self):
+        df_dict = {
+            "mutation_id": ["m1", "m2", "m3"],
+            "sample_id": ["s1", "s2", "s3"],
+            "cluster_id": [20, 4, 104],
+            "cellular_prevalence": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self.assertTrue(input_validator.validate())
+
+    def test_validate_valid_one_req_col_missing(self):
+        df_dict = {
+            "sample_id": ["s1", "s2", "s3"],
+            "cluster_id": [20, 4, 104],
+            "cellular_prevalence": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_valid_all_req_col_missing(self):
+        df_dict = {
+            "cellular_prevalence": [0.001, 0.002, 0.001],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
     def test_validate_all_columns_valid_string_cols_used(self):
         df_dict = {
             "mutation_id": ["m1", "m2", "m3"],
@@ -377,7 +528,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_number_cols_used(self):
         df_dict = {
@@ -389,7 +540,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_integer_cols_used(self):
         df_dict = {
@@ -401,7 +552,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_valid_mixed_cols_used(self):
         df_dict = {
@@ -413,7 +564,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertTrue(input_validator.validate_all_columns())
+        self.assertTrue(input_validator._validate_all_columns())
 
     def test_validate_all_columns_one_invalid_col(self):
         df_dict = {
@@ -425,7 +576,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
 
     def test_validate_all_columns_two_invalid_cols(self):
         df_dict = {
@@ -437,7 +588,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
 
     def test_validate_all_columns_all_invalid_cols(self):
         df_dict = {
@@ -449,7 +600,54 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
-        self.assertFalse(input_validator.validate_all_columns())
+        self.assertFalse(input_validator._validate_all_columns())
+
+    def test_validate_one_invalid_col(self):
+        df_dict = {
+            "mutation_id": ["m1", "m2", "m3"],
+            "sample_id": ["s1", "s2", "s3"],
+            "cluster_id": [20, 4, 104],
+            "cellular_prevalence": [1, 2, 1],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_two_invalid_cols(self):
+        df_dict = {
+            "mutation_id": [True, False, True],
+            "sample_id": ["s1", "s2", "s3"],
+            "cluster_id": [20, 4, 104],
+            "cellular_prevalence": [1, 2, 1],
+            "chrom": ["chr1", "chr2", "chr3"],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_all_invalid_cols(self):
+        df_dict = {
+            "mutation_id": [True, False, True],
+            "sample_id": ["", None, "1"],
+            "cluster_id": ["20", "4", "104"],
+            "cellular_prevalence": ["0.001", "0.002", "0.001"],
+            "chrom": [True, False, True],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
+
+    def test_validate_all_invalid_cols_one_req_missing(self):
+        df_dict = {
+            "sample_id": ["", None, "1"],
+            "cluster_id": ["20", "4", "104"],
+            "cellular_prevalence": ["0.001", "0.002", "0.001"],
+            "chrom": [True, False, True],
+        }
+        df = pd.DataFrame(df_dict)
+        input_validator = self.create_input_validator_instance(df)
+        self._run_raise_error_on_validate_test(input_validator)
 
 
 if __name__ == "__main__":

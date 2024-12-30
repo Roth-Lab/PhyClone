@@ -5,3 +5,11 @@ class MajorCopyNumberError(Exception):
             "\n Major_CN: {maj}, Minor CN: {minor}".format(maj=major_cn, minor=minor_cn)
         )
         super().__init__(error_msg)
+
+
+class InputFormatError(Exception):
+    def __init__(self, errors_list):
+        error_msg = "\n"
+        for error in errors_list:
+            error_msg += str(error) + "\n\n"
+        super().__init__(error_msg)

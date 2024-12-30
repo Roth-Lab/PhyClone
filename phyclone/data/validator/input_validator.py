@@ -2,6 +2,7 @@ import pandas as pd
 import csv
 import warnings
 import json
+from phyclone.data.validator.schema_error_builder import SchemaErrors
 
 class InputValidator(object):
 
@@ -11,6 +12,7 @@ class InputValidator(object):
         self.required_columns = set(schema['required'])
         self.optional_columns = set(schema['properties']) - self.required_columns
         self.column_rules = schema['properties']
+        self.error_helper = SchemaErrors()
 
     @staticmethod
     def load_json_schema(schema_file):
@@ -32,24 +34,27 @@ class InputValidator(object):
         return pd.read_csv(file_path, sep=csv_delim)
 
     def validate(self):
-        are_required_columns_present = self.validate_required_column_presence()
-        are_all_columns_valid = self.validate_all_columns()
+        are_required_columns_present = self._validate_required_column_presence()
+        are_all_columns_valid = self._validate_all_columns()
+        self.error_helper.raise_errors()
         return are_required_columns_present and are_all_columns_valid
 
-    def validate_required_column_presence(self):
+    def _validate_required_column_presence(self):
         curr_cols = set(self.df.columns)
         missing_cols = set(self.required_columns) - curr_cols
+        for col in missing_cols:
+            self.error_helper.add_missing_column_error(col)
         return len(missing_cols) == 0
 
-    def validate_all_columns(self):
+    def _validate_all_columns(self):
         curr_cols = self.df.columns
         are_all_cols_valid = True
         for col in curr_cols:
-            is_curr_col_valid = self.validate_column(col)
+            is_curr_col_valid = self._validate_column(col)
             are_all_cols_valid = are_all_cols_valid and is_curr_col_valid
         return are_all_cols_valid
 
-    def validate_base_type(self, base_type, column):
+    def _validate_base_type(self, base_type, column):
         if base_type == "integer":
             return self._validate_int(self.df[column].dtype)
         elif base_type == "string":
@@ -75,8 +80,9 @@ class InputValidator(object):
     def _validate_num(col_dtype):
         return col_dtype == float
 
-    def validate_column(self, column):
+    def _validate_column(self, column):
         col_rule = self.column_rules[column]
+        required_type = col_rule['type']
 
         is_type_valid, col_type = self._check_column_type(col_rule, column)
 
@@ -84,27 +90,38 @@ class InputValidator(object):
             is_min_valid = self._check_column_minimum(col_rule, col_type, column)
         else:
             is_min_valid = False
+            invalid_type_msg = "Column is of invalid type {}, valid type(s): {}".format(col_type, required_type)
+            self.error_helper.add_invalid_column_error(column, invalid_type_msg)
 
         return is_type_valid and is_min_valid
 
     def _check_column_minimum(self, col_rule, col_type, column):
         is_min_valid = True
+        invalid_type_msg = "Column minimum value/length violation"
         if "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
-            is_min_valid = (self.df[column] >= 0).all()
+            min_value = col_rule["minimum"]
+            is_min_valid = (self.df[column] >= min_value).all()
+            invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(min_value)
         elif "minLength" in col_rule and col_type == "string":
-            is_min_valid = self.df[column].str.len().ge(col_rule["minLength"]).all(skipna=False)
+            min_length = col_rule["minLength"]
+            is_min_valid = self.df[column].str.len().ge(min_length).all(skipna=False)
+            invalid_type_msg = "Column contains elements that violate the required minimum string length of {}".format(min_length)
+        if not is_min_valid:
+            self.error_helper.add_invalid_column_error(column, invalid_type_msg)
         return is_min_valid
 
     def _check_column_type(self, col_rule, column):
         is_type_valid = False
         col_type = col_rule['type']
-        loaded_col_type = col_rule['type']
+        loaded_col_type = self.df[column].dtype.name
         if isinstance(col_type, list):
             for chk_type in col_type:
-                is_type_valid = self.validate_base_type(chk_type, column)
+                is_type_valid = self._validate_base_type(chk_type, column)
                 if is_type_valid:
                     loaded_col_type = chk_type
                     break
         else:
-            is_type_valid = self.validate_base_type(col_type, column)
+            is_type_valid = self._validate_base_type(col_type, column)
+            if is_type_valid:
+                loaded_col_type = col_type
         return is_type_valid, loaded_col_type
