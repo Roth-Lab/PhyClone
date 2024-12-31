@@ -1,6 +1,5 @@
 import itertools
 from collections import OrderedDict, defaultdict
-
 import numba
 import numpy as np
 import pandas as pd
@@ -8,11 +7,7 @@ import pandas as pd
 import phyclone.data.base
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import (
-    log_normalize,
-    log_pyclone_beta_binomial_pdf,
-    log_pyclone_binomial_pdf,
-)
+from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 
 
@@ -125,10 +120,10 @@ def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_
             else:
                 cluster_prob_status_msg += "\nMutation chrom position column also not found."
                 cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
-                cluster_prob_status_msg += "Setting values to {p}.\n".format(p=low_loss_prob)
+                cluster_prob_status_msg += " Setting values to {p}.\n".format(p=low_loss_prob)
                 cluster_df.loc[:, "outlier_prob"] = low_loss_prob
         else:
-            cluster_prob_status_msg += " Setting values to {p}\n".format(p=outlier_prob)
+            cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
     else:
         cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
@@ -268,40 +263,25 @@ def _create_loaded_pyclone_data_dict(df, samples):
 def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
     total_cn = major_cn + minor_cn
 
-    cn = []
-
-    mu = []
-
-    log_pi = []
-
     if major_cn < minor_cn:
         raise MajorCopyNumberError(major_cn, minor_cn)
 
     # Consider all possible mutational genotypes consistent with mutation before CN change
-    for x in range(1, major_cn + 1):
-        cn.append((normal_cn, normal_cn, total_cn))
-
-        mu.append((error_rate, error_rate, min(1 - error_rate, x / total_cn)))
-
-        log_pi.append(0)
+    cn = [(normal_cn, normal_cn, total_cn) for _ in range(1, major_cn + 1)]
+    mu = [(error_rate, error_rate, min(1 - error_rate, x / total_cn)) for x in range(1, major_cn + 1)]
 
     # Consider mutational genotype of mutation before CN change if not already added
-    mutation_after_cn = (normal_cn, total_cn, total_cn)
-
-    if mutation_after_cn not in cn:
+    if total_cn != normal_cn:
+        mutation_after_cn = (normal_cn, total_cn, total_cn)
         cn.append(mutation_after_cn)
-
         mu.append((error_rate, error_rate, min(1 - error_rate, 1 / total_cn)))
-
-        log_pi.append(0)
-
         assert len(set(cn)) == 2
 
     cn = np.array(cn, dtype=int)
-
     mu = np.array(mu, dtype=float)
 
-    log_pi = log_normalize(np.array(log_pi, dtype=float))
+    log_pi_val = -np.log(len(cn))
+    log_pi = np.full(len(cn), log_pi_val)
 
     return cn, mu, log_pi
 

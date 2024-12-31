@@ -5,6 +5,7 @@ import json
 from phyclone.data.validator.schema_error_builder import SchemaErrors
 import gzip
 
+
 class InputValidator(object):
 
     def __init__(self, file_path, schema_file):

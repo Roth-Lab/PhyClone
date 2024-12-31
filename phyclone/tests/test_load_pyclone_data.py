@@ -59,17 +59,6 @@ def tester_get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
 
 class TestLoadPyCloneData(unittest.TestCase):
 
-    # def setUp(self):
-    #     self.rng = np.random.default_rng(self.seed)
-    #
-    # def __init__(self, method_name: str = ...):
-    #     super().__init__(method_name)
-    #     self.seed = 244310326493402386435613023297139050129
-    #     self.grid_size = 101
-    #     self.density = "beta-binomial"
-    #     self.outlier_prob = 1e-4
-    #     self.precision = 400
-
     def _assert_datapoint_dict_against_df_dict(self, actual_df, data, df_dict, skip_dict):
         self.assertEqual(len(actual_df["mutation_id"].unique()), len(data))
         self.assertListEqual(sorted(actual_df["mutation_id"].unique()), list(data.keys()))
@@ -417,12 +406,23 @@ class TestLoadPyCloneData(unittest.TestCase):
         self._assert_datapoint_dict_against_df_dict(actual_df, data, df_dict, skip_dict)
 
     def test_get_major_cn_prior(self):
-        maj = 2
-        minor = 1
-        actual_vals = get_major_cn_prior(maj, minor, 2)
-        expected_vals = tester_get_major_cn_prior(maj, minor, 2)
-        for i in range(len(actual_vals)):
-            np.testing.assert_array_equal(actual_vals[i], expected_vals[i])
+        maj_vals = [2, 2, 8, 10, 4, 1]
+        min_vals = [1, 0, 3, 1, 4, 1]
+
+        for cn_iter in range(len(maj_vals)):
+            major = maj_vals[cn_iter]
+            minor = min_vals[cn_iter]
+
+            with self.subTest(
+                msg="Major CN prior test {}".format(cn_iter),
+                maj_cn_prior_test=cn_iter,
+                major_val=major,
+                minor_val=minor,
+            ):
+                actual_vals = get_major_cn_prior(major, minor, 2)
+                expected_vals = tester_get_major_cn_prior(major, minor, 2)
+                for i in range(len(actual_vals)):
+                    np.testing.assert_array_equal(actual_vals[i], expected_vals[i])
 
 
 if __name__ == "__main__":
