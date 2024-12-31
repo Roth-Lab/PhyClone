@@ -3,7 +3,7 @@ import csv
 import warnings
 import json
 from phyclone.data.validator.schema_error_builder import SchemaErrors
-
+import gzip
 
 class InputValidator(object):
 
@@ -23,9 +23,15 @@ class InputValidator(object):
 
     @staticmethod
     def load_df(file_path):
-        with open(file_path, "r") as csv_file:
-            dialect = csv.Sniffer().sniff(csv_file.readline())
-            csv_delim = str(dialect.delimiter)
+
+        try:
+            with open(file_path, "r") as csv_file:
+                dialect = csv.Sniffer().sniff(csv_file.readline())
+                csv_delim = str(dialect.delimiter)
+        except UnicodeDecodeError:
+            with gzip.open(file_path, "rt") as csv_file:
+                dialect = csv.Sniffer().sniff(csv_file.readline())
+                csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
             warnings.warn(
