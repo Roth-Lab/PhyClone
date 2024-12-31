@@ -340,7 +340,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
                 "normal_cn": {"type": "integer", "minimum": 0},
                 "tumour_content": {"type": "number", "minimum": 0.0, "default": 1.0},
                 "error_rate": {"type": "number", "minimum": 0.0, "default": 0.001},
-                "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
             },
             "required": ["mutation_id", "sample_id", "ref_counts", "alt_counts", "major_cn", "minor_cn", "normal_cn"],
         }
@@ -363,7 +362,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -379,7 +377,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -389,7 +386,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
         df_dict = {
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -406,7 +402,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -423,7 +418,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": [1.0, 2.0, 3.0],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -440,7 +434,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": [1, 2, 3],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -457,7 +450,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": [1.0, 2.0, 3.0],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -474,7 +466,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -491,7 +482,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -508,7 +498,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [-2, -2, -2],
             "tumour_content": [1, 2, 3],
             "error_rate": ["0.001", "0.002", "0.001"],
-            "chrom": [True, False, True],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -525,7 +514,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -542,7 +530,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -559,7 +546,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [-2, -2, -2],
             "tumour_content": [1, 2, 3],
             "error_rate": ["0.001", "0.002", "0.001"],
-            "chrom": [True, False, True],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)
@@ -575,7 +561,6 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "normal_cn": [-2, -2, -2],
             "tumour_content": [1, 2, 3],
             "error_rate": ["0.001", "0.002", "0.001"],
-            "chrom": ["", None, True],
         }
         df = pd.DataFrame(df_dict)
         input_validator = self.create_input_validator_instance(df)

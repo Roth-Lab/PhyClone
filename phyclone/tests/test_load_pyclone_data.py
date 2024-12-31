@@ -89,7 +89,6 @@ class TestLoadPyCloneData(unittest.TestCase):
                 "normal_cn": [2, 2, 2],
                 "tumour_content": [1.0, 0.2, 0.3],
                 "error_rate": [0.001, 0.002, 0.001],
-                "chrom": ["chr1", "chr2", "chr3"],
             }
             df = pd.DataFrame(df_dict)
             file_path = os.path.join(tmp_dir, "data.tsv")
@@ -110,7 +109,6 @@ class TestLoadPyCloneData(unittest.TestCase):
                 "normal_cn": [2, 2, 2],
                 "tumour_content": [1.0, 0.2, 0.3],
                 "error_rate": [0.001, 0.002, 0.001],
-                "chrom": ["chr1", "chr2", "chr3"],
             }
             df = pd.DataFrame(df_dict)
             file_path = os.path.join(tmp_dir, "data.tsv")
@@ -130,7 +128,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -148,7 +145,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -167,7 +163,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "normal_cn": [2, 2, 2],
             "tumour_content": [1.0, 0.2, 0.3],
             "error_rate": [0.001, 0.002, 0.001],
-            "chrom": ["chr1", "chr2", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -204,9 +199,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -243,9 +235,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         df = pd.concat([df, pd.DataFrame([{"mutation_id": "m4",
@@ -256,8 +245,7 @@ class TestLoadPyCloneData(unittest.TestCase):
                                           "minor_cn": 2,
                                           "normal_cn": 2,
                                           "tumour_content": 1.0,
-                                          "error_rate": 0.001,
-                                          "chrom": "ch1"}])], ignore_index=True)
+                                          "error_rate": 0.001}])], ignore_index=True)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
         actual_df = _remove_duplicated_and_partially_absent_mutations(actual_df, samples)
@@ -293,9 +281,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         df = pd.concat([df, pd.DataFrame([{"mutation_id": "m4",
@@ -306,8 +291,7 @@ class TestLoadPyCloneData(unittest.TestCase):
                                           "minor_cn": 2,
                                           "normal_cn": 2,
                                           "tumour_content": 1.0,
-                                          "error_rate": 0.001,
-                                          "chrom": "ch1"},
+                                          "error_rate": 0.001,},
                                           {"mutation_id": "m5",
                                            "sample_id": "s2",
                                            "ref_counts": 10,
@@ -316,8 +300,7 @@ class TestLoadPyCloneData(unittest.TestCase):
                                            "minor_cn": 2,
                                            "normal_cn": 2,
                                            "tumour_content": 1.0,
-                                           "error_rate": 0.001,
-                                           "chrom": "ch1"}
+                                           "error_rate": 0.001,}
                                           ])], ignore_index=True)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
@@ -354,9 +337,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -412,11 +392,6 @@ class TestLoadPyCloneData(unittest.TestCase):
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3",
-                      "chr3", "chr3", "chr3",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -454,9 +429,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -490,9 +462,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -527,9 +496,6 @@ class TestLoadPyCloneData(unittest.TestCase):
             "tumour_content": [1.0, 0.2, 0.3,
                                1.0, 0.2, 0.3,
                                1.0, 0.2, 0.3],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2",
-                      "chr3", "chr3", "chr3"],
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
@@ -559,8 +525,6 @@ class TestLoadPyCloneData(unittest.TestCase):
                                1.0, 1.0, 1.0],
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2"],
         }
         skip_dict = {"m1": 0, "m2": 3}
         actual_df = pd.DataFrame(df_dict)
@@ -588,8 +552,6 @@ class TestLoadPyCloneData(unittest.TestCase):
                                1.0, 1.0, 1.0],
             "error_rate": [0.001, 0.001, 0.001,
                            0.001, 0.001, 0.001],
-            "chrom": ["chr1", "chr1", "chr1",
-                      "chr2", "chr2", "chr2"],
         }
         skip_dict = {"m1": 0, "m2": 3}
         actual_df = pd.DataFrame(df_dict)

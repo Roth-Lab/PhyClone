@@ -49,13 +49,6 @@
       "type": "number",
       "minimum": 0.0,
       "default": 0.001
-    },
-    "chrom": {
-      "type": [
-        "number",
-        "string",
-        "integer"
-      ]
     }
   },
   "required": [

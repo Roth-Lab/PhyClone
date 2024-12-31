@@ -51,7 +51,6 @@ def load_data(
         cluster_input_validator.validate()
         cluster_df = _setup_cluster_df(
             cluster_file,
-            file_name,
             outlier_prob,
             rng,
             low_loss_prob,
@@ -112,7 +111,6 @@ def _create_clustered_data_arr(
 
 def _setup_cluster_df(
     cluster_file,
-    data_file,
     outlier_prob,
     rng,
     low_loss_prob,
@@ -120,31 +118,21 @@ def _setup_cluster_df(
     assign_loss_prob,
 ):
     cluster_df = pd.read_csv(cluster_file, sep="\t")
+    cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
+        cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
         if assign_loss_prob:
-            column_checks = True
-            if "chrom" not in cluster_df.columns:
-                data_df = pd.read_table(data_file)
-                if "chrom" in data_df.columns:
-                    data_df = data_df[["mutation_id", "chrom"]]
-                    cluster_df = pd.merge(cluster_df, data_df, how="inner", on=["mutation_id"])
-                    cluster_df = cluster_df.drop_duplicates()
-                else:
-                    column_checks = False
+            column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
             if column_checks:
-                print("\nCluster level outlier probability column not found. Assigning from data.")
+                cluster_prob_status_msg += "Assigning from data.\n"
                 _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob)
             else:
-                print(
-                    "\nCluster level outlier probability column not found. \nMutation position data also not found in "
-                    "either cluster or data file, "
-                    "thus, outlier probability cannot be assigned form data. Setting values to {p}\n".format(
-                        p=low_loss_prob
-                    )
-                )
+                cluster_prob_status_msg += "\nMutation chrom position column also not found."
+                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
+                cluster_prob_status_msg += " Setting values to {p}\n".format(p=low_loss_prob)
                 cluster_df.loc[:, "outlier_prob"] = low_loss_prob
         else:
-            print("\nCluster level outlier probability column not found. Setting values to {p}".format(p=outlier_prob))
+            cluster_prob_status_msg += " Setting values to {p}\n".format(p=outlier_prob)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
     if not assign_loss_prob:
         if outlier_prob == 0:
@@ -152,6 +140,7 @@ def _setup_cluster_df(
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
+    print(cluster_prob_status_msg)
     return cluster_df
 
 
@@ -206,7 +195,7 @@ def _remove_duplicated_and_partially_absent_mutations(df, samples):
 
 
 def _remove_cn_zero_mutations(df):
-    num_dels = sum(df["major_cn"] == 0)
+    num_dels = len(df.loc[df["major_cn"] == 0])
     if num_dels > 0:
         if num_dels == 1:
             pl = ""
@@ -227,7 +216,6 @@ def _process_required_cols_on_df(df, samples):
         df.loc[:, "error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
         print("Tumour content column not found. Setting values to 1.0.")
-
         df.loc[:, "tumour_content"] = 1.0
 
 
