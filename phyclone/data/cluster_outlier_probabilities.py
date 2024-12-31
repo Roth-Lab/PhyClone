@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 
 
-def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob):
+def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
     truncal_cluster = _define_truncal_cluster(df)
 
     print("Cluster {} identified as likely truncal.".format(truncal_cluster))
@@ -13,15 +13,21 @@ def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob):
 
     truncal_dists = _get_truncal_chrom_arr(df, truncal_cluster)
 
-    lost_clusters = _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists)
+    lost_clusters = _define_possibly_lost_clusters(
+        cluster_info_dict,
+        rng,
+        truncal_cluster,
+        truncal_dists,
+        min_clust_size,
+    )
 
     _finalize_loss_prob_on_cluster_df(df, high_loss_prob, lost_clusters, low_loss_prob)
 
 
-def _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists):
+def _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists, min_clust_size):
     truncal_dist_len = len(truncal_dists)
     lost_clusters = list()
-    min_clust_size = 4
+    print("\nInferring lost clusters with minimum cluster size of {}.".format(min_clust_size))
     test_iters = 10000
     for cluster, info_obj in cluster_info_dict.items():
         cluster_dist_len = info_obj.num_mutations
@@ -74,7 +80,11 @@ def _finalize_loss_prob_on_cluster_df(cluster_df, high_loss_prob, lost_clusters,
             "{num} potentially lost/outlier cluster{pl} identified,"
             " setting {pos} prior loss prob to {pr}."
             "\nRemaining cluster(s) will use a prior loss prob of {prl}.".format(
-                num=len(lost_clusters), pl=pluralize, pr=high_loss_prob, pos=possessive, prl=low_loss_prob
+                num=len(lost_clusters),
+                pl=pluralize,
+                pr=high_loss_prob,
+                pos=possessive,
+                prl=low_loss_prob,
             )
         )
         print("Cluster{pl} identified as potentially lost/outlier{pl}: {lost}".format(pl=pluralize, lost=lost_clusters))

@@ -17,6 +17,7 @@ class TesterInputValidator(InputValidator):
         self.column_rules = schema["properties"]
         self.error_helper = SchemaErrors()
 
+
 class TestInputValidatorLoaders(unittest.TestCase):
 
     def test_data_validator_loads(self):
@@ -74,7 +75,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
                 "tumour_content": [1.0, 0.2, 0.3],
                 "error_rate": [0.001, 0.002, 0.001],
                 "chrom": ["chr1", "chr2", "chr3"],
-                "extra_col": [1, 2, 3]
+                "extra_col": [1, 2, 3],
             }
             df = pd.DataFrame(df_dict)
             file_path = os.path.join(tmp_dir, "data.tsv")
@@ -135,6 +136,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
         with self.assertRaises(InputFormatError) as error:
             input_validator.validate()
         print(error.exception)
+
 
 class BaseTest(object):
     class TestInputValidatorMethods(unittest.TestCase):

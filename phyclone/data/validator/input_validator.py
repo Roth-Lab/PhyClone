@@ -4,14 +4,15 @@ import warnings
 import json
 from phyclone.data.validator.schema_error_builder import SchemaErrors
 
+
 class InputValidator(object):
 
     def __init__(self, file_path, schema_file):
         self.df = self.load_df(file_path)
         schema = self.load_json_schema(schema_file)
-        self.required_columns = set(schema['required'])
-        self.optional_columns = set(schema['properties']) - self.required_columns
-        self.column_rules = schema['properties']
+        self.required_columns = set(schema["required"])
+        self.optional_columns = set(schema["properties"]) - self.required_columns
+        self.column_rules = schema["properties"]
         self.error_helper = SchemaErrors()
 
     @staticmethod
@@ -22,14 +23,17 @@ class InputValidator(object):
 
     @staticmethod
     def load_df(file_path):
-        with open(file_path, 'r') as csv_file:
+        with open(file_path, "r") as csv_file:
             dialect = csv.Sniffer().sniff(csv_file.readline())
             csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
-            warnings.warn("Input should be tab-delimited, supplied file is delimited by {delim}\n"
-                          "Will attempt parsing with the current delimiter, {delim}\n".format(delim=repr(csv_delim)),
-                          stacklevel=2, category=UserWarning)
+            warnings.warn(
+                "Input should be tab-delimited, supplied file is delimited by {delim}\n"
+                "Will attempt parsing with the current delimiter, {delim}\n".format(delim=repr(csv_delim)),
+                stacklevel=2,
+                category=UserWarning,
+            )
         return pd.read_csv(file_path, sep=csv_delim)
 
     def validate(self):
@@ -83,7 +87,7 @@ class InputValidator(object):
 
     def _validate_column(self, column):
         col_rule = self.column_rules[column]
-        required_type = col_rule['type']
+        required_type = col_rule["type"]
 
         is_type_valid, col_type = self._check_column_type(col_rule, column)
 
@@ -102,19 +106,23 @@ class InputValidator(object):
         if "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
             min_value = col_rule["minimum"]
             is_min_valid = (self.df[column] >= min_value).all(skipna=False)
-            invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(min_value)
+            invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(
+                min_value
+            )
         elif "minLength" in col_rule and col_type == "string":
             min_length = col_rule["minLength"]
             self.df[column] = self.df[column].fillna(value="")
             is_min_valid = self.df[column].str.len().ge(min_length).all(skipna=False)
-            invalid_type_msg = "Column contains elements that violate the required minimum string length of {}".format(min_length)
+            invalid_type_msg = "Column contains elements that violate the required minimum string length of {}".format(
+                min_length
+            )
         if not is_min_valid:
             self.error_helper.add_invalid_column_error(column, invalid_type_msg)
         return is_min_valid
 
     def _check_column_type(self, col_rule, column):
         is_type_valid = False
-        col_type = col_rule['type']
+        col_type = col_rule["type"]
         loaded_col_type = self.df[column].dtype.name
         if isinstance(col_type, list):
             for chk_type in col_type:

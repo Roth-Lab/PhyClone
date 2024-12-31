@@ -35,6 +35,7 @@ class SchemaErrorBuilder(object):
     def build(self):
         return SchemaError(self._error_type, self._column_errors, len(self._column_errors))
 
+
 class SchemaErrors(object):
     __slots__ = ("errors", "_missing_column_error", "_invalid_column_error")
 

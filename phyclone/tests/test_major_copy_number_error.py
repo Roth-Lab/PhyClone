@@ -15,7 +15,7 @@ class TestMajorCopyNumberError(unittest.TestCase):
         try:
             get_major_cn_prior(maj, minor, 2)
         except MajorCopyNumberError:
-            self.fail('MajorCopyNumberError raised with major: {}, and minor: {}'.format(maj, minor))
+            self.fail("MajorCopyNumberError raised with major: {}, and minor: {}".format(maj, minor))
 
     def test_major_greater_than_minor(self):
         maj = 2
@@ -23,7 +23,8 @@ class TestMajorCopyNumberError(unittest.TestCase):
         try:
             get_major_cn_prior(maj, minor, 2)
         except MajorCopyNumberError:
-            self.fail('MajorCopyNumberError raised with major: {}, and minor: {}'.format(maj, minor))
+            self.fail("MajorCopyNumberError raised with major: {}, and minor: {}".format(maj, minor))
+
 
 if __name__ == "__main__":
     unittest.main()

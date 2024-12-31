@@ -10,7 +10,8 @@ from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import (
     log_normalize,
-    log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf,
+    log_pyclone_beta_binomial_pdf,
+    log_pyclone_binomial_pdf,
 )
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 
@@ -26,6 +27,7 @@ def load_data(
     grid_size=101,
     outlier_prob=1e-4,
     precision=400,
+    min_clust_size=4,
 ):
     data_input_validator = create_data_input_validator_instance(file_name)
     data_input_validator.validate()
@@ -56,6 +58,7 @@ def load_data(
             low_loss_prob,
             high_loss_prob,
             assign_loss_prob,
+            min_clust_size,
         )
 
         cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
@@ -109,14 +112,7 @@ def _create_clustered_data_arr(
     return data
 
 
-def _setup_cluster_df(
-    cluster_file,
-    outlier_prob,
-    rng,
-    low_loss_prob,
-    high_loss_prob,
-    assign_loss_prob,
-):
+def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob, min_clust_size):
     cluster_df = pd.read_csv(cluster_file, sep="\t")
     cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
@@ -125,15 +121,18 @@ def _setup_cluster_df(
             column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
             if column_checks:
                 cluster_prob_status_msg += "Assigning from data.\n"
-                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob)
+                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob, min_clust_size)
             else:
                 cluster_prob_status_msg += "\nMutation chrom position column also not found."
                 cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
-                cluster_prob_status_msg += " Setting values to {p}\n".format(p=low_loss_prob)
+                cluster_prob_status_msg += "Setting values to {p}.\n".format(p=low_loss_prob)
                 cluster_df.loc[:, "outlier_prob"] = low_loss_prob
         else:
             cluster_prob_status_msg += " Setting values to {p}\n".format(p=outlier_prob)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
+    else:
+        cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
+        cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
     if not assign_loss_prob:
         if outlier_prob == 0:
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
@@ -149,7 +148,10 @@ def compute_outlier_prob(outlier_prob, cluster_size):
         return outlier_prob, np.log(1.0)
     else:
         res = np.log(outlier_prob) * cluster_size
-        res_not = np.log1p(-outlier_prob) * cluster_size
+        if outlier_prob == 1:
+            res_not = -np.inf
+        else:
+            res_not = np.log1p(-outlier_prob) * cluster_size
         return res, res_not
 
 
@@ -189,7 +191,13 @@ def _remove_duplicated_and_partially_absent_mutations(df, samples):
             pl = ("", "is")
         else:
             pl = ("s", "are")
-        print("Removing {} mutation{} that {} not present in all samples".format(num_not_present_in_all, pl[0], pl[1]))
+        print(
+            "Removing {} mutation{} that {} not present in all samples".format(
+                num_not_present_in_all,
+                pl[0],
+                pl[1],
+            )
+        )
     df = df.loc[group_transform == samples_len]
     return df
 
@@ -357,5 +365,3 @@ class SampleDataPoint(object):
         self.mu = mu
         self.log_pi = log_pi
         self.t = t
-
-
