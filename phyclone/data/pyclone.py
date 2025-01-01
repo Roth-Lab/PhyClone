@@ -2,7 +2,6 @@ import itertools
 from collections import OrderedDict, defaultdict
 import numba
 import numpy as np
-import pandas as pd
 
 import phyclone.data.base
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
@@ -24,8 +23,7 @@ def load_data(
     precision=400,
     min_clust_size=4,
 ):
-    data_input_validator = create_data_input_validator_instance(file_name)
-    data_input_validator.validate()
+
     pyclone_data, samples = load_pyclone_data(file_name)
 
     if cluster_file is None:
@@ -44,8 +42,6 @@ def load_data(
             data.append(data_point)
 
     else:
-        cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
-        cluster_input_validator.validate()
         cluster_df = _setup_cluster_df(
             cluster_file,
             outlier_prob,
@@ -108,7 +104,7 @@ def _create_clustered_data_arr(
 
 
 def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob, min_clust_size):
-    cluster_df = pd.read_csv(cluster_file, sep="\t")
+    cluster_df = _get_raw_cluster_df(cluster_file)
     cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
         cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
@@ -135,6 +131,13 @@ def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     print(cluster_prob_status_msg)
+    return cluster_df
+
+
+def _get_raw_cluster_df(cluster_file):
+    cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
+    cluster_input_validator.validate()
+    cluster_df = cluster_input_validator.df
     return cluster_df
 
 
@@ -223,10 +226,10 @@ def _process_required_cols_on_df(df, samples):
 
 
 def _create_raw_data_df(file_name):
-    df = pd.read_table(file_name)
-    if len(df.columns) == 1:
-        df = pd.read_csv(file_name)
-    df["sample_id"] = df["sample_id"].astype(str)
+    data_input_validator = create_data_input_validator_instance(file_name)
+    data_input_validator.validate()
+    df = data_input_validator.df
+    df["sample_id"] = df["sample_id"].astype("string")
     return df
 
 
