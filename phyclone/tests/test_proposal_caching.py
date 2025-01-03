@@ -32,7 +32,7 @@ class BaseTest(object):
 
             kernel = kernel_cls(
                 self.tree_dist,
-                outlier_proposal_prob=self.outlier_prob,
+                outlier_modelling_active=False,
                 perm_dist=None,
                 rng=self._rng,
             )

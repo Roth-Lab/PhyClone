@@ -42,8 +42,16 @@ def load_data(
             data.append(data_point)
 
     else:
-        cluster_df = _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob,
-                                       min_clust_size, data_df)
+        cluster_df = _setup_cluster_df(
+            cluster_file,
+            outlier_prob,
+            rng,
+            low_loss_prob,
+            high_loss_prob,
+            assign_loss_prob,
+            min_clust_size,
+            data_df,
+        )
 
         cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
 
@@ -96,8 +104,16 @@ def _create_clustered_data_arr(
     return data
 
 
-def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob, min_clust_size,
-                      data_df):
+def _setup_cluster_df(
+    cluster_file,
+    outlier_prob,
+    rng,
+    low_loss_prob,
+    high_loss_prob,
+    assign_loss_prob,
+    min_clust_size,
+    data_df,
+):
     cluster_df = _get_raw_cluster_df(cluster_file, data_df)
     cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:

@@ -134,10 +134,11 @@ class FSCRPDistribution(object):
 
 
 class TreeJointDistribution(object):
-    __slots__ = "prior"
+    __slots__ = "prior", "outlier_modelling_active"
 
-    def __init__(self, prior):
+    def __init__(self, prior, outlier_modelling_active=False):
         self.prior = prior
+        self.outlier_modelling_active = outlier_modelling_active
 
     def __eq__(self, other):
         return self.prior == other.prior
@@ -205,12 +206,12 @@ class TreeJointDistribution(object):
 
         return log_p, log_p_one
 
-    @staticmethod
-    def outlier_prior(tree_node_data, outlier_node_name):
+    def outlier_prior(self, tree_node_data, outlier_node_name):
         log_p = 0
-        for node, node_data in tree_node_data.items():
-            for data_point in node_data:
-                if data_point.outlier_prob != 0:
+        if self.outlier_modelling_active:
+            for node, node_data in tree_node_data.items():
+                for data_point in node_data:
+                    # if data_point.outlier_prob != 0:
                     if node == outlier_node_name:
                         log_p += data_point.outlier_prob
 

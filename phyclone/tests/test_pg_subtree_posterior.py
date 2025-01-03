@@ -19,6 +19,8 @@ class BaseTest(object):
         def __init__(self, methodName: str = ...):
             super().__init__(methodName)
 
+            self.run_scale = None
+            self.sampler = None
             self._rng = random.default_rng(12345)
 
         def test_single_data_point_1d(self):
@@ -68,7 +70,7 @@ class BaseTest(object):
 
             kernel = kernel_cls(
                 self.tree_dist,
-                outlier_proposal_prob=0,
+                outlier_modelling_active=False,
                 perm_dist=perm_dist,
                 rng=self._rng,
             )

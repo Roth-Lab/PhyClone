@@ -471,8 +471,16 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(file_path, 0, self.rng, self.low_loss_prob, self.high_loss_prob, False,
-                                          self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                0,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                False,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == 0))
 
     def test_no_outliers_all_optional_cols(self):
@@ -481,8 +489,16 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(file_path, 0, self.rng, self.low_loss_prob, self.high_loss_prob, False,
-                                          self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                0,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                False,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == 0))
 
     def test_global_outlier_val(self):
@@ -491,8 +507,16 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, False, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                False,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == self.outlier_prob))
 
     def test_assign_loss_prob__valid_cols(self):
@@ -502,8 +526,16 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, True, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                True,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] != 0))
 
     def test_assign_loss_prob__chrom_missing(self):
@@ -514,8 +546,16 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, True, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                True,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == self.low_loss_prob))
 
     def test_assign_loss_prob__chrom_missing_present_on_data_df(self):
@@ -527,8 +567,16 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, True, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                True,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] != 0))
 
     def test_assign_loss_prob__cellular_prevalence_missing(self):
@@ -539,8 +587,16 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, True, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                True,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == self.low_loss_prob))
 
     def test_assign_loss_prob__both_chrom_and_ccf_missing(self):
@@ -551,8 +607,16 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(file_path, self.outlier_prob, self.rng, self.low_loss_prob,
-                                          self.high_loss_prob, True, self.min_clust_size, data_df)
+            actual_df = _setup_cluster_df(
+                file_path,
+                self.outlier_prob,
+                self.rng,
+                self.low_loss_prob,
+                self.high_loss_prob,
+                True,
+                self.min_clust_size,
+                data_df,
+            )
         self.assertTrue(np.all(actual_df["outlier_prob"] == self.low_loss_prob))
 
 

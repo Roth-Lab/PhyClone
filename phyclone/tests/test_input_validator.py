@@ -250,11 +250,13 @@ class BaseTest(object):
                     elif col_type == "string":
                         string_type_cols.append(col)
 
-            col_categories_dict = {"integer": integer_type_cols,
-                                   "number": float_type_cols,
-                                   "string": string_type_cols,
-                                   "list": list_type_cols,
-                                   "longest_list_type_col_name": longest_list_type_col_name}
+            col_categories_dict = {
+                "integer": integer_type_cols,
+                "number": float_type_cols,
+                "string": string_type_cols,
+                "list": list_type_cols,
+                "longest_list_type_col_name": longest_list_type_col_name,
+            }
             return col_categories_dict
 
         def _get_a_col_for_category(self, check_type):
@@ -279,7 +281,7 @@ class BaseTest(object):
             category_list = self.col_categories_dict[check_type]
 
             for col in category_list:
-                col_rule =  self.column_rules[col]
+                col_rule = self.column_rules[col]
                 if min_type in col_rule:
                     curr_min = col_rule[min_type]
                     if curr_min >= min_val:
@@ -304,7 +306,7 @@ class BaseTest(object):
                 return [min_val + float(i * 0.25) for i in range(3)]
             elif col_type == "string":
                 min_val = int(min_val)
-                return [str(i)*min_val for i in range(3)]
+                return [str(i) * min_val for i in range(3)]
             else:
                 raise NotImplementedError("Column type {} not supported".format(col_type))
 
@@ -540,9 +542,11 @@ class BaseTest(object):
                 for invalid_data_tuple in invalid_data_list:
                     invalid_data = invalid_data_tuple[1]
                     how_invalid = invalid_data_tuple[0]
-                    with self.subTest(msg="Invalid col: {}, {}".format(col, how_invalid),
-                                      invalid_col=col,
-                                      how_invalid=how_invalid):
+                    with self.subTest(
+                        msg="Invalid col: {}, {}".format(col, how_invalid),
+                        invalid_col=col,
+                        how_invalid=how_invalid,
+                    ):
                         valid_col_val = df_dict[col]
                         df_dict[col] = invalid_data
                         df = pd.DataFrame(df_dict)
@@ -558,9 +562,11 @@ class BaseTest(object):
                 for invalid_data_tuple in invalid_data_list:
                     invalid_data = invalid_data_tuple[1]
                     how_invalid = invalid_data_tuple[0]
-                    with self.subTest(msg="Invalid col: {}, {}".format(col, how_invalid),
-                                      invalid_col=col,
-                                      how_invalid=how_invalid):
+                    with self.subTest(
+                        msg="Invalid col: {}, {}".format(col, how_invalid),
+                        invalid_col=col,
+                        how_invalid=how_invalid,
+                    ):
                         valid_col_val = df_dict[col]
                         df_dict[col] = invalid_data
                         df = pd.DataFrame(df_dict)
@@ -596,25 +602,24 @@ class BaseTest(object):
             return df_dict
 
 
-
 class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
 
     def set_schema(self):
         self.schema = {
-                "properties": {
-                    "mutation_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                    "sample_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                    "ref_counts": {"type": "integer", "minimum": 0},
-                    "alt_counts": {"type": "integer", "minimum": 0},
-                    "major_cn": {"type": "integer", "minimum": 0},
-                    "minor_cn": {"type": "integer", "minimum": 0},
-                    "normal_cn": {"type": "integer", "minimum": 0},
-                    "tumour_content": {"type": "number", "minimum": 0.0, "default": 1.0},
-                    "error_rate": {"type": "number", "minimum": 0.0, "default": 0.001},
-                    "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
-                },
-                "required": ["mutation_id", "sample_id", "ref_counts", "alt_counts", "major_cn", "minor_cn", "normal_cn"],
-            }
+            "properties": {
+                "mutation_id": {"type": ["number", "string", "integer"], "minLength": 1},
+                "sample_id": {"type": ["number", "string", "integer"], "minLength": 1},
+                "ref_counts": {"type": "integer", "minimum": 0},
+                "alt_counts": {"type": "integer", "minimum": 0},
+                "major_cn": {"type": "integer", "minimum": 0},
+                "minor_cn": {"type": "integer", "minimum": 0},
+                "normal_cn": {"type": "integer", "minimum": 0},
+                "tumour_content": {"type": "number", "minimum": 0.0, "default": 1.0},
+                "error_rate": {"type": "number", "minimum": 0.0, "default": 0.001},
+                "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
+            },
+            "required": ["mutation_id", "sample_id", "ref_counts", "alt_counts", "major_cn", "minor_cn", "normal_cn"],
+        }
 
     def test_validate__all_invalid_cols(self):
         df_dict = {
