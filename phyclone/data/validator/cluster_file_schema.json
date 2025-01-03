@@ -31,7 +31,8 @@
         "number",
         "string",
         "integer"
-      ]
+      ],
+      "minLength": 1
     }
   },
   "required": [

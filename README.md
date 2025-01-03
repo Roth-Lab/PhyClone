@@ -85,7 +85,8 @@ Default value is 1.0 if column is not present.
 However, in most cases it should be the same for all mutations in a sample.
 
 9. `error_rate` - Sequencing error rate.
-Default value is 0.001 if column is not present. 
+Default value is 0.001 if column is not present.
+10. `chrom` - Chromosome on which `mutation_id` is found.
 
 ------------------
 
@@ -113,9 +114,9 @@ The file should be in tab delimited tidy data frame format and have the followin
 
 You can include the following optional columns:
 
-4. `chrom` - Chromosome on which mutation_id is found
+4. `chrom` - Chromosome on which `mutation_id` is found.
    
-5. `cellular_prevalence` - Cluster cellular prevalence estimate (included in all [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi) clustering results)
+5. `cellular_prevalence` - Cluster cellular prevalence estimate (included in all [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi) clustering results).
 
 > [!NOTE]
 > In order to make use of PhyClone's data informed loss probability prior assignment, columns 4 and 5 are required.
@@ -179,10 +180,10 @@ As explored in the PhyClone paper, PhyClone is equipped with the ability to mode
 > The `--outlier-prob` option will also allow for the use of a global loss probability prior on clustered runs as well.
 2. Assigning the outlier probability from clustered data.
    * PhyClone is also able to assign clusters either a high or low outlier prior probability, based on the input data.
-   * This feature requires that the clustered data include mutational chromosome assignments, the `chrom` column, and cluster cellular prevalence (CCF) measures, the `cellular_prevalence` column (which should **both** be included in the [cluster.tsv](#cluster-file-format) file).
+   * This feature requires that the clustered data include mutational chromosome assignments, the `chrom` column (which can be supplied in either the [data.tsv](#main-input-format) or [cluster.tsv](#cluster-file-format) files), and cluster cellular prevalence (CCF) measures, the `cellular_prevalence` column (which should be included in the [cluster.tsv](#cluster-file-format) file).
    * To activate this feature, ensure the input files are populated with the appropriate columns and include the `--assign-loss-prob` flag in the PhyClone `run` command.
 > [!TIP]
-> If using PyClone-VI for clustering, the CCF column will come as a part of its results. And you need only append the chromosomal positioning column `chrom` to the [cluster.tsv](#cluster-file-format) input file.
+> If using PyClone-VI for clustering, the CCF column will come as a part of its results. And you need only append the chromosomal positioning column `chrom` to either input files.
    
 > [!IMPORTANT]
 > With outlier modelling active, the end result table will assign all mutations inferred to be lost or outliers to a clone with the id of `-1`.

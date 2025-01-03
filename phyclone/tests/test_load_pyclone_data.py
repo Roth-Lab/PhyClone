@@ -403,7 +403,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             actual_df.to_csv(file_path, sep="\t", index=False)
-            data, samples = load_pyclone_data(file_path)
+            data, samples, data_df = load_pyclone_data(file_path)
 
         self._assert_datapoint_dict_against_df_dict(actual_df, data, df_dict, skip_dict)
 

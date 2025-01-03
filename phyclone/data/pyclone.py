@@ -2,7 +2,7 @@ import itertools
 from collections import OrderedDict, defaultdict
 import numba
 import numpy as np
-
+import pandas as pd
 import phyclone.data.base
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
@@ -24,7 +24,7 @@ def load_data(
     min_clust_size=4,
 ):
 
-    pyclone_data, samples = load_pyclone_data(file_name)
+    pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
     if cluster_file is None:
         data = []
@@ -42,15 +42,8 @@ def load_data(
             data.append(data_point)
 
     else:
-        cluster_df = _setup_cluster_df(
-            cluster_file,
-            outlier_prob,
-            rng,
-            low_loss_prob,
-            high_loss_prob,
-            assign_loss_prob,
-            min_clust_size,
-        )
+        cluster_df = _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob,
+                                       min_clust_size, data_df)
 
         cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
 
@@ -103,8 +96,9 @@ def _create_clustered_data_arr(
     return data
 
 
-def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob, min_clust_size):
-    cluster_df = _get_raw_cluster_df(cluster_file)
+def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_prob, assign_loss_prob, min_clust_size,
+                      data_df):
+    cluster_df = _get_raw_cluster_df(cluster_file, data_df)
     cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
         cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
@@ -112,32 +106,40 @@ def _setup_cluster_df(cluster_file, outlier_prob, rng, low_loss_prob, high_loss_
             column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
             if column_checks:
                 cluster_prob_status_msg += "Assigning from data.\n"
+                print(cluster_prob_status_msg)
                 _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob, min_clust_size)
             else:
                 cluster_prob_status_msg += "\nMutation chrom position column also not found."
                 cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
                 cluster_prob_status_msg += " Setting values to {p}.\n".format(p=low_loss_prob)
+                print(cluster_prob_status_msg)
                 cluster_df.loc[:, "outlier_prob"] = low_loss_prob
         else:
             cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
+            print(cluster_prob_status_msg)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
     else:
         cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
         cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
+        print(cluster_prob_status_msg)
     if not assign_loss_prob:
         if outlier_prob == 0:
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
-    print(cluster_prob_status_msg)
     return cluster_df
 
 
-def _get_raw_cluster_df(cluster_file):
+def _get_raw_cluster_df(cluster_file, data_df):
     cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
     cluster_input_validator.validate()
     cluster_df = cluster_input_validator.df
+    if "chrom" not in cluster_df.columns:
+        if "chrom" in data_df.columns:
+            data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
+            cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
+            cluster_df = cluster_df.drop_duplicates()
     return cluster_df
 
 
@@ -170,7 +172,7 @@ def load_pyclone_data(file_name):
 
     data = _create_loaded_pyclone_data_dict(df, samples)
 
-    return data, samples
+    return data, samples, df
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
