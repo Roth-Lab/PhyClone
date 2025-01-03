@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "PhyClone"
 version = "0.5.1"
-description='Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing.'
+description="Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing."
 authors = [
     {name = "Andrew Roth", email = "aroth@bccrc.ca"},
     {name = "Emilia Hurtado", email = "ehurtado@bccrc.ca"}
@@ -19,7 +19,7 @@ dependencies = [
     "numba",
     "numpy>=1.26.4",
     "scipy",
-    "click",
+    "click>=8.0",
     "xxhash>=3.3.0",
     "networkx",
     "rustworkx>=0.15.1",

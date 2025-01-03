@@ -153,7 +153,6 @@ class TreeJointDistribution(object):
 
         log_p = self.prior.log_p(tree, tree_node_data)
 
-        # Outlier prior
         log_p += self.outlier_prior(tree_node_data, tree.outlier_node_name)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
@@ -172,7 +171,6 @@ class TreeJointDistribution(object):
 
         log_p = self.prior.log_p_one(tree, tree_node_data)
 
-        # Outlier prior
         log_p += self.outlier_prior(tree_node_data, tree.outlier_node_name)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
@@ -211,7 +209,6 @@ class TreeJointDistribution(object):
         if self.outlier_modelling_active:
             for node, node_data in tree_node_data.items():
                 for data_point in node_data:
-                    # if data_point.outlier_prob != 0:
                     if node == outlier_node_name:
                         log_p += data_point.outlier_prob
 

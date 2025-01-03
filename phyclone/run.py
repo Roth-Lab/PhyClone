@@ -58,7 +58,7 @@ def run(
 
     if assign_loss_prob and user_provided_loss_prob:
         raise Exception(
-            "Cannot use both --assign-loss-prob and --user-provided-loss-prob," " these options are mutually exclusive"
+            "Cannot use both --assign-loss-prob and --user-provided-loss-prob, these options are mutually exclusive."
         )
 
     if assign_loss_prob and outlier_prob == 0:
