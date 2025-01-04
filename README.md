@@ -260,4 +260,4 @@ Additional options:
 
 # License
 
-PhyClone is licensed under the GPL v3, see the [LICENSE](LICENSE.md) file for details.
+PhyClone is licensed under the GNU General Public License v3 or later (GPLv3+), see the [LICENSE](LICENSE.md) file for details.
