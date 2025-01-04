@@ -184,7 +184,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df_dict = {
                 "mutation_id": ["m1", "m2", "m3"],
                 "sample_id": ["", "s2", "s3"],
-                "cluster_id": [20, None, 104],
+                "cluster_id": ["20", "", "104"],
                 "cellular_prevalence": [0.001, 0.002, 0.001],
                 "chrom": ["chr1", "chr2", "chr3"],
             }
@@ -352,6 +352,13 @@ class BaseTest(object):
             input_validator = self.create_input_validator_instance(df)
             self.assertFalse(input_validator._validate_base_type("integer", self.integer_col))
 
+        def test_check_column_minimum__integer_invalid_input_NaN(self):
+            df = pd.DataFrame({self.integer_col: [1, None, 3]})
+            input_validator = self.create_input_validator_instance(df)
+            self.assertFalse(
+                input_validator._check_column_minimum(self.column_rules[self.integer_col], "integer", self.integer_col)
+            )
+
         def test_validate_base_type__number_valid_input(self):
             df = pd.DataFrame({self.float_col: [1.5, 2.5, 3.5]})
             input_validator = self.create_input_validator_instance(df)
@@ -366,6 +373,13 @@ class BaseTest(object):
             df = pd.DataFrame({self.float_col: ["1", "2", "3"]})
             input_validator = self.create_input_validator_instance(df)
             self.assertFalse(input_validator._validate_base_type("number", self.float_col))
+
+        def test_check_column_minimum__number_invalid_input_NaN(self):
+            df = pd.DataFrame({self.float_col: [1.5, 2.5, None]})
+            input_validator = self.create_input_validator_instance(df)
+            self.assertFalse(
+                input_validator._check_column_minimum(self.column_rules[self.float_col], "number", self.float_col)
+            )
 
         def test_validate_base_type__string_valid_input(self):
             df = pd.DataFrame({self.string_col: ["m1", "m2", "m3"]})
@@ -660,7 +674,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
             "properties": {
                 "mutation_id": {"type": ["number", "string", "integer"], "minLength": 1},
                 "sample_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "cluster_id": {"type": "integer"},
+                "cluster_id": {"type": ["number", "string", "integer"], "minLength": 1},
                 "cellular_prevalence": {"type": "number"},
                 "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
             },
@@ -671,7 +685,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
         df_dict = {
             "mutation_id": [True, False, True],
             "sample_id": ["", None, "1"],
-            "cluster_id": ["20", "4", "104"],
+            "cluster_id": ["", "4", "104"],
             "cellular_prevalence": ["0.001", "0.002", "0.001"],
             "chrom": [True, False, True],
         }
@@ -682,7 +696,7 @@ class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
     def test_validate__all_invalid_cols_one_req_missing(self):
         df_dict = {
             "sample_id": ["", None, "1"],
-            "cluster_id": ["20", "4", "104"],
+            "cluster_id": ["20", "4", ""],
             "cellular_prevalence": ["0.001", "0.002", "0.001"],
             "chrom": [True, False, True],
         }

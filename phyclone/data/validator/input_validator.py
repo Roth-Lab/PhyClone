@@ -110,6 +110,9 @@ class InputValidator(object):
     def _check_column_minimum(self, col_rule, col_type, column):
         is_min_valid = True
         invalid_type_msg = "Column minimum value/length violation"
+        if col_type != "string":
+            is_min_valid = pd.notnull(self.df[column]).all()
+            invalid_type_msg = "Column contains missing or NaN values"
         if "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
             min_value = col_rule["minimum"]
             is_min_valid = (self.df[column] >= min_value).all(skipna=False)

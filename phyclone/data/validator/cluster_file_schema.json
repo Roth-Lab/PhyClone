@@ -21,7 +21,12 @@
       "minLength": 1
     },
     "cluster_id": {
-      "type": "integer"
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
     },
     "cellular_prevalence": {
       "type": "number"
