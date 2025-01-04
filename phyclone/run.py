@@ -49,7 +49,7 @@ def run(
     num_chains=1,
     subtree_update_prob=0.0,
     low_loss_prob=0.0001,
-    high_loss_prob=0.4,
+    high_loss_prob=0.45,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
 ):
@@ -58,7 +58,7 @@ def run(
 
     if assign_loss_prob and user_provided_loss_prob:
         raise Exception(
-            "Cannot use both --assign-loss-prob and --user-provided-loss-prob," " these options are mutually exclusive"
+            "Cannot use both --assign-loss-prob and --user-provided-loss-prob, these options are mutually exclusive."
         )
 
     if assign_loss_prob and outlier_prob == 0:
@@ -67,7 +67,18 @@ def run(
     if user_provided_loss_prob and outlier_prob == 0:
         outlier_prob = 0.0001
 
-    print_welcome_message(burnin, density, num_chains, num_iters, num_particles, seed, outlier_prob)
+    outlier_modelling_active = outlier_prob > 0
+
+    print_welcome_message(
+        burnin,
+        density,
+        num_chains,
+        num_iters,
+        num_particles,
+        seed,
+        outlier_modelling_active,
+        rng_main,
+    )
 
     data, samples = load_data(
         in_file,
@@ -95,7 +106,7 @@ def run(
             num_particles,
             num_samples_data_point,
             num_samples_prune_regraph,
-            outlier_prob,
+            outlier_modelling_active,
             print_freq,
             proposal,
             resample_threshold,
@@ -125,7 +136,7 @@ def run(
                     num_particles,
                     num_samples_data_point,
                     num_samples_prune_regraph,
-                    outlier_prob,
+                    outlier_modelling_active,
                     print_freq,
                     proposal,
                     resample_threshold,
@@ -151,7 +162,16 @@ def run(
     create_main_run_output(cluster_file, out_file, results)
 
 
-def print_welcome_message(burnin, density, num_chains, num_iters, num_particles, seed, outlier_prob):
+def print_welcome_message(
+    burnin,
+    density,
+    num_chains,
+    num_iters,
+    num_particles,
+    seed,
+    outlier_modelling_active,
+    rng_main,
+):
     print()
     print("#" * 100)
     print("PhyClone - Analysis Run")
@@ -164,11 +184,11 @@ def print_welcome_message(burnin, density, num_chains, num_iters, num_particles,
     print("Number of burn-in iterations: {}".format(burnin))
     print("Number of MCMC iterations: {}".format(num_iters))
     if seed is not None:
-        print("Random seed: {}".format(seed))
+        seed_msg = "(user-provided)"
     else:
-        print("Random seed: None (unseeded)")
-    outlier_modelling_status = outlier_prob > 0
-    print("Outlier modelling allowed: {}".format(outlier_modelling_status))
+        seed_msg = "(machine-entropy)"
+    print("Random seed: {} {}".format(rng_main.bit_generator.seed_seq.entropy, seed_msg))
+    print("Outlier modelling allowed: {}".format(outlier_modelling_active))
     print()
     print("#" * 100)
     print()
@@ -184,7 +204,7 @@ def run_phyclone_chain(
     num_particles,
     num_samples_data_point,
     num_samples_prune_regraph,
-    outlier_prob,
+    outlier_modelling_active,
     print_freq,
     proposal,
     resample_threshold,
@@ -194,9 +214,9 @@ def run_phyclone_chain(
     chain_num,
     subtree_update_prob,
 ):
-    tree_dist = TreeJointDistribution(FSCRPDistribution(concentration_value))
-    kernel = setup_kernel(outlier_prob, proposal, rng, tree_dist)
-    samplers = setup_samplers(kernel, num_particles, outlier_prob, resample_threshold, rng, tree_dist)
+    tree_dist = TreeJointDistribution(FSCRPDistribution(concentration_value), outlier_modelling_active)
+    kernel = setup_kernel(outlier_modelling_active, proposal, rng, tree_dist)
+    samplers = setup_samplers(kernel, num_particles, outlier_modelling_active, resample_threshold, rng, tree_dist)
     tree = Tree.get_single_node_tree(data)
     timer = Timer()
     tree = _run_burnin(
@@ -379,8 +399,8 @@ class SamplersHolder:
     subtree_sampler: ParticleGibbsSubtreeSampler
 
 
-def setup_samplers(kernel, num_particles, outlier_prob, resample_threshold, rng, tree_dist):
-    dp_sampler = DataPointSampler(tree_dist, rng, outliers=(outlier_prob > 0))
+def setup_samplers(kernel, num_particles, outlier_modelling_active, resample_threshold, rng, tree_dist):
+    dp_sampler = DataPointSampler(tree_dist, rng, outliers=outlier_modelling_active)
     prg_sampler = PruneRegraphSampler(tree_dist, rng)
     conc_sampler = GammaPriorConcentrationSampler(0.01, 0.01, rng=rng)
     burnin_sampler = UnconditionalSMCSampler(kernel, num_particles=num_particles, resample_threshold=resample_threshold)
@@ -400,11 +420,7 @@ def setup_samplers(kernel, num_particles, outlier_prob, resample_threshold, rng,
     )
 
 
-def setup_kernel(outlier_prob, proposal, rng, tree_dist):
-    if outlier_prob > 0:
-        outlier_proposal_prob = 0.1
-    else:
-        outlier_proposal_prob = 0
+def setup_kernel(outlier_modelling_active, proposal, rng, tree_dist):
     kernel_cls = SemiAdaptedKernel
     if proposal == "bootstrap":
         kernel_cls = BootstrapKernel
@@ -413,7 +429,7 @@ def setup_kernel(outlier_prob, proposal, rng, tree_dist):
     elif proposal == "semi-adapted":
         kernel_cls = SemiAdaptedKernel
 
-    kernel = kernel_cls(tree_dist, rng, outlier_proposal_prob=outlier_proposal_prob)
+    kernel = kernel_cls(tree_dist, rng, outlier_modelling_active=outlier_modelling_active)
     return kernel
 
 

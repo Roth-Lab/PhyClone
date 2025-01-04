@@ -22,10 +22,10 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         data_point,
         kernel,
         parent_particle,
-        outlier_proposal_prob=0.0,
+        outlier_modelling_active=False,
         parent_tree=None,
     ):
-        super().__init__(data_point, kernel, parent_particle, outlier_proposal_prob, parent_tree)
+        super().__init__(data_point, kernel, parent_particle, outlier_modelling_active, parent_tree)
 
         self.log_half = kernel.log_half
 
@@ -86,7 +86,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self._log_p = {}
         trees = self._get_existing_node_trees()
 
-        if self.outlier_proposal_prob > 0:
+        if self.outlier_modelling_active:
             trees.append(self._get_outlier_tree())
 
         if self._empty_tree():
@@ -195,14 +195,14 @@ def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_d
 
 
 class SemiAdaptedKernel(Kernel):
-    __slots__ = ("outlier_proposal_prob", "log_half")
+    __slots__ = ("outlier_modelling_active", "log_half")
 
-    def __init__(self, tree_dist, rng, outlier_proposal_prob=0.0, perm_dist=None):
+    def __init__(self, tree_dist, rng, outlier_modelling_active=False, perm_dist=None):
         super().__init__(tree_dist, rng, perm_dist=perm_dist)
 
         self.log_half = np.log(0.5)
 
-        self.outlier_proposal_prob = outlier_proposal_prob
+        self.outlier_modelling_active = outlier_modelling_active
 
     def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
         if parent_particle is not None:
@@ -211,27 +211,23 @@ class SemiAdaptedKernel(Kernel):
             data_point,
             self,
             parent_particle,
-            self.outlier_proposal_prob,
+            self.outlier_modelling_active,
             self.tree_dist.prior.alpha,
         )
 
 
 @lru_cache(maxsize=1024)
-def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_proposal_prob, alpha):
+def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
     if parent_particle is not None:
         ret = SemiAdaptedProposalDistribution(
             data_point,
             kernel,
             parent_particle,
-            outlier_proposal_prob=outlier_proposal_prob,
+            outlier_modelling_active=outlier_modelling_active,
             parent_tree=parent_particle.built_tree,
         )
     else:
         ret = SemiAdaptedProposalDistribution(
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_proposal_prob=outlier_proposal_prob,
-            parent_tree=None,
+            data_point, kernel, parent_particle, outlier_modelling_active=outlier_modelling_active, parent_tree=None
         )
     return ret

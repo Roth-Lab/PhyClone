@@ -82,6 +82,7 @@ class ProposalDistribution(object):
         "parent_particle",
         "_rng",
         "parent_tree",
+        "outlier_modelling_active",
     )
 
     def __init__(
@@ -89,7 +90,7 @@ class ProposalDistribution(object):
         data_point,
         kernel,
         parent_particle,
-        outlier_proposal_prob=0.0,
+        outlier_modelling_active=False,
         parent_tree=None,
     ):
         self.data_point = data_point
@@ -98,7 +99,12 @@ class ProposalDistribution(object):
 
         self.perm_dist = kernel.perm_dist
 
-        self.outlier_proposal_prob = outlier_proposal_prob
+        self.outlier_modelling_active = outlier_modelling_active
+
+        if outlier_modelling_active:
+            self.outlier_proposal_prob = 0.1
+        else:
+            self.outlier_proposal_prob = 0.0
 
         self.parent_particle = parent_particle
 

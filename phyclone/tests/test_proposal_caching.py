@@ -32,7 +32,7 @@ class BaseTest(object):
 
             kernel = kernel_cls(
                 self.tree_dist,
-                outlier_proposal_prob=self.outlier_prob,
+                outlier_modelling_active=False,
                 perm_dist=None,
                 rng=self._rng,
             )
@@ -192,6 +192,7 @@ class BaseTest(object):
 class FullyAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        _get_cached_full_proposal_dist.cache_clear()
         self.kernel = self._get_sampler(FullyAdaptedKernel)
         self.cached_fxn = _get_cached_full_proposal_dist
 
@@ -199,6 +200,7 @@ class FullyAdaptedTest(BaseTest.BaseTest):
 class SemiAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        _get_cached_semi_proposal_dist.cache_clear()
         self.kernel = self._get_sampler(SemiAdaptedKernel)
         self.cached_fxn = _get_cached_semi_proposal_dist
 

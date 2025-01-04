@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PhyClone Data Input Schema",
+  "description": "PhyClone input data .tsv file validation schema",
+  "type": "object",
+  "properties": {
+    "mutation_id": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
+    },
+    "sample_id": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
+    },
+    "ref_counts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "alt_counts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "major_cn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "minor_cn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "normal_cn": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tumour_content": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "error_rate": {
+      "type": "number",
+      "minimum": 0.0
+    },
+    "chrom": {
+      "type": [
+        "number",
+        "string",
+        "integer"
+      ],
+      "minLength": 1
+    }
+  },
+  "required": [
+    "mutation_id",
+    "sample_id",
+    "ref_counts",
+    "alt_counts",
+    "major_cn",
+    "minor_cn",
+    "normal_cn"
+  ]
+}

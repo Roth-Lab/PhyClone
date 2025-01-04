@@ -1,5 +1,5 @@
 import numpy as np
-from phyclone.data.pyclone import log_pyclone_binomial_pdf, log_pyclone_beta_binomial_pdf
+from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from scipy.special import logsumexp
 from numba import types, njit
 from numba.typed import Dict

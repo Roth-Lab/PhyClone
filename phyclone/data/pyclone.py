@@ -1,19 +1,13 @@
 import itertools
 from collections import OrderedDict, defaultdict
-
 import numba
 import numpy as np
 import pandas as pd
-
 import phyclone.data.base
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import (
-    log_normalize,
-    log_beta_binomial_pdf,
-    log_sum_exp,
-    log_binomial_pdf,
-)
+from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
+from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 
 
 def load_data(
@@ -27,8 +21,10 @@ def load_data(
     grid_size=101,
     outlier_prob=1e-4,
     precision=400,
+    min_clust_size=4,
 ):
-    pyclone_data, samples = load_pyclone_data(file_name)
+
+    pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
     if cluster_file is None:
         data = []
@@ -48,12 +44,13 @@ def load_data(
     else:
         cluster_df = _setup_cluster_df(
             cluster_file,
-            file_name,
             outlier_prob,
             rng,
             low_loss_prob,
             high_loss_prob,
             assign_loss_prob,
+            min_clust_size,
+            data_df,
         )
 
         cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
@@ -109,40 +106,38 @@ def _create_clustered_data_arr(
 
 def _setup_cluster_df(
     cluster_file,
-    data_file,
     outlier_prob,
     rng,
     low_loss_prob,
     high_loss_prob,
     assign_loss_prob,
+    min_clust_size,
+    data_df,
 ):
-    cluster_df = pd.read_csv(cluster_file, sep="\t")
+    cluster_df = _get_raw_cluster_df(cluster_file, data_df)
+    cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
+        cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
         if assign_loss_prob:
-            column_checks = True
-            if "chrom" not in cluster_df.columns:
-                data_df = pd.read_table(data_file)
-                if "chrom" in data_df.columns:
-                    data_df = data_df[["mutation_id", "chrom"]]
-                    cluster_df = pd.merge(cluster_df, data_df, how="inner", on=["mutation_id"])
-                    cluster_df = cluster_df.drop_duplicates()
-                else:
-                    column_checks = False
+            column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
             if column_checks:
-                print("\nCluster level outlier probability column not found. Assigning from data.")
-                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob)
+                cluster_prob_status_msg += "Assigning from data.\n"
+                print(cluster_prob_status_msg)
+                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob, min_clust_size)
             else:
-                print(
-                    "\nCluster level outlier probability column not found. \nMutation position data also not found in "
-                    "either cluster or data file, "
-                    "thus, outlier probability cannot be assigned form data. Setting values to {p}\n".format(
-                        p=low_loss_prob
-                    )
-                )
+                cluster_prob_status_msg += "\nMutation chrom position column also not found."
+                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
+                cluster_prob_status_msg += " Setting values to {p}.\n".format(p=low_loss_prob)
+                print(cluster_prob_status_msg)
                 cluster_df.loc[:, "outlier_prob"] = low_loss_prob
         else:
-            print("\nCluster level outlier probability column not found. Setting values to {p}".format(p=outlier_prob))
+            cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
+            print(cluster_prob_status_msg)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
+    else:
+        cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
+        cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
+        print(cluster_prob_status_msg)
     if not assign_loss_prob:
         if outlier_prob == 0:
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
@@ -152,12 +147,27 @@ def _setup_cluster_df(
     return cluster_df
 
 
+def _get_raw_cluster_df(cluster_file, data_df):
+    cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
+    cluster_input_validator.validate()
+    cluster_df = cluster_input_validator.df
+    if "chrom" not in cluster_df.columns:
+        if "chrom" in data_df.columns:
+            data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
+            cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
+            cluster_df = cluster_df.drop_duplicates()
+    return cluster_df
+
+
 def compute_outlier_prob(outlier_prob, cluster_size):
     if outlier_prob == 0:
         return outlier_prob, np.log(1.0)
     else:
         res = np.log(outlier_prob) * cluster_size
-        res_not = np.log1p(-outlier_prob) * cluster_size
+        if outlier_prob == 1:
+            res_not = -np.inf
+        else:
+            res_not = np.log1p(-outlier_prob) * cluster_size
         return res, res_not
 
 
@@ -178,7 +188,7 @@ def load_pyclone_data(file_name):
 
     data = _create_loaded_pyclone_data_dict(df, samples)
 
-    return data, samples
+    return data, samples, df
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
@@ -197,13 +207,19 @@ def _remove_duplicated_and_partially_absent_mutations(df, samples):
             pl = ("", "is")
         else:
             pl = ("s", "are")
-        print("Removing {} mutation{} that {} not present in all samples".format(num_not_present_in_all, pl[0], pl[1]))
+        print(
+            "Removing {} mutation{} that {} not present in all samples".format(
+                num_not_present_in_all,
+                pl[0],
+                pl[1],
+            )
+        )
     df = df.loc[group_transform == samples_len]
     return df
 
 
 def _remove_cn_zero_mutations(df):
-    num_dels = sum(df["major_cn"] == 0)
+    num_dels = len(df.loc[df["major_cn"] == 0])
     if num_dels > 0:
         if num_dels == 1:
             pl = ""
@@ -215,8 +231,8 @@ def _remove_cn_zero_mutations(df):
 
 
 def _process_required_cols_on_df(df, samples):
+    print("Num Samples: {}".format(len(samples)))
     if len(samples) > 10:
-        print("Num Samples: {}".format(len(samples)))
         print("Samples: {}...".format(" ".join(samples[:4])))
     else:
         print("Samples: {}".format(" ".join(samples)))
@@ -224,15 +240,14 @@ def _process_required_cols_on_df(df, samples):
         df.loc[:, "error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
         print("Tumour content column not found. Setting values to 1.0.")
-
         df.loc[:, "tumour_content"] = 1.0
 
 
 def _create_raw_data_df(file_name):
-    df = pd.read_table(file_name)
-    if len(df.columns) == 1:
-        df = pd.read_csv(file_name)
-    df["sample_id"] = df["sample_id"].astype(str)
+    data_input_validator = create_data_input_validator_instance(file_name)
+    data_input_validator.validate()
+    df = data_input_validator.df
+    df["sample_id"] = df["sample_id"].astype("string")
     return df
 
 
@@ -269,40 +284,25 @@ def _create_loaded_pyclone_data_dict(df, samples):
 def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
     total_cn = major_cn + minor_cn
 
-    cn = []
-
-    mu = []
-
-    log_pi = []
-
     if major_cn < minor_cn:
         raise MajorCopyNumberError(major_cn, minor_cn)
 
     # Consider all possible mutational genotypes consistent with mutation before CN change
-    for x in range(1, major_cn + 1):
-        cn.append((normal_cn, normal_cn, total_cn))
-
-        mu.append((error_rate, error_rate, min(1 - error_rate, x / total_cn)))
-
-        log_pi.append(0)
+    cn = [(normal_cn, normal_cn, total_cn) for _ in range(1, major_cn + 1)]
+    mu = [(error_rate, error_rate, min(1 - error_rate, x / total_cn)) for x in range(1, major_cn + 1)]
 
     # Consider mutational genotype of mutation before CN change if not already added
-    mutation_after_cn = (normal_cn, total_cn, total_cn)
-
-    if mutation_after_cn not in cn:
+    if total_cn != normal_cn:
+        mutation_after_cn = (normal_cn, total_cn, total_cn)
         cn.append(mutation_after_cn)
-
         mu.append((error_rate, error_rate, min(1 - error_rate, 1 / total_cn)))
-
-        log_pi.append(0)
-
         assert len(set(cn)) == 2
 
     cn = np.array(cn, dtype=int)
-
     mu = np.array(mu, dtype=float)
 
-    log_pi = log_normalize(np.array(log_pi, dtype=float))
+    log_pi_val = -np.log(len(cn))
+    log_pi = np.full(len(cn), log_pi_val)
 
     return cn, mu, log_pi
 
@@ -366,71 +366,3 @@ class SampleDataPoint(object):
         self.mu = mu
         self.log_pi = log_pi
         self.t = t
-
-
-@numba.jit(nopython=True)
-def log_pyclone_beta_binomial_pdf(data, f, s):
-    t = data.t
-
-    C = len(data.cn)
-
-    population_prior = np.zeros(3)
-    population_prior[0] = 1 - t
-    population_prior[1] = t * (1 - f)
-    population_prior[2] = t * f
-
-    ll = np.ones(C, dtype=np.float64) * np.inf * -1
-
-    for c in range(C):
-        e_vaf = 0
-
-        norm_const = 0
-
-        for i in range(3):
-            e_cn = population_prior[i] * data.cn[c, i]
-
-            e_vaf += e_cn * data.mu[c, i]
-
-            norm_const += e_cn
-
-        e_vaf /= norm_const
-
-        a = e_vaf * s
-
-        b = s - a
-
-        ll[c] = data.log_pi[c] + log_beta_binomial_pdf(data.a + data.b, data.b, a, b)
-
-    return log_sum_exp(ll)
-
-
-@numba.jit(nopython=True)
-def log_pyclone_binomial_pdf(data, f):
-    t = data.t
-
-    C = len(data.cn)
-
-    population_prior = np.zeros(3)
-    population_prior[0] = 1 - t
-    population_prior[1] = t * (1 - f)
-    population_prior[2] = t * f
-
-    ll = np.ones(C, dtype=np.float64) * np.inf * -1
-
-    for c in range(C):
-        e_vaf = 0
-
-        norm_const = 0
-
-        for i in range(3):
-            e_cn = population_prior[i] * data.cn[c, i]
-
-            e_vaf += e_cn * data.mu[c, i]
-
-            norm_const += e_cn
-
-        e_vaf /= norm_const
-
-        ll[c] = data.log_pi[c] + log_binomial_pdf(data.a + data.b, data.b, e_vaf)
-
-    return log_sum_exp(ll)
