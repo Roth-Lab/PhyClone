@@ -22,19 +22,32 @@ An implementation of the forest structured Chinese restaurant process with a Dir
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/phyclone/README.html)
 
-The recommended way to install PhyClone is through [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) and the [Bioconda](https://bioconda.github.io/index.html) package channel.
+The recommended way to install PhyClone is through [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)/[mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) and the [Bioconda](https://bioconda.github.io/index.html) package channel.
 
-To install into a newly created environment **(Recommended)**:
+1. Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html).
+2. Configure the [Bioconda channel](https://bioconda.github.io/#usage):
+   ```
+   conda config --add channels bioconda
+   conda config --add channels conda-forge
+   conda config --set channel_priority strict
+   ```
+3. Once the Bioconda channel has been configured in your conda install:
 
-```
-mamba create --name phyclone phyclone
-```
-
-Or if installing into a pre-existing environment:
-
-```
-mamba install phyclone
-```
+    * To install into a newly created environment **(Recommended)**:
+    
+    ```
+    mamba create --name phyclone phyclone
+    ```
+    
+    * Or if installing into a pre-existing environment:
+    
+    ```
+    mamba install phyclone
+    ```
+> [!NOTE]
+> If either install command fails due to conda/mamba being unable to find the PhyClone package, you may need to specify the channel, e.g.:
+> ```mamba create --name phyclone bioconda::phyclone```
+---------
 
 ## Input File Formats
 
@@ -46,7 +59,6 @@ PhyClone analysis has two possible input files:
 > In principle PhyClone can be used without pre-clustering. 
 > However, it drastically increases the computational complexity. Thus, pre-clustering is recommended for WGS data.
 
----------
 ### Main input format
 
 > [!TIP]
@@ -71,6 +83,9 @@ This is free form but should match across all samples.
 
 5. `major_cn` - Major copy number of segment overlapping mutation.
 
+> [!WARNING]
+> PhyClone will remove any mutations that have a `major_cn` value of 0.
+
 6. `minor_cn` - Minor copy number of segment overlapping mutation.
 
 7. `normal_cn` - Total copy number of segment in healthy tissue.
@@ -88,13 +103,7 @@ However, in most cases it should be the same for all mutations in a sample.
 Default value is 0.001 if column is not present.
 10. `chrom` - Chromosome on which `mutation_id` is found.
 
-------------------
-
 ### Cluster file format
-
-[//]: # (> [!IMPORTANT])
-
-[//]: # (> Though not strictly required to run PhyClone, this file is **strongly recommended**.)
 
 > [!TIP]
 > While any mutation pre-clustering method can be used, we recommend 
@@ -120,16 +129,6 @@ You can include the following optional columns:
 
 > [!NOTE]
 > In order to make use of PhyClone's data informed loss probability prior assignment, columns 4 and 5 are required.
-
-[//]: # (4. outlier_prob - &#40;Prior&#41; probability that the cluster/mutation is an outlier.)
-
-[//]: # (    )
-[//]: # (    Default value is made equal to the current analysis `--outlier-prob` option if column is not present. )
-
-[//]: # ()
-[//]: # (> [!NOTE])
-
-[//]: # (> The `--outlier-prob` option carries a default value of 0.0)
 
 > [!TIP]
 > There is an example file in [examples/data/mixing_clusters.tsv](examples/data/mixing_clusters.tsv)
@@ -165,10 +164,6 @@ For more advanced options, run:
 ```
 phyclone run --help
 ``` 
-
-[//]: # (> [!IMPORTANT])
-
-[//]: # (> Unlike PyClone, PhyClone does not estimate the precision parameter of the Beta-Binomial. This parameter can be set with the --precision flag, though the default value of 400 should suffice in most cases.)
 
 ### Outlier Modelling
 
