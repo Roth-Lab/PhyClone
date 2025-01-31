@@ -130,7 +130,7 @@ class BaseLoadDataTest(object):
                 cluster_file_path = os.path.join(tmp_dir, "clusters.tsv")
                 cluster_df.to_csv(cluster_file_path, sep="\t", index=False)
 
-                data, actual_samples = load_data(
+                data, actual_samples, _ = load_data(
                     data_file_path,
                     self.rng,
                     low_loss_prob,
@@ -150,7 +150,7 @@ class BaseLoadDataTest(object):
                 data_file_path = os.path.join(tmp_dir, "data.tsv")
                 data_df.to_csv(data_file_path, sep="\t", index=False)
 
-                data, actual_samples = load_data(
+                data, actual_samples, _ = load_data(
                     data_file_path,
                     self.rng,
                     low_loss_prob,

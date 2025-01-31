@@ -4,7 +4,7 @@ import numba
 import numpy as np
 import pandas as pd
 import phyclone.data.base
-from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
+from phyclone.data.cluster_outlier_probabilities import _assign_out_prob, define_initial_data_order_on_df
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
@@ -150,6 +150,10 @@ def _setup_cluster_df(
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+
+    if "order_rank" not in cluster_df.columns:
+        define_initial_data_order_on_df(cluster_df)
+
     if "order_rank" in cluster_df.columns:
         cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob", "order_rank"]].drop_duplicates()
     else:

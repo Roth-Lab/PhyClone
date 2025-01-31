@@ -192,7 +192,7 @@ def run_phyclone_chain(burnin, concentration_update, concentration_value, data, 
                 max_time,
                 num_samples_data_point,
                 num_samples_prune_regraph,
-            samplers,
+                samplers,
                 timer,
                 tree,
                 tree_dist,
@@ -250,6 +250,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
+    clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
@@ -335,7 +336,10 @@ def _run_burnin(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
+    best_tree = tree
+
     if burnin > 0:
+        best_score = -np.inf
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -357,6 +361,11 @@ def _run_burnin(
 
                 tree.relabel_nodes()
 
+                tree_score = tree_dist.log_p_one(tree)
+                if tree_score > best_score:
+                    best_score = tree_score
+                    best_tree = tree
+
                 if timer.elapsed > max_time:
                     break
         print_stats(burnin, tree, tree_dist, chain_num)
@@ -366,7 +375,7 @@ def _run_burnin(
     print("#" * 100)
     print()
 
-    return tree
+    return best_tree
 
 def _run_sigma_init_iter(
     max_time,
@@ -383,11 +392,15 @@ def _run_sigma_init_iter(
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
 
-    sigma_init_iters = 1
-    print_freq = 1
+    sigma_init_iters = 100
+    print_freq = round(sigma_init_iters / 2)
+
+    best_tree = None
+    best_score = -np.inf
 
     print("#" * 100)
-    print("Single Iteration Better Data Sigma Initialization")
+    # print("Single Iteration Better Data Sigma Initialization")
+    print("Pre-Burn: Single Sigma Better Data Initialization")
     print("#" * 100)
 
     for i in range(sigma_init_iters):
@@ -407,16 +420,21 @@ def _run_sigma_init_iter(
 
             tree.relabel_nodes()
 
+            tree_score = tree_dist.log_p_one(tree)
+            if tree_score > best_score:
+                best_score = tree_score
+                best_tree = tree
+
             if timer.elapsed > max_time:
                 break
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
     print()
     print("#" * 100)
-    print("Post better-init iteration.")
+    print("Post Pre-Burn")
     print("#" * 100)
     print()
 
-    return tree
+    return best_tree
 
 
 @dataclass
