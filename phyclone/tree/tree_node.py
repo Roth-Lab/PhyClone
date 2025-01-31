@@ -1,7 +1,6 @@
+from __future__ import annotations
 from typing import Union
-
 import numpy as np
-
 from phyclone.tree.utils import compute_log_S
 
 
@@ -70,7 +69,7 @@ class TreeNode(object):
 
         np.add(log_p, log_s, out=log_r, order="C")
 
-    def copy(self):
+    def copy(self) -> TreeNode:
         return self.__copy__()
 
     def to_dict(self):
