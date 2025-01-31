@@ -1,16 +1,17 @@
 import numpy as np
-
+from math import ulp
 from phyclone.utils.math import log_sum_exp, cached_log_factorial
 
 
 class FSCRPDistribution(object):
     """FSCRP prior distribution on trees."""
 
-    __slots__ = ("_alpha", "log_alpha", "_c_const")
+    __slots__ = ("_alpha", "log_alpha", "_c_const", "_smallest_alpha")
 
     def __init__(self, alpha, c_const=1000):
         self.alpha = alpha
         self.c_const = c_const
+        self._smallest_alpha = ulp(0.0)
 
     def __eq__(self, other):
         alpha_check = self.alpha == other.alpha
@@ -25,6 +26,8 @@ class FSCRPDistribution(object):
 
     @alpha.setter
     def alpha(self, alpha):
+        if alpha == 0.0:
+            alpha = self._smallest_alpha
         self._alpha = alpha
         self.log_alpha = np.log(alpha)
 
@@ -102,7 +105,8 @@ class FSCRPDistribution(object):
 
     def _compute_z_term(self, num_roots, num_nodes):
         # TODO: this is just 0, any point to doing this?
-        log_one = np.log(1)
+        # log_one = np.log(1)
+        log_one = 0
 
         # TODO: 1 raised to the power of anything is still just 1, likely don't need this
         a_term = log_one * num_nodes
