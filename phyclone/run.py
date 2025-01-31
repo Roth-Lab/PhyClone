@@ -474,9 +474,9 @@ def _run_sigma_init_iter(
 
     tree_dist.prior.alpha = assoc_alpha
     print()
-    print("#" * 100)
+    print("~" * 100)
     print("Post Pre-Burn")
-    print("#" * 100)
+    print("~" * 100)
     print()
 
     return best_tree
