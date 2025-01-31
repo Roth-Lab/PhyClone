@@ -16,6 +16,10 @@ def clear_proposal_dist_caches():
     # compute_log_S.cache_clear()
     # _convolve_two_children.cache_clear()
 
+def clear_convolution_caches():
+    compute_log_S.cache_clear()
+    _convolve_two_children.cache_clear()
+
 
 def print_cache_info():
     print("\n***********************************************************")

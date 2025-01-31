@@ -329,7 +329,7 @@ def topology_report(**kwargs):
 )
 @click.option(
     "--high-loss-prob",
-    default=0.45,
+    default=0.4,
     type=click.FloatRange(0.0001, 1.0, clamp=True),
     show_default=True,
     help="""Higher loss probability setting. 

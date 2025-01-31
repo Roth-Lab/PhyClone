@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.dev import clear_proposal_dist_caches
+from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
 
 
 def run(
@@ -36,7 +36,7 @@ def run(
     grid_size=101,
     max_time=float("inf"),
     num_iters=5000,
-    num_particles=80,
+    num_particles=100,
     num_samples_data_point=1,
     num_samples_prune_regraph=1,
     outlier_prob=0,
@@ -49,7 +49,7 @@ def run(
     num_chains=1,
     subtree_update_prob=0.0,
     low_loss_prob=0.0001,
-    high_loss_prob=0.45,
+    high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
 ):
@@ -80,7 +80,7 @@ def run(
         rng_main,
     )
 
-    data, samples = load_data(
+    data, samples, init_sigma = load_data(
         in_file,
         rng_main,
         low_loss_prob,
@@ -96,26 +96,10 @@ def run(
     results = {}
 
     if num_chains == 1:
-        results[0] = run_phyclone_chain(
-            burnin,
-            concentration_update,
-            concentration_value,
-            data,
-            max_time,
-            num_iters,
-            num_particles,
-            num_samples_data_point,
-            num_samples_prune_regraph,
-            outlier_modelling_active,
-            print_freq,
-            proposal,
-            resample_threshold,
-            rng_main,
-            samples,
-            thin,
-            0,
-            subtree_update_prob,
-        )
+        results[0] = run_phyclone_chain(burnin, concentration_update, concentration_value, data, max_time, num_iters,
+                                        num_particles, num_samples_data_point, num_samples_prune_regraph,
+                                        outlier_modelling_active, print_freq, proposal, resample_threshold, rng_main,
+                                        samples, thin, 0, subtree_update_prob, init_sigma)
 
         print("Finished chain", 0)
 
@@ -145,6 +129,7 @@ def run(
                     thin,
                     chain_num,
                     subtree_update_prob,
+                    init_sigma,
                 )
                 for chain_num, rng in enumerate(rng_list)
             ]
@@ -194,31 +179,26 @@ def print_welcome_message(
     print()
 
 
-def run_phyclone_chain(
-    burnin,
-    concentration_update,
-    concentration_value,
-    data,
-    max_time,
-    num_iters,
-    num_particles,
-    num_samples_data_point,
-    num_samples_prune_regraph,
-    outlier_modelling_active,
-    print_freq,
-    proposal,
-    resample_threshold,
-    rng,
-    samples,
-    thin,
-    chain_num,
-    subtree_update_prob,
-):
+def run_phyclone_chain(burnin, concentration_update, concentration_value, data, max_time, num_iters, num_particles,
+                       num_samples_data_point, num_samples_prune_regraph, outlier_modelling_active, print_freq,
+                       proposal, resample_threshold, rng, samples, thin, chain_num, subtree_update_prob, init_sigma):
     tree_dist = TreeJointDistribution(FSCRPDistribution(concentration_value), outlier_modelling_active)
     kernel = setup_kernel(outlier_modelling_active, proposal, rng, tree_dist)
     samplers = setup_samplers(kernel, num_particles, outlier_modelling_active, resample_threshold, rng, tree_dist)
     tree = Tree.get_single_node_tree(data)
     timer = Timer()
+    if init_sigma:
+        tree = _run_sigma_init_iter(
+                max_time,
+                num_samples_data_point,
+                num_samples_prune_regraph,
+            samplers,
+                timer,
+                tree,
+                tree_dist,
+                chain_num,
+                init_sigma,
+        )
     tree = _run_burnin(
         burnin,
         max_time,
@@ -379,10 +359,60 @@ def _run_burnin(
 
                 if timer.elapsed > max_time:
                     break
-
+        print_stats(burnin, tree, tree_dist, chain_num)
     print()
     print("#" * 100)
     print("Post-burnin")
+    print("#" * 100)
+    print()
+
+    return tree
+
+def _run_sigma_init_iter(
+    max_time,
+    num_samples_data_point,
+    num_samples_prune_regraph,
+    samplers,
+    timer,
+    tree,
+    tree_dist,
+    chain_num,
+    sigma_init
+):
+    burnin_sampler = samplers.burnin_sampler
+    dp_sampler = samplers.dp_sampler
+    prg_sampler = samplers.prg_sampler
+
+    sigma_init_iters = 1
+    print_freq = 1
+
+    print("#" * 100)
+    print("Single Iteration Better Data Sigma Initialization")
+    print("#" * 100)
+
+    for i in range(sigma_init_iters):
+        with timer:
+            if i % print_freq == 0:
+                print_stats(i, tree, tree_dist, chain_num)
+
+            clear_proposal_dist_caches()
+
+            tree = burnin_sampler.sample_tree(tree, sigma_init)
+
+            for _ in range(num_samples_data_point):
+                tree = dp_sampler.sample_tree(tree)
+
+            for _ in range(num_samples_prune_regraph):
+                tree = prg_sampler.sample_tree(tree)
+
+            tree.relabel_nodes()
+
+            if timer.elapsed > max_time:
+                break
+    print_stats(sigma_init_iters, tree, tree_dist, chain_num)
+    print()
+    print("#" * 100)
+    print("Post better-init iteration.")
     print("#" * 100)
     print()
 

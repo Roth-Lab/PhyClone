@@ -26,6 +26,8 @@ def load_data(
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
+    init_sigma = None
+
     if cluster_file is None:
         data = []
 
@@ -71,7 +73,12 @@ def load_data(
             pyclone_data,
         )
 
-    return data, samples
+        if "order_rank" in cluster_df.columns:
+            datapoint_name_dict = {d.name: d for d in data}
+            cluster_order = cluster_df.set_index("order_rank")["cluster_id"].to_dict()
+            init_sigma = [datapoint_name_dict[str(cluster_order[i])] for i in range(len(datapoint_name_dict))]
+
+    return data, samples, init_sigma
 
 
 def _create_clustered_data_arr(
@@ -143,7 +150,10 @@ def _setup_cluster_df(
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
-    cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
+    if "order_rank" in cluster_df.columns:
+        cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob", "order_rank"]].drop_duplicates()
+    else:
+        cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     return cluster_df
 
 

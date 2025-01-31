@@ -23,6 +23,20 @@ def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
 
     _finalize_loss_prob_on_cluster_df(df, high_loss_prob, lost_clusters, low_loss_prob)
 
+    define_initial_data_order_on_df(cluster_info_dict, df, truncal_cluster)
+
+
+def define_initial_data_order_on_df(cluster_info_dict, df, truncal_cluster):
+    truncal_cluster_obj = cluster_info_dict.pop(truncal_cluster)
+    cell_prev_sorted_list = [truncal_cluster_obj]
+    cell_prev_sorted_list.extend(sorted(cluster_info_dict.values(), key=lambda x: x.cell_prev_mean, reverse=True))
+    # cell_prev_sorted_list = sorted(cluster_info_dict.values(), key=lambda x: x.cell_prev_mean, reverse=True)
+    cluster_sort_ranks = {v.cluster_id: k for k, v in enumerate(cell_prev_sorted_list)}
+    print("\nThe following initial data order has been defined: \n", cluster_sort_ranks)
+    df["order_rank"] = -1
+    for cluster_id, order_rank in cluster_sort_ranks.items():
+        df.loc[df["cluster_id"] == cluster_id, "order_rank"] = order_rank
+
 
 def _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists, min_clust_size):
     truncal_dist_len = len(truncal_dists)
@@ -154,13 +168,15 @@ def _build_cluster_info_dict(df):
             cluster_id=cluster,
             num_mutations=len(group["mutation_id"].unique()),
             num_unique_chromosomes=len(group["chrom"].unique()),
+            cell_prev_mean=group["cellular_prevalence"].mean()
         )
         cluster_info_dict[cluster] = clust_info_obj
     return cluster_info_dict
 
 
-@dataclass
+@dataclass(slots=True)
 class ClusterInfo:
     cluster_id: str | int
     num_mutations: int
     num_unique_chromosomes: int
+    cell_prev_mean: float
