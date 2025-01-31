@@ -54,7 +54,10 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
                 log_p = self.log_half
 
-                num_children = tree.num_children_on_node_that_matters
+                try:
+                    num_children = tree.num_children_on_node_that_matters
+                except AttributeError:
+                    num_children = tree.get_number_of_children(tree.node_last_added_to)
 
                 log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
 
@@ -62,10 +65,11 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
     def _get_log_p(self, tree):
         """Get the log probability of the given tree. From stored dict, using TreeHolder intermediate."""
-        if isinstance(tree, Tree):
-            tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-        else:
-            tree_particle = tree
+        # if isinstance(tree, Tree):
+        #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+        # else:
+        #     tree_particle = tree
+        tree_particle = tree
         return self._log_p[tree_particle]
 
     def sample(self):

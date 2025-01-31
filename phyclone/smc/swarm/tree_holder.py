@@ -40,11 +40,12 @@ class TreeHolder(object):
         return self._hash_val
 
     def __eq__(self, other):
-        self_key = self._tree
-
-        other_key = other._tree
-
-        return self_key == other_key
+        return hash(self) == hash(other)
+        # self_key = self._tree
+        #
+        # other_key = other._tree
+        #
+        # return self_key == other_key
 
     def copy(self):
         return TreeHolder(self.tree, self._tree_dist, self._perm_dist)

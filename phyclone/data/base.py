@@ -1,7 +1,14 @@
 import numpy as np
 from scipy.special import logsumexp as log_sum_exp
 
-from phyclone.tree.utils import _sub_compute_S
+# from phyclone.tree.utils import _sub_compute_S
+
+def _sub_compute_S(log_D):
+    log_S = np.empty_like(log_D)
+    num_dims = log_D.shape[0]
+    for i in range(num_dims):
+        np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
+    return log_S
 
 
 class DataPoint(object):

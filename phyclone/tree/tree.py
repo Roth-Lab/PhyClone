@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 from collections import defaultdict
 from itertools import chain
 
 import numpy as np
 import rustworkx as rx
-from phyclone.data import DataPoint
 from phyclone.tree.tree_node import TreeNode
+from phyclone.data.base import DataPoint
 from phyclone.tree.visitors import (
     PostOrderNodeUpdater,
     PreOrderNodeRelabeller,
@@ -30,14 +31,14 @@ class Tree(object):
         "_outlier_node_name",
     )
 
-    def __init__(self, grid_size):
+    def __init__(self, grid_size: tuple[int, int]):
         self.grid_size = grid_size
 
         self._data = defaultdict(list)
 
         self._log_prior = -np.log(grid_size[1])
 
-        self._graph = rx.PyDiGraph()
+        self._graph = rx.PyDiGraph(multigraph=False)
 
         self._node_indices = dict()
 
@@ -45,9 +46,9 @@ class Tree(object):
 
         self._last_node_added_to = None
 
-        self._root_node_name = Tree._ROOT_NODE_NAME
+        self._root_node_name = self.__class__._ROOT_NODE_NAME
 
-        self._outlier_node_name = Tree._OUTLIER_NODE_NAME
+        self._outlier_node_name = self.__class__._OUTLIER_NODE_NAME
 
         self._add_node(self._root_node_name)
 
@@ -60,6 +61,36 @@ class Tree(object):
         other_key = (other.get_clades(), frozenset(other.outliers))
 
         return self_key == other_key
+
+    def __copy__(self):
+        cls = self.__class__
+
+        new = cls.__new__(cls)
+
+        new.grid_size = self.grid_size
+
+        new._data = defaultdict(list)
+
+        new._data.update({k: v.copy() for k, v in self._data.items()})
+
+        new._log_prior = self._log_prior
+
+        new._graph = self._graph.copy()
+
+        new._node_indices = self._node_indices.copy()
+
+        new._node_indices_rev = self._node_indices_rev.copy()
+
+        new._last_node_added_to = self._last_node_added_to
+
+        new._root_node_name = self._root_node_name
+
+        new._outlier_node_name = self._outlier_node_name
+
+        for node_idx in new._graph.node_indices():
+            new._graph[node_idx] = new._graph[node_idx].copy()
+
+        return new
 
     def to_newick_string(self) -> str:
         visitor = GraphToNewickVisitor(self)
@@ -85,11 +116,7 @@ class Tree(object):
         """
         tree = cls(data[0].grid_size)
 
-        node = tree.create_root_node([])
-
-        _ = tree._add_list_of_data_points_to_node(data, node)
-
-        tree.update()
+        tree.create_root_node(data=data)
 
         return tree
 
@@ -174,7 +201,7 @@ class Tree(object):
             log_prior = tree_dict["log_prior"]
         else:
             log_prior = -np.log(grid_size[1])
-        new_graph = rx.PyDiGraph()
+        new_graph = rx.PyDiGraph(multigraph=False)
 
         new = cls.__new__(cls)
         new.grid_size = grid_size
@@ -242,7 +269,7 @@ class Tree(object):
 
         self._internal_add_data_point_to_node(False, data_point, node)
 
-    def _internal_add_data_point_to_node(self, build_add, data_point: DataPoint, node):
+    def _internal_add_data_point_to_node(self, build_add: bool, data_point: DataPoint, node):
         self._data[node].append(data_point)
         self._last_node_added_to = node
 
@@ -293,7 +320,7 @@ class Tree(object):
             self._data[node_name] = subtree._data[old_node_name]
             self._add_node_to_indices(node_name, new_idx)
 
-    def create_root_node(self, children=None, data=None):
+    def create_root_node(self, children=None, data: list[DataPoint] = None):
         """Create a new root node in the forest.
 
         Parameters
@@ -310,19 +337,13 @@ class Tree(object):
 
         node = self._graph.num_nodes() - 1
 
-        self._add_node(node)
+        node_idx = self._add_node(node)
 
-        root_idx = self._node_indices[self._root_node_name]
+        self._add_list_of_data_points_to_node(data, node)
 
-        node_idx = self._add_list_of_data_points_to_node(data, node)
-
-        self._graph.add_edge(root_idx, node_idx, None)
-
-        for child in children:
-            child_idx = self._node_indices[child]
-            self._graph.remove_edge(root_idx, child_idx)
-
-            self._graph.add_edge(node_idx, child_idx, None)
+        if len(children) > 0:
+            child_indices = [self._node_indices[child] for child in children]
+            self._graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
 
         self._last_node_added_to = node
 
@@ -335,37 +356,9 @@ class Tree(object):
         if len(data) > 0:
             self._data[node].extend(data)
             self._graph[node_idx].add_data_point_list(data)
-        return node_idx
 
     def copy(self) -> Tree:
-        cls = self.__class__
-
-        new = cls.__new__(cls)
-
-        new.grid_size = self.grid_size
-
-        new._data = defaultdict(list)
-
-        new._data.update({k: v.copy() for k, v in self._data.items()})
-
-        new._log_prior = self._log_prior
-
-        new._graph = self._graph.copy()
-
-        new._node_indices = self._node_indices.copy()
-
-        new._node_indices_rev = self._node_indices_rev.copy()
-
-        new._last_node_added_to = self._last_node_added_to
-
-        new._root_node_name = self._root_node_name
-
-        new._outlier_node_name = self._outlier_node_name
-
-        for node_idx in new._graph.node_indices():
-            new._graph[node_idx] = new._graph[node_idx].copy()
-
-        return new
+        return self.__copy__()
 
     def get_children(self, node):
         node_idx = self._node_indices[node]
@@ -411,7 +404,7 @@ class Tree(object):
 
         return data_len
 
-    def get_subtree(self, subtree_root):
+    def get_subtree(self, subtree_root) -> Tree:
         if subtree_root == self._root_node_name:
             return self.copy()
 
@@ -425,24 +418,18 @@ class Tree(object):
 
         new_root_idx = new._node_indices[self._root_node_name]
 
-        sub_root_idx = -1
-
-        for sub_idx in subtree_graph.node_indices():
-            payload = subtree_graph[sub_idx]
-            if payload.node_id == subtree_root:
-                sub_root_idx = sub_idx
-                break
+        sub_root_idx = subtree_graph.filter_nodes(lambda node: bool(node.node_id == subtree_root))[0]
 
         new._graph.compose(subtree_graph, {new_root_idx: (sub_root_idx, None)})
 
         for node_idx in new._graph.node_indices():
             new._graph[node_idx] = new._graph[node_idx].copy()
-            node = new._graph[node_idx].node_id
-            new._data[node] = list(self._data[node])
+            new_node = new._graph[node_idx].node_id
+            new._data[new_node] = list(self._data[new_node])
 
-            new._add_node_to_indices(node, node_idx)
+            new._add_node_to_indices(new_node, node_idx)
 
-        new.update()
+        new._update_path_to_root(new._root_node_name)
 
         return new
 
@@ -458,7 +445,7 @@ class Tree(object):
         self._node_indices = visitor.node_indices
         self._node_indices_rev = visitor.node_indices_rev
 
-    def remove_data_point_from_node(self, data_point, node):
+    def remove_data_point_from_node(self, data_point: DataPoint, node):
         self._data[node].remove(data_point)
 
         if node != self._outlier_node_name:
@@ -467,7 +454,7 @@ class Tree(object):
 
             self._update_path_to_root(node)
 
-    def remove_data_point_from_outliers(self, data_point):
+    def remove_data_point_from_outliers(self, data_point: DataPoint):
         self._data[self._outlier_node_name].remove(data_point)
 
     def remove_subtree(self, subtree: Tree):
@@ -505,8 +492,13 @@ class Tree(object):
 
     def _add_node(self, node):
         node_obj = TreeNode(self.grid_size, self._log_prior, node)
-        node_idx = self._graph.add_node(node_obj)
+        if node == self._root_node_name:
+            node_idx = self._graph.add_node(node_obj)
+        else:
+            root_idx = self._node_indices[self._root_node_name]
+            node_idx = self._graph.add_child(root_idx, node_obj, None)
         self._add_node_to_indices(node, node_idx)
+        return node_idx
 
     def _add_node_to_indices(self, node, node_idx):
         self._node_indices[node] = node_idx
