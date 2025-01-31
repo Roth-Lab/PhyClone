@@ -96,10 +96,27 @@ def run(
     results = {}
 
     if num_chains == 1:
-        results[0] = run_phyclone_chain(burnin, concentration_update, concentration_value, data, max_time, num_iters,
-                                        num_particles, num_samples_data_point, num_samples_prune_regraph,
-                                        outlier_modelling_active, print_freq, proposal, resample_threshold, rng_main,
-                                        samples, thin, 0, subtree_update_prob, init_sigma)
+        results[0] = run_phyclone_chain(
+            burnin,
+            concentration_update,
+            concentration_value,
+            data,
+            max_time,
+            num_iters,
+            num_particles,
+            num_samples_data_point,
+            num_samples_prune_regraph,
+            outlier_modelling_active,
+            print_freq,
+            proposal,
+            resample_threshold,
+            rng_main,
+            samples,
+            thin,
+            0,
+            subtree_update_prob,
+            init_sigma,
+        )
 
         print("Finished chain", 0)
 
@@ -179,9 +196,27 @@ def print_welcome_message(
     print()
 
 
-def run_phyclone_chain(burnin, concentration_update, concentration_value, data, max_time, num_iters, num_particles,
-                       num_samples_data_point, num_samples_prune_regraph, outlier_modelling_active, print_freq,
-                       proposal, resample_threshold, rng, samples, thin, chain_num, subtree_update_prob, init_sigma):
+def run_phyclone_chain(
+    burnin,
+    concentration_update,
+    concentration_value,
+    data,
+    max_time,
+    num_iters,
+    num_particles,
+    num_samples_data_point,
+    num_samples_prune_regraph,
+    outlier_modelling_active,
+    print_freq,
+    proposal,
+    resample_threshold,
+    rng,
+    samples,
+    thin,
+    chain_num,
+    subtree_update_prob,
+    init_sigma,
+):
     tree_dist = TreeJointDistribution(FSCRPDistribution(concentration_value), outlier_modelling_active)
     kernel = setup_kernel(outlier_modelling_active, proposal, rng, tree_dist)
     samplers = setup_samplers(kernel, num_particles, outlier_modelling_active, resample_threshold, rng, tree_dist)
@@ -189,15 +224,16 @@ def run_phyclone_chain(burnin, concentration_update, concentration_value, data, 
     timer = Timer()
     if init_sigma:
         tree = _run_sigma_init_iter(
-                max_time,
-                num_samples_data_point,
-                num_samples_prune_regraph,
-                samplers,
-                timer,
-                tree,
-                tree_dist,
-                chain_num,
-                init_sigma,
+            max_time,
+            num_samples_data_point,
+            num_samples_prune_regraph,
+            samplers,
+            timer,
+            tree,
+            tree_dist,
+            chain_num,
+            init_sigma,
+            concentration_update,
         )
     tree = _run_burnin(
         burnin,
@@ -377,6 +413,7 @@ def _run_burnin(
 
     return best_tree
 
+
 def _run_sigma_init_iter(
     max_time,
     num_samples_data_point,
@@ -386,20 +423,22 @@ def _run_sigma_init_iter(
     tree,
     tree_dist,
     chain_num,
-    sigma_init
+    sigma_init,
+    concentration_update,
 ):
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
+    conc_sampler = samplers.conc_sampler
 
-    sigma_init_iters = 10
+    sigma_init_iters = 100
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = None
     best_score = -np.inf
+    assoc_alpha = tree_dist.prior.alpha
 
     print("#" * 100)
-    # print("Single Iteration Better Data Sigma Initialization")
     print("Pre-Burn: Single Sigma Better Data Initialization")
     print("#" * 100)
 
@@ -420,14 +459,20 @@ def _run_sigma_init_iter(
 
             tree.relabel_nodes()
 
+            if concentration_update:
+                update_concentration_value(conc_sampler, tree, tree_dist)
+
             tree_score = tree_dist.log_p_one(tree)
             if tree_score > best_score:
                 best_score = tree_score
                 best_tree = tree
+                assoc_alpha = tree_dist.prior.alpha
 
             if timer.elapsed > max_time:
                 break
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
+
+    tree_dist.prior.alpha = assoc_alpha
     print()
     print("#" * 100)
     print("Post Pre-Burn")
