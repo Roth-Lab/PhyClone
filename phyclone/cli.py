@@ -311,6 +311,12 @@ def topology_report(**kwargs):
     "Note: This option is incompatible with --user-provided-loss-prob",
 )
 @click.option(
+    "--run-pre-burn/--no-run-pre-burn",
+    default=False,
+    show_default=True,
+    help="Whether to run pre-burn sampling before burnin; if applicable.",
+)
+@click.option(
     "--user-provided-loss-prob/--no-user-provided-loss-prob",
     default=False,
     show_default=True,

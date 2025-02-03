@@ -52,6 +52,7 @@ def run(
     high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
+    run_pre_burn=False,
 ):
 
     rng_main = instantiate_and_seed_RNG(seed)
@@ -92,6 +93,9 @@ def run(
         outlier_prob=outlier_prob,
         precision=precision,
     )
+
+    if not run_pre_burn:
+        init_sigma = None
 
     results = {}
 
@@ -385,7 +389,7 @@ def _run_burnin(
                 if i % print_freq == 0:
                     print_stats(i, tree, tree_dist, chain_num)
 
-                clear_proposal_dist_caches()
+                # clear_proposal_dist_caches()
 
                 tree = burnin_sampler.sample_tree(tree)
 
@@ -434,7 +438,7 @@ def _run_sigma_init_iter(
     sigma_init_iters = 100
     print_freq = round(sigma_init_iters / 2)
 
-    best_tree = None
+    best_tree = tree
     best_score = -np.inf
     assoc_alpha = tree_dist.prior.alpha
 
@@ -471,6 +475,8 @@ def _run_sigma_init_iter(
             if timer.elapsed > max_time:
                 break
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
+
+    clear_proposal_dist_caches()
 
     tree_dist.prior.alpha = assoc_alpha
     print()
