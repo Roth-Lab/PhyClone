@@ -58,7 +58,7 @@ class FSCRPDistribution(object):
             tree_node_data = tree.node_data
 
         outlier_node_name = tree.outlier_node_name
-        log_p = 0
+        log_p = 0.0
         # CRP prior
         num_nodes = tree.get_number_of_nodes()
         log_p += num_nodes * self.log_alpha
@@ -104,11 +104,8 @@ class FSCRPDistribution(object):
         return log_p, log_p_one
 
     def _compute_z_term(self, num_roots, num_nodes):
-        # TODO: this is just 0, any point to doing this?
-        # log_one = np.log(1)
-        log_one = 0
+        log_one = 0.0
 
-        # TODO: 1 raised to the power of anything is still just 1, likely don't need this
         a_term = log_one * num_nodes
 
         la = log_one
@@ -131,10 +128,12 @@ class FSCRPDistribution(object):
         z_term = self._compute_z_term(num_roots, num_nodes)
         log_const = self.c_const
 
+        log_one = 0.0
+
         if num_roots == 0:
             num_roots = 1
 
-        return np.log(1) - (z_term + (log_const * (num_roots - 1)))
+        return log_one - (z_term + (log_const * (num_roots - 1)))
 
 
 class TreeJointDistribution(object):
@@ -202,20 +201,34 @@ class TreeJointDistribution(object):
                 log_p += log_sum_exp(tree.data_log_likelihood[i, :])
                 log_p_one += tree.data_log_likelihood[i, -1]
 
-        for data_point in tree.outliers:
-            log_p += data_point.outlier_marginal_prob
-            log_p_one += data_point.outlier_marginal_prob
+        outliers_marginal_prob = sum([data_point.outlier_marginal_prob for data_point in tree.outliers])
+
+        log_p += outliers_marginal_prob
+        log_p_one += outliers_marginal_prob
+
+        # for data_point in tree.outliers:
+        #     log_p += data_point.outlier_marginal_prob
+        #     log_p_one += data_point.outlier_marginal_prob
 
         return log_p, log_p_one
 
     def outlier_prior(self, tree_node_data, outlier_node_name):
-        log_p = 0
+        log_p = 0.0
         if self.outlier_modelling_active:
             for node, node_data in tree_node_data.items():
-                for data_point in node_data:
-                    if node == outlier_node_name:
-                        log_p += data_point.outlier_prob
-
-                    else:
-                        log_p += data_point.outlier_prob_not
+                if node == outlier_node_name:
+                    log_p += sum([data_point.outlier_prob for data_point in node_data])
+                else:
+                    log_p += sum([data_point.outlier_prob_not for data_point in node_data])
         return log_p
+
+    # def outlier_prior(self, tree_node_data, outlier_node_name):
+    #     log_p = 0
+    #     if self.outlier_modelling_active:
+    #         for node, node_data in tree_node_data.items():
+    #             for data_point in node_data:
+    #                 if node == outlier_node_name:
+    #                     log_p += data_point.outlier_prob
+    #                 else:
+    #                     log_p += data_point.outlier_prob_not
+    #     return log_p

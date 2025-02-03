@@ -127,9 +127,7 @@ class FullyAdaptedKernel(Kernel):
 
         self.outlier_modelling_active = outlier_modelling_active
 
-    def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
-        if parent_particle is not None:
-            parent_particle.built_tree = parent_tree
+    def get_proposal_distribution(self, data_point, parent_particle):
         return _get_cached_full_proposal_dist(
             data_point,
             self,
@@ -151,6 +149,10 @@ def _get_cached_full_proposal_dist(data_point, kernel, parent_particle, outlier_
         )
     else:
         ret = FullyAdaptedProposalDistribution(
-            data_point, kernel, parent_particle, outlier_modelling_active=outlier_modelling_active, parent_tree=None
+            data_point,
+            kernel,
+            parent_particle,
+            outlier_modelling_active=outlier_modelling_active,
+            parent_tree=None,
         )
     return ret

@@ -13,7 +13,7 @@ class Kernel(object):
     def rng(self):
         return self._rng
 
-    def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
+    def get_proposal_distribution(self, data_point, parent_particle):
         """Get proposal distribution given the current data point and parent particle."""
         raise NotImplementedError
 

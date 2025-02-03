@@ -44,11 +44,10 @@ class Particle(object):
         return self._hash_val
 
     def __eq__(self, other):
-        self_key = self._tree
+        hash_check = hash(self) == hash(other)
+        return hash_check
 
-        other_key = other._tree
-
-        return self_key == other_key
+        # return self_key == other_key
 
     # def copy(self):
     #     cls = self.__class__
@@ -99,4 +98,6 @@ class Particle(object):
 
     @built_tree.getter
     def built_tree(self):
+        if len(self._built_tree) == 0:
+            return None
         return self._built_tree.pop()

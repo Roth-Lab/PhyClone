@@ -138,11 +138,20 @@ class BootstrapKernel(Kernel):
 
         self.outlier_modelling_active = outlier_modelling_active
 
-    def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
-        return BootstrapProposalDistribution(
-            data_point,
-            self,
-            parent_particle,
-            outlier_modelling_active=self.outlier_modelling_active,
-            parent_tree=parent_tree,
-        )
+    def get_proposal_distribution(self, data_point, parent_particle):
+        if parent_particle is not None:
+            return BootstrapProposalDistribution(
+                data_point,
+                self,
+                parent_particle,
+                outlier_modelling_active=self.outlier_modelling_active,
+                parent_tree=parent_particle.built_tree,
+            )
+        else:
+            return BootstrapProposalDistribution(
+                data_point,
+                self,
+                parent_particle,
+                outlier_modelling_active=self.outlier_modelling_active,
+                parent_tree=None,
+            )

@@ -54,10 +54,12 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
                 log_p = self.log_half
 
-                try:
-                    num_children = tree.num_children_on_node_that_matters
-                except AttributeError:
-                    num_children = tree.get_number_of_children(tree.node_last_added_to)
+                num_children = tree.num_children_on_node_that_matters
+
+                # try:
+                #     num_children = tree.num_children_on_node_that_matters
+                # except AttributeError:
+                #     num_children = tree.get_number_of_children(tree.node_last_added_to)
 
                 log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
 
@@ -69,8 +71,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
         # else:
         #     tree_particle = tree
-        tree_particle = tree
-        return self._log_p[tree_particle]
+        # tree_particle = tree
+        return self._log_p[tree]
 
     def sample(self):
         """Sample a new tree from the proposal distribution."""
@@ -208,9 +210,7 @@ class SemiAdaptedKernel(Kernel):
 
         self.outlier_modelling_active = outlier_modelling_active
 
-    def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
-        if parent_particle is not None:
-            parent_particle.built_tree = parent_tree
+    def get_proposal_distribution(self, data_point, parent_particle):
         return _get_cached_semi_proposal_dist(
             data_point,
             self,
@@ -232,6 +232,10 @@ def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_
         )
     else:
         ret = SemiAdaptedProposalDistribution(
-            data_point, kernel, parent_particle, outlier_modelling_active=outlier_modelling_active, parent_tree=None
+            data_point,
+            kernel,
+            parent_particle,
+            outlier_modelling_active=outlier_modelling_active,
+            parent_tree=None,
         )
     return ret

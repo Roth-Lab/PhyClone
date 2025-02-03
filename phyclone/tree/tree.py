@@ -354,8 +354,8 @@ class Tree(object):
     def _add_list_of_data_points_to_node(self, data: list[DataPoint], node):
         node_idx = self._node_indices[node]
         if len(data) > 0:
-            self._data[node].extend(data)
             self._graph[node_idx].add_data_point_list(data)
+            self._data[node].extend(data)
 
     def copy(self) -> Tree:
         return self.__copy__()
@@ -367,6 +367,10 @@ class Tree(object):
     def get_number_of_children(self, node):
         node_idx = self._node_indices[node]
         return len(self._graph.successors(node_idx))
+
+    @property
+    def num_children_on_node_that_matters(self):
+        return self.get_number_of_children(self._last_node_added_to)
 
     def get_descendants(self, source=None):
         if source is None:

@@ -32,7 +32,7 @@ class TreeNode(object):
 
     def add_data_point_list(self, data_point_list):
         dp_idx_set = {dp.idx for dp in data_point_list}
-        # assert self.data_points.isdisjoint(dp_idx_set)
+        assert self.data_points.isdisjoint(dp_idx_set)
         self.data_points.update(dp_idx_set)
 
         log_p = self.log_p
@@ -43,16 +43,16 @@ class TreeNode(object):
             log_r += data_point.value
 
     def add_data_point(self, data_point):
-        dp_idx = data_point.idx
+        # dp_idx = data_point.idx
         # assert dp_idx not in self.data_points
 
-        self.data_points.add(dp_idx)
+        self.data_points.add(data_point.idx)
         self.log_p += data_point.value
         self.log_r += data_point.value
 
     def remove_data_point(self, data_point):
         dp_idx = data_point.idx
-        # assert dp_idx in self.data_points
+        assert dp_idx in self.data_points
 
         self.data_points.discard(dp_idx)
         self.log_p -= data_point.value
