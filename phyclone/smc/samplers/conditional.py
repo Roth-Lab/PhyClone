@@ -9,11 +9,12 @@ from phyclone.tree import Tree
 class ConditionalSMCSampler(AbstractSMCSampler):
     """SMC sampler which conditions a fixed path."""
 
-    __slots__ = "constrained_path"
+    __slots__ = ("constrained_path", "uniform_weight")
 
     def __init__(self, current_tree, data_points, kernel, num_particles, resample_threshold=0.5):
         super().__init__(data_points, kernel, num_particles, resample_threshold=resample_threshold)
 
+        self.uniform_weight = -np.log(self.num_particles)
         self.constrained_path = self._get_constrained_path(current_tree)
 
     def _get_constrained_path(self, tree):
@@ -80,7 +81,8 @@ class ConditionalSMCSampler(AbstractSMCSampler):
     def _init_swarm(self):
         self.swarm = ParticleSwarm()
 
-        uniform_weight = -np.log(self.num_particles)
+        # uniform_weight = -np.log(self.num_particles)
+        uniform_weight = self.uniform_weight
 
         self.swarm.add_particle(uniform_weight, self.constrained_path[1])
 
@@ -96,7 +98,8 @@ class ConditionalSMCSampler(AbstractSMCSampler):
         if self.swarm.relative_ess <= self.resample_threshold:
             new_swarm = ParticleSwarm()
 
-            log_uniform_weight = -np.log(self.num_particles)
+            # log_uniform_weight = -np.log(self.num_particles)
+            log_uniform_weight = self.uniform_weight
 
             multiplicities = self._rng.multinomial(self.num_particles - 1, self.swarm.weights)
 

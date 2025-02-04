@@ -99,7 +99,7 @@ def lse_accumulate(log_x, out_arr):
     return out_arr
 
 
-@numba.jit(nopython=True)
+@numba.jit(nopython=True, fastmath=True)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
@@ -110,12 +110,24 @@ def log_sum_exp(log_X):
     if np.isinf(max_exp):
         return max_exp
 
-    total = 0
+    total = 0.0
 
     for x in log_X:
         total += np.exp(x - max_exp)
 
     return np.log(total) + max_exp
+
+
+@numba.jit(nopython=True, fastmath=True)
+def log_sum_exp_over_dims(log_x_arr):
+    num_dims = log_x_arr.shape[0]
+
+    sum_total = 0.0
+
+    for dim in range(num_dims):
+        sum_total += log_sum_exp(log_x_arr[dim])
+
+    return sum_total
 
 
 @numba.jit(nopython=True)
@@ -236,6 +248,58 @@ def conv_log(log_x, log_y, ans):
         ans[k - 1] = np.log(sub_ans) + max_val
 
     return ans
+
+
+@numba.jit(nopython=True, fastmath=True)
+def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
+    """Direct convolution in log space."""
+
+    n = log_x_arr.shape[-1]
+    dims = log_x_arr.shape[0]
+
+    for l in range(dims):
+        log_x = log_x_arr[l]
+        log_y = log_y_arr[l]
+        log_y = log_y[::-1]
+        ans = ans_arr[l]
+        for k in range(1, n + 1):
+            v_arr = np.empty(k)
+            max_val = -np.inf
+            for j in range(k):
+                curr = log_x[j] + log_y[n - (k - j)]
+                v_arr[j] = curr
+                if curr > max_val:
+                    max_val = curr
+
+            v_arr -= max_val
+
+            np.exp(v_arr, v_arr)
+
+            sub_ans = 0
+            for i in range(k):
+                sub_ans += v_arr[i]
+
+            ans[k - 1] = np.log(sub_ans) + max_val
+
+    return ans_arr
+
+@numba.jit(nopython=True, fastmath=True)
+def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
+    """Direct convolution in numba-time."""
+
+    n = log_x_arr.shape[-1]
+    dims = log_x_arr.shape[0]
+
+    for l in range(dims):
+        log_x = log_x_arr[l]
+        log_y = log_y_arr[l]
+        log_y = log_y[::-1]
+        ans = ans_arr[l]
+        for k in range(1, n + 1):
+            for j in range(k):
+                ans[k - 1] += log_x[j] * log_y[n - (k - j)]
+
+    return ans_arr
 
 
 def fft_convolve_two_children(child_1, child_2):
