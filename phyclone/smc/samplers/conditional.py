@@ -4,6 +4,7 @@ import rustworkx as rx
 from phyclone.smc.samplers.base import AbstractSMCSampler
 from phyclone.smc.swarm import TreeHolder, ParticleSwarm
 from phyclone.tree import Tree
+from itertools import repeat
 
 
 class ConditionalSMCSampler(AbstractSMCSampler):
@@ -46,10 +47,11 @@ class ConditionalSMCSampler(AbstractSMCSampler):
                 new_tree.add_data_point_to_node(data_point, node_map[old_node])
 
             else:
-                children = []
-
-                for child in tree.get_children(old_node):
-                    children.append(node_map[child])
+                # children = []
+                #
+                # for child in tree.get_children(old_node):
+                #     children.append(node_map[child])
+                children = [node_map[child] for child in tree.get_children(old_node)]
 
                 new_node = new_tree.create_root_node(children)
 
@@ -81,8 +83,8 @@ class ConditionalSMCSampler(AbstractSMCSampler):
     def _init_swarm(self):
         self.swarm = ParticleSwarm()
 
-        # uniform_weight = -np.log(self.num_particles)
-        uniform_weight = self.uniform_weight
+        uniform_weight = -np.log(self.num_particles)
+        # uniform_weight = self.uniform_weight
 
         self.swarm.add_particle(uniform_weight, self.constrained_path[1])
 
@@ -98,8 +100,8 @@ class ConditionalSMCSampler(AbstractSMCSampler):
         if self.swarm.relative_ess <= self.resample_threshold:
             new_swarm = ParticleSwarm()
 
-            # log_uniform_weight = -np.log(self.num_particles)
-            log_uniform_weight = self.uniform_weight
+            log_uniform_weight = -np.log(self.num_particles)
+            # log_uniform_weight = self.uniform_weight
 
             multiplicities = self._rng.multinomial(self.num_particles - 1, self.swarm.weights)
 
@@ -107,11 +109,26 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
             new_swarm.add_particle(log_uniform_weight, self.constrained_path[self.iteration + 1])
 
-            for particle, multiplicity in zip(self.swarm.particles, multiplicities):
-                for _ in range(multiplicity):
-                    assert not np.isneginf(particle.log_w)
+            # for particle, multiplicity in zip(self.swarm.particles, multiplicities):
+            #     for _ in range(multiplicity):
+            #         assert not np.isneginf(particle.log_w)
+            #
+            #         new_swarm.add_particle(log_uniform_weight, particle)
+            # filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities))
 
-                    new_swarm.add_particle(log_uniform_weight, particle)
+            # for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
+            #     assert not np.isneginf(particle.log_w)
+            #     for _ in range(multiplicity):
+            #         new_swarm.add_particle(log_uniform_weight, particle)
+
+            for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
+                assert not np.isneginf(particle.log_w)
+                new_swarm.add_particles_from_iterators(repeat(log_uniform_weight, multiplicity),
+                                                       repeat(particle, multiplicity))
+                # list_of_particles =
+                # for _ in range(multiplicity):
+                #     new_swarm.add_particle(log_uniform_weight, particle)
+
 
             self.swarm = new_swarm
 

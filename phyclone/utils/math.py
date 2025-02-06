@@ -99,7 +99,7 @@ def lse_accumulate(log_x, out_arr):
     return out_arr
 
 
-@numba.jit(nopython=True, fastmath=True)
+@numba.jit(nopython=True, fastmath=False)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
@@ -110,7 +110,7 @@ def log_sum_exp(log_X):
     if np.isinf(max_exp):
         return max_exp
 
-    total = numba.float64(0.0)
+    total = 0.0
 
     for x in log_X:
         total += np.exp(x - max_exp)
@@ -118,19 +118,18 @@ def log_sum_exp(log_X):
     return np.log(total) + max_exp
 
 
-@numba.jit(nopython=True, fastmath=True)
+@numba.jit(nopython=True, fastmath=False)
 def log_sum_exp_over_dims(log_x_arr):
-    num_dims = log_x_arr.shape[0]
 
     sum_total = np.float64(0.0)
 
-    for dim in range(num_dims):
-        sum_total += log_sum_exp(log_x_arr[dim])
+    for dim in log_x_arr:
+        sum_total += log_sum_exp(dim)
 
     return sum_total
 
 
-@numba.jit(nopython=True, fastmath=True)
+@numba.jit(nopython=True, fastmath=False)
 def log_sum_exp_over_dims_to_arr(log_x_arr):
     num_dims = log_x_arr.shape[0]
     ret_arr = np.empty(num_dims)
@@ -294,7 +293,8 @@ def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
 
     return ans_arr
 
-@numba.jit(nopython=True, fastmath=True)
+
+@numba.jit(nopython=True, fastmath=False)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
 

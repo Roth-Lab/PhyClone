@@ -76,6 +76,22 @@ class ParticleSwarm(object):
 
         self._log_norm_const = None
 
+    def add_particles_from_iterators(self, log_weights, particles):
+        """Add a particle to the swarm.
+
+        Parameters
+        ----------
+        log_weights: Iterable[float]
+            Unnormalized log weight of particle
+
+        particles: Iterable[Particle]
+        """
+        self.particles.extend(particles)
+
+        self._unnormalized_log_weights.extend(log_weights)
+
+        self._log_norm_const = None
+
     def to_list(self):
         """Return a list of two tuples where the first entry is a particle and the second is the weight."""
         return zip(self.particles, self.weights)

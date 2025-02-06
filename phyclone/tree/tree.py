@@ -339,7 +339,8 @@ class Tree(object):
 
         node_idx = self._add_node(node)
 
-        self._add_list_of_data_points_to_node(data, node)
+        if len(data) > 0:
+            self._add_list_of_data_points_to_node(data, node)
 
         if len(children) > 0:
             child_indices = [self._node_indices[child] for child in children]
@@ -352,8 +353,8 @@ class Tree(object):
         return node
 
     def _add_list_of_data_points_to_node(self, data: list[DataPoint], node):
-        node_idx = self._node_indices[node]
         if len(data) > 0:
+            node_idx = self._node_indices[node]
             self._graph[node_idx].add_data_point_list(data)
             self._data[node].extend(data)
 
