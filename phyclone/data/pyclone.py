@@ -8,6 +8,7 @@ from phyclone.data.cluster_outlier_probabilities import _assign_out_prob, define
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
+from math import ulp
 
 
 def load_data(
@@ -173,13 +174,24 @@ def _get_raw_cluster_df(cluster_file, data_df):
     return cluster_df
 
 
+# def compute_outlier_prob(outlier_prob, cluster_size):
+#     if outlier_prob == 0:
+#         return outlier_prob, np.log(1.0)
+#     else:
+#         res = np.log(outlier_prob) * cluster_size
+#         if outlier_prob == 1:
+#             res_not = -np.inf
+#         else:
+#             res_not = np.log1p(-outlier_prob) * cluster_size
+#         return res, res_not
 def compute_outlier_prob(outlier_prob, cluster_size):
+    eps = ulp(0.0)
     if outlier_prob == 0:
-        return outlier_prob, np.log(1.0)
+        return np.log(eps) * cluster_size, np.log(1.0)
     else:
         res = np.log(outlier_prob) * cluster_size
         if outlier_prob == 1:
-            res_not = -np.inf
+            res_not = np.log(eps) * cluster_size
         else:
             res_not = np.log1p(-outlier_prob) * cluster_size
         return res, res_not

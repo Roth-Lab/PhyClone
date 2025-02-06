@@ -110,7 +110,7 @@ def log_sum_exp(log_X):
     if np.isinf(max_exp):
         return max_exp
 
-    total = 0.0
+    total = numba.float64(0.0)
 
     for x in log_X:
         total += np.exp(x - max_exp)
@@ -122,12 +122,23 @@ def log_sum_exp(log_X):
 def log_sum_exp_over_dims(log_x_arr):
     num_dims = log_x_arr.shape[0]
 
-    sum_total = 0.0
+    sum_total = np.float64(0.0)
 
     for dim in range(num_dims):
         sum_total += log_sum_exp(log_x_arr[dim])
 
     return sum_total
+
+
+@numba.jit(nopython=True, fastmath=True)
+def log_sum_exp_over_dims_to_arr(log_x_arr):
+    num_dims = log_x_arr.shape[0]
+    ret_arr = np.empty(num_dims)
+
+    for dim in range(num_dims):
+        ret_arr[dim] = log_sum_exp(log_x_arr[dim])
+
+    return ret_arr
 
 
 @numba.jit(nopython=True)

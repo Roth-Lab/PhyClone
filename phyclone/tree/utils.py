@@ -17,17 +17,19 @@ def compute_log_S(child_log_R_values):
         return 0.0
 
     log_D = compute_log_D(child_log_R_values)
-    log_S = _sub_compute_S(log_D)
+    log_S = np.empty_like(log_D)
+    log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
+    # log_S = _sub_compute_S(log_D)
 
     return np.ascontiguousarray(log_S)
 
 
-def _sub_compute_S(log_D):
-    log_S = np.empty_like(log_D)
-    num_dims = log_D.shape[0]
-    for i in range(num_dims):
-        np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
-    return log_S
+# def _sub_compute_S(log_D):
+#     log_S = np.empty_like(log_D)
+#     num_dims = log_D.shape[0]
+#     for i in range(num_dims):
+#         np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
+#     return log_S
 
 
 def compute_log_D(child_log_R_values):

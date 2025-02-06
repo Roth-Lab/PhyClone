@@ -1,14 +1,5 @@
 import numpy as np
-from scipy.special import logsumexp as log_sum_exp
-
-# from phyclone.tree.utils import _sub_compute_S
-
-def _sub_compute_S(log_D):
-    log_S = np.empty_like(log_D)
-    num_dims = log_D.shape[0]
-    for i in range(num_dims):
-        np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
-    return log_S
+from phyclone.utils.math import log_sum_exp_over_dims
 
 
 class DataPoint(object):
@@ -36,12 +27,13 @@ class DataPoint(object):
         self.outlier_prob_not = outlier_prob_not
 
         log_prior = -np.log(value.shape[1])
+        # sub_comp = np.logaddexp.accumulate(self.value + log_prior, axis=-1)
+        sub_comp = self.value + log_prior
+        sub_comp = np.logaddexp.accumulate(sub_comp, out=sub_comp, axis=-1)
+        sub_comp += log_prior
+        self.outlier_marginal_prob = log_sum_exp_over_dims(sub_comp)
+        # self.outlier_marginal_prob = log_sum_exp_over_dims_to_arr(sub_comp).sum()
 
-        tmp = self.value + log_prior
-
-        sub_comp = _sub_compute_S(tmp)
-
-        self.outlier_marginal_prob = np.sum(log_sum_exp(sub_comp + log_prior, axis=1))
 
     def __hash__(self):
         return hash(self.name)
