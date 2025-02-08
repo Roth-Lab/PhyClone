@@ -99,23 +99,39 @@ def lse_accumulate(log_x, out_arr):
     return out_arr
 
 
-@numba.jit(nopython=True, fastmath=False)
+@numba.jit(nopython=True, fastmath=True)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
     This implementation is numerically safer than the naive method.
     """
-    max_exp = np.max(log_X)
+    # max_exp = np.max(log_X)
+    max_exp = -np.inf
+
+    for val in log_X:
+        if val > max_exp:
+            max_exp = val
 
     if np.isinf(max_exp):
         return max_exp
 
-    total = 0.0
+    total = np.float64(0.0)
 
     for x in log_X:
         total += np.exp(x - max_exp)
 
     return np.log(total) + max_exp
+
+
+@numba.jit(nopython=True, fastmath=True)
+def lower_clip(arr, lower):
+    # rows = len(arr)
+    cols = arr.shape[-1]
+    for dim_arr in arr:
+        # dim_arr = arr[i]
+        for j in range(cols):
+            if dim_arr[j] < lower:
+                dim_arr[j] = lower
 
 
 @numba.jit(nopython=True, fastmath=False)
@@ -132,10 +148,25 @@ def log_sum_exp_over_dims(log_x_arr):
 @numba.jit(nopython=True, fastmath=False)
 def log_sum_exp_over_dims_to_arr(log_x_arr):
     num_dims = log_x_arr.shape[0]
-    ret_arr = np.empty(num_dims)
+    ret_arr = np.empty(num_dims, np.float64)
 
-    for dim in range(num_dims):
-        ret_arr[dim] = log_sum_exp(log_x_arr[dim])
+    for dim, log_x_dim in enumerate(log_x_arr):
+        ret_arr[dim] = log_sum_exp(log_x_dim)
+    # for ret_dim, log_x_dim in zip(ret_arr, log_x_arr):
+    #     ret_dim = log_sum_exp(log_x_dim)
+
+    return ret_arr
+
+
+@numba.jit(nopython=True, fastmath=False)
+def log_sum_exp_over_dims_to_arr_supplied(log_x_arr, ret_arr):
+    # num_dims = log_x_arr.shape[0]
+    # ret_arr = np.empty(num_dims, np.float64)
+
+    for dim, log_x_dim in enumerate(log_x_arr):
+        ret_arr[dim] = log_sum_exp(log_x_dim)
+    # for ret_dim, log_x_dim in zip(ret_arr, log_x_arr):
+    #     ret_dim = log_sum_exp(log_x_dim)
 
     return ret_arr
 
@@ -311,6 +342,24 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
 
     return ans_arr
+
+# @numba.jit(nopython=True, fastmath=False)
+# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
+#     """Direct convolution in numba-time."""
+#
+#     n = log_x_arr.shape[-1]
+#     # dims = log_x_arr.shape[0]
+#
+#     for l, (log_x, log_y) in enumerate(zip(log_x_arr, log_y_arr)):
+#         # log_x = log_x_arr[l]
+#         # log_y = log_y_arr[l]
+#         log_y = log_y[::-1]
+#         ans = ans_arr[l]
+#         for k in range(1, n + 1):
+#             for j in range(k):
+#                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
+#
+#     return ans_arr
 
 
 def fft_convolve_two_children(child_1, child_2):

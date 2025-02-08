@@ -137,7 +137,7 @@ class FSCRPDistribution(object):
 
 
 class TreeJointDistribution(object):
-    __slots__ = "prior", "outlier_modelling_active"
+    __slots__ = "prior", "outlier_modelling_active", "_lse_arr"
 
     def __init__(self, prior, outlier_modelling_active=False):
         self.prior = prior
@@ -179,8 +179,6 @@ class TreeJointDistribution(object):
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
             log_p += tree.data_log_likelihood[:, -1].sum()
-            # for i in range(tree.grid_size[0]):
-            #     log_p += tree.data_log_likelihood[i, -1]
 
         for data_point in tree.outliers:
             log_p += data_point.outlier_marginal_prob

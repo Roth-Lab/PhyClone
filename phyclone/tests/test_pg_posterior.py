@@ -20,7 +20,7 @@ class BaseTest(object):
         def __init__(self, method_name: str = ...):
             super().__init__(method_name)
 
-            self._rng = np.random.default_rng(12345)
+            self._rng = np.random.default_rng(242643578967193853558243570818064774262)
 
         def test_single_data_point_1d(self):
             data = [
@@ -137,24 +137,24 @@ class BaseTest(object):
 class BootstrapAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(BootstrapKernel)
-
         self.run_scale = 1
 
 
 class FullyAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(FullyAdaptedKernel)
-
         self.run_scale = 1
 
 
 class SemiAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(SemiAdaptedKernel)
-
         self.run_scale = 1
 
 

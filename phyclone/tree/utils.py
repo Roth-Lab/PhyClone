@@ -19,17 +19,8 @@ def compute_log_S(child_log_R_values):
     log_D = compute_log_D(child_log_R_values)
     log_S = np.empty_like(log_D)
     log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
-    # log_S = _sub_compute_S(log_D)
 
     return np.ascontiguousarray(log_S)
-
-
-# def _sub_compute_S(log_D):
-#     log_S = np.empty_like(log_D)
-#     num_dims = log_D.shape[0]
-#     for i in range(num_dims):
-#         np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
-#     return log_S
 
 
 def compute_log_D(child_log_R_values):
@@ -41,19 +32,31 @@ def compute_log_D(child_log_R_values):
     if num_children == 1:
         return child_log_R_values[0]
 
-    conv_res = _convolve_two_children(child_log_R_values[0], child_log_R_values[1])
-    for j in range(2, num_children):
-        conv_res = _convolve_two_children(child_log_R_values[j], conv_res)
+    all_maxes = np.max(child_log_R_values, axis=-1, keepdims=True)
+    normed_children = np.empty_like(child_log_R_values, order="C")
 
-    log_D = conv_res
-    return log_D
+    np.subtract(child_log_R_values, all_maxes, out=normed_children)
+
+    np.exp(normed_children, out=normed_children)
+
+    conv_res = _convolve_two_children(normed_children[0], normed_children[1])
+    for j in range(2, num_children):
+        conv_res = _convolve_two_children(normed_children[j], conv_res)
+
+    conv_res[conv_res <= 0] = 1e-100
+
+    np.log(conv_res, dtype=np.float64, out=conv_res)
+
+    conv_res += all_maxes.sum(0)
+
+    return conv_res
 
 
 @two_np_arr_cache(maxsize=1024)
 def _convolve_two_children(child_1, child_2):
     grid_size = child_1.shape[-1]
     if grid_size < 1000:
-        res_arr = _nb_conv_dims(child_1, child_2)
+        res_arr = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
     else:
         res_arr = fft_convolve_two_children(child_1, child_2)
     return res_arr
@@ -89,23 +92,23 @@ def _np_conv_dims(child_1, child_2):
 
 def _nb_conv_dims(child_1, child_2):
 
-    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+    # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+    #
+    # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    #
+    # child_1_norm = np.exp(child_1 - child_1_maxes, order="C")
+    #
+    # child_2_norm = np.exp(child_2 - child_2_maxes, order="C")
 
-    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    log_D = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
 
-    child_1_norm = np.exp(child_1 - child_1_maxes, order="C")
-
-    child_2_norm = np.exp(child_2 - child_2_maxes, order="C")
-
-    log_D = conv_over_dims(child_1_norm, child_2_norm, np.zeros_like(child_1, order="C"))
-
-    log_D[log_D <= 0] = 1e-100
-
-    log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
-
-    log_D += child_1_maxes
-
-    log_D += child_2_maxes
+    # log_D[log_D <= 0] = 1e-100
+    #
+    # log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
+    #
+    # log_D += child_1_maxes
+    #
+    # log_D += child_2_maxes
 
     return log_D
 

@@ -1,7 +1,7 @@
 import unittest
 from collections import defaultdict, Counter
 
-from numpy import random
+import numpy as np
 
 import phyclone.tests.simulate as simulate
 from phyclone.mcmc import ParticleGibbsSubtreeSampler
@@ -21,7 +21,7 @@ class BaseTest(object):
 
             self.run_scale = None
             self.sampler = None
-            self._rng = random.default_rng(12345)
+            self._rng = None
 
         def test_single_data_point_1d(self):
             node_data = [
@@ -123,24 +123,24 @@ class BaseTest(object):
 class BootstrapAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(BootstrapKernel)
-
         self.run_scale = 1
 
 
 class FullyAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(FullyAdaptedKernel)
-
         self.run_scale = 1
 
 
 class SemiAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         self.sampler = self._get_sampler(SemiAdaptedKernel)
-
         self.run_scale = 1
 
 
