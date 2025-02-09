@@ -99,7 +99,7 @@ class Tree(object):
         return visitor.final_string
 
     def get_clades(self) -> frozenset:
-        visitor = GraphToCladesVisitor(self)
+        visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, self._root_node_name)
         root_idx = self._node_indices[self._root_node_name]
         rx.dfs_search(self._graph, [root_idx], visitor)
         vis_clades = frozenset(visitor.clades)
@@ -149,6 +149,10 @@ class Tree(object):
         root_idx = self._node_indices[self._root_node_name]
         return self._graph[root_idx].log_r
 
+    def get_tree_node_object(self, node):
+        node_idx = self._node_indices[node]
+        return self._graph[node_idx].copy()
+
     @property
     def labels(self):
         result = {dp.idx: k for k, l in self.node_data.items() for dp in l}
@@ -160,6 +164,16 @@ class Tree(object):
             map(
                 cached_log_factorial,
                 map(self._graph.out_degree, self._graph.node_indices()),
+            )
+        )
+        return mult
+
+    @staticmethod
+    def compute_multiplicity_from_graph(graph):
+        mult = sum(
+            map(
+                cached_log_factorial,
+                map(graph.out_degree, graph.node_indices()),
             )
         )
         return mult
@@ -193,6 +207,10 @@ class Tree(object):
     def roots(self):
         node_idx = self._node_indices[self._root_node_name]
         return [child.node_id for child in self._graph.successors(node_idx)]
+
+    def get_root_tree_node_dict(self):
+        root_idx = self._node_indices[self._root_node_name]
+        return {child.node_id:child.copy() for child in self._graph.successors(root_idx)}
 
     @classmethod
     def from_dict(cls, tree_dict) -> Tree:

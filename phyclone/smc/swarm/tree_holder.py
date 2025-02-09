@@ -1,5 +1,6 @@
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 from phyclone.tree import Tree
 
 
@@ -18,6 +19,7 @@ class TreeHolder(object):
         "node_last_added_to",
         "num_children_on_node_that_matters",
         "outlier_node_name",
+        "multiplicity"
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -41,13 +43,8 @@ class TreeHolder(object):
 
     def __eq__(self, other):
         return hash(self) == hash(other)
-        # self_key = self._tree
-        #
-        # other_key = other._tree
-        #
-        # return self_key == other_key
 
-    def copy(self):
+    def copy(self) -> TreeHolder:
         return TreeHolder(self.tree, self._tree_dist, self._perm_dist)
         # TODO: re-write this? building tree unnecessarily here
 
@@ -65,6 +62,8 @@ class TreeHolder(object):
         else:
             self.log_pdf = self._perm_dist.log_pdf(tree)
 
+        self.multiplicity = tree.multiplicity
+
         self.log_p, self.log_p_one = self._tree_dist.compute_both_log_p_and_log_p_one(tree)
 
         self.tree_roots = np.asarray(tree.roots)
@@ -75,9 +74,10 @@ class TreeHolder(object):
         self.node_last_added_to = tree.node_last_added_to
         if self.node_last_added_to != tree.outlier_node_name:
             self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
+            # self.num_children_on_node_that_matters = tree.num_children_on_node_that_matters
         else:
             self.num_children_on_node_that_matters = 0
 
     @tree.getter
-    def tree(self):
+    def tree(self) -> Tree:
         return Tree.from_dict(self._tree)
