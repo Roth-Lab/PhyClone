@@ -20,6 +20,7 @@ from phyclone.mcmc.particle_gibbs import (
 from phyclone.process_trace import create_main_run_output
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.samplers import UnconditionalSMCSampler
+from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
 from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
@@ -389,7 +390,7 @@ def _run_burnin(
                 if i % print_freq == 0:
                     print_stats(i, tree, tree_dist, chain_num)
 
-                # clear_proposal_dist_caches()
+                clear_proposal_dist_caches()
 
                 tree = burnin_sampler.sample_tree(tree)
 
@@ -528,7 +529,7 @@ def setup_kernel(outlier_modelling_active, proposal, rng, tree_dist):
     elif proposal == "semi-adapted":
         kernel_cls = SemiAdaptedKernel
 
-    kernel = kernel_cls(tree_dist, rng, outlier_modelling_active=outlier_modelling_active)
+    kernel = kernel_cls(tree_dist, rng, outlier_modelling_active=outlier_modelling_active, perm_dist=None)
     return kernel
 
 

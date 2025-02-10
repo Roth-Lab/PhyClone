@@ -110,18 +110,26 @@ class ProposalDistribution(object):
 
         self._rng = kernel.rng
 
-        self._set_parent_tree(parent_tree)
+        self._set_parent_tree()
 
     def _empty_tree(self):
         """Tree has no nodes"""
         return (self.parent_particle is None) or (len(self.parent_particle.tree_roots) == 0)
 
-    def _set_parent_tree(self, parent_tree):
+    # def _set_parent_tree(self, parent_tree):
+    #     if self.parent_particle is not None:
+    #         if parent_tree is not None:
+    #             self.parent_tree = parent_tree
+    #         else:
+    #             self.parent_tree = self.parent_particle.tree
+    #     else:
+    #         self.parent_tree = None
+    def _set_parent_tree(self):
         if self.parent_particle is not None:
-            if parent_tree is not None:
-                self.parent_tree = parent_tree
-            else:
-                self.parent_tree = self.parent_particle.tree
+            # if parent_tree is not None:
+            #     self.parent_tree = parent_tree
+            # else:
+            self.parent_tree = self.parent_particle.tree
         else:
             self.parent_tree = None
 

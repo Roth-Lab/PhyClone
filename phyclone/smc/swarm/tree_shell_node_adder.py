@@ -35,6 +35,11 @@ class TreeInfo:
         node_data.update({k: v.copy() for k, v in self.node_data.items()})
         return node_data
 
+    def get_num_datapoints(self):
+        # count = sum(len(v) for v in self.node_data.values())
+        count = sum(map(len, self.node_data.values()))
+        return count
+
 
 class TreeHolderBuilder(object):
     __slots__ = (
@@ -59,7 +64,8 @@ class TreeHolderBuilder(object):
         "_roots",
         "_hash_val",
         "_tree_dist",
-        "_number_of_nodes"
+        "_number_of_nodes",
+        "_log_pdf"
     )
 
     def __init__(
@@ -92,9 +98,14 @@ class TreeHolderBuilder(object):
         self._roots = None
         self._hash_val = None
         self._tree_dist = None
+        self._log_pdf = 0.0
 
     def __hash__(self):
         return self._hash_val
+
+    def __eq__(self, other):
+        hash_check = hash(self) == hash(other)
+        return hash_check
 
     def with_graph(self, graph):
         self._graph = graph
@@ -107,6 +118,9 @@ class TreeHolderBuilder(object):
         self.labels = node_data
         self.outliers = node_data
         return self
+
+    def with_log_pdf(self, log_pdf):
+        self._log_pdf = log_pdf
 
     def with_node_last_added_to(self, node_last_added_to):
         self._node_last_added_to = node_last_added_to
@@ -148,6 +162,7 @@ class TreeHolderBuilder(object):
     def build(self) -> TreeHolder:
         self._hash_val = hash((self.get_clades(), frozenset(self.outliers)))
         ret = TreeHolder(self, self._tree_dist, None)
+        ret.log_pdf = self._log_pdf
         return ret
 
     def get_clades(self) -> frozenset:
@@ -171,7 +186,7 @@ class TreeHolderBuilder(object):
             "graph": self._graph.edge_list(),
             "node_idx": self._node_idx.copy(),
             "node_idx_rev": self._node_idx_rev.copy(),
-            "node_data": {k: v.copy() for k, v in self._data.items()},
+            "node_data": self._data.copy(),
             "grid_size": self.grid_size,
             "node_last_added_to": self._node_last_added_to,
             "log_prior": self._log_prior,
@@ -264,21 +279,33 @@ class TreeShellNodeAdder(object):
         "roots_num_children",
         "roots_num_desc",
         "_nodes",
+        "tree_dict",
+        "perm_dist",
+        "_perm_dist_dict",
+        "_num_datapoints"
     )
 
-    def __init__(self, tree: Tree):
+    def __init__(self, tree: Tree, perm_dist=None):
+        self._hash_val = hash(tree)
         self._tree_info = TreeInfo(**tree.to_dict())
+        self.tree_dict = tree.to_dict()
         self._grid_size = self._tree_info.grid_size
         self._log_prior = self._tree_info.log_prior
         self._root_nodes_dict = tree.get_root_tree_node_dict()
         self._next_node_id = tree.get_number_of_nodes()
         self._dummy_root_obj = tree.get_tree_node_object(tree.root_node_name)
-        self._hash_val = hash(tree)
         self._root_idx = self._tree_info.node_idx[tree.root_node_name]
         self._root_node_name = tree.root_node_name
         self._outlier_node_name = tree.outlier_node_name
         self._root_node_names_set = self._root_nodes_dict.keys()
         self._nodes = tree.nodes
+        self.perm_dist = perm_dist
+        self._perm_dist_dict = None
+        self._num_datapoints = 0
+
+        if perm_dist:
+            self._num_datapoints = self._tree_info.get_num_datapoints()
+            self._perm_dist_dict = self.precompute_subroot_log_counts(tree)
 
         self.roots_num_children = {
             sub_root: tree.get_number_of_children(sub_root) for sub_root in self._root_node_names_set
@@ -287,8 +314,15 @@ class TreeShellNodeAdder(object):
             sub_root: tree.get_number_of_descendants(sub_root) for sub_root in self._root_node_names_set
         }
 
+    def precompute_subroot_log_counts(self, tree):
+        perm_dist_dict = {sub_root: (self.perm_dist.log_count(tree, sub_root), tree.get_subtree_data_len(sub_root)) for sub_root in self._root_node_names_set}
+        return perm_dist_dict
+
     def __hash__(self):
         return self._hash_val
+
+    def __eq__(self, other):
+        return hash(self) == hash(other)
 
     def create_tree_holder_with_new_node(
         self,
@@ -339,8 +373,23 @@ class TreeShellNodeAdder(object):
         tree_holder_builder.with_roots(roots_list)
 
         # tree_holder = tree_holder_builder.build()
+        # if self.perm_dist:
+        self._compute_new_log_pdf(children, node_id, roots_list, tree_holder_builder)
 
         return tree_holder_builder
+
+    def _compute_new_log_pdf(self, children, node_id, roots, tree_holder_builder):
+        if self.perm_dist:
+            count = self.perm_dist.log_count_subroot_from_precomp(self._perm_dist_dict, children, 1)
+            subtree_data_len = sum(self._perm_dist_dict[child][1] for child in children) + 1
+            self._perm_dist_dict[node_id] = (count, subtree_data_len)
+            new_num_datapoints = self._num_datapoints + 1
+            num_outliers = len(tree_holder_builder.outliers)
+            log_pdf = -self.perm_dist.log_count_root(self._perm_dist_dict, roots, new_num_datapoints, num_outliers)
+            self._perm_dist_dict.pop(node_id)
+        else:
+            log_pdf = 0.0
+        tree_holder_builder.with_log_pdf(log_pdf)
 
     def _add_roots_num_desc(
         self,

@@ -29,14 +29,14 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         new_tree = Tree(tree.grid_size)
 
-        parent_tree = None
+        # parent_tree = None
 
         tree_dist = self.kernel.tree_dist
         perm_dist = self.kernel.perm_dist
         outlier_node_name = tree.outlier_node_name
 
         for data_point in self.data_points:
-            new_tree = new_tree.copy()
+            # new_tree = new_tree.copy()
 
             old_node = data_to_node[data_point.idx]
 
@@ -61,8 +61,8 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
             parent_particle = constrained_path[-1]
 
-            if parent_particle:
-                parent_particle.built_tree = parent_tree
+            # if parent_particle:
+            #     parent_particle.built_tree = parent_tree
 
             proposal_dist = self.kernel.get_proposal_distribution(data_point, parent_particle)
 
@@ -74,7 +74,7 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
             constrained_path.append(particle)
 
-            parent_tree = new_tree
+            # parent_tree = new_tree
 
         assert rx.is_isomorphic(tree.graph, new_tree.graph, id_order=False)
 

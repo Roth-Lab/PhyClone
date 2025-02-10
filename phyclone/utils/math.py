@@ -106,7 +106,7 @@ def log_sum_exp(log_X):
     This implementation is numerically safer than the naive method.
     """
     # max_exp = np.max(log_X)
-    max_exp = -np.inf
+    max_exp = log_X[0]
 
     for val in log_X:
         if val > max_exp:

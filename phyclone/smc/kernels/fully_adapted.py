@@ -139,20 +139,20 @@ class FullyAdaptedKernel(Kernel):
 
 @lru_cache(maxsize=1024)
 def _get_cached_full_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
-    if parent_particle is not None:
-        ret = FullyAdaptedProposalDistribution(
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_modelling_active=outlier_modelling_active,
-            parent_tree=parent_particle.built_tree,
-        )
-    else:
-        ret = FullyAdaptedProposalDistribution(
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_modelling_active=outlier_modelling_active,
-            parent_tree=None,
-        )
+    # if parent_particle is not None:
+    #     ret = FullyAdaptedProposalDistribution(
+    #         data_point,
+    #         kernel,
+    #         parent_particle,
+    #         outlier_modelling_active=outlier_modelling_active,
+    #         parent_tree=parent_particle.built_tree,
+    #     )
+    # else:
+    ret = FullyAdaptedProposalDistribution(
+        data_point,
+        kernel,
+        parent_particle,
+        outlier_modelling_active=outlier_modelling_active,
+        parent_tree=None,
+    )
     return ret

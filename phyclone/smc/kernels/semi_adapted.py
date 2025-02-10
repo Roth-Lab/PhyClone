@@ -4,6 +4,7 @@ import numpy as np
 
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution
 from phyclone.smc.swarm import TreeHolder
+from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
 from phyclone.utils.math import log_normalize, cached_log_binomial_coefficient
 
@@ -15,7 +16,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("_log_p", "log_half", "_q_dist", "_curr_trees", "parent_is_empty_tree", "_cached_log_old_num_roots")
+    __slots__ = ("_log_p", "log_half", "_q_dist", "_curr_trees", "parent_is_empty_tree", "_cached_log_old_num_roots", "_tree_shell_node_adder")
 
     def __init__(
         self,
@@ -30,6 +31,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.log_half = kernel.log_half
 
         self.parent_is_empty_tree = False
+
+        self._tree_shell_node_adder = None
 
         self._init_dist()
 
@@ -104,9 +107,12 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             tree.create_root_node(children=[], data=[self.data_point])
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-
+            # self._tree_shell_node_adder = TreeShellNodeAdder(tree)
             trees.append(tree_particle)
         else:
+            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.perm_dist)
+            # self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree, self.perm_dist)
+            # self._tree_shell_node_adder = get_cached_tree_shell_node_adder(self.parent_particle, self.perm_dist)
             old_num_roots = len(self.parent_particle.tree_roots)
             self._cached_log_old_num_roots = np.log(old_num_roots + 1)
 
@@ -178,16 +184,69 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         else:
             children = self._rng.choice(self.parent_particle.tree_roots, num_children, replace=False)
 
-        tree_container = get_cached_new_tree(
-            self.parent_particle,
+        frozen_children = frozenset(children)
+        #
+        # tree_container = get_cached_new_tree(
+        #     self.parent_particle,
+        #     self.data_point,
+        #     frozen_children,
+        #     self.tree_dist,
+        #     self.perm_dist,
+        # )
+
+        # if self.parent_particle != self._tree_shell_node_adder:
+        #     self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree)
+
+        # if self._tree_shell_node_adder is None:
+        #     self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree, self.perm_dist)
+
+        tree_container2 = get_cached_new_tree_adder(
+            self._tree_shell_node_adder,
             self.data_point,
-            frozenset(children),
+            frozen_children,
             self.tree_dist,
-            self.perm_dist,
+            # self.perm_dist,
+            # self.parent_particle
         )
+        # tree_container2 = tree_container_builder.build()
+        #
+        # # assert tree_container == tree_container2
+        # if tree_container != tree_container2:
+        #     print('f')
+        #     tree_cont = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point, self.tree_dist)
+        #     tree_cont_check = tree_cont.build()
+        #     assert tree_cont_check == tree_container
 
-        return tree_container
+        # tree_cont = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point,
+        #                                                                          self.tree_dist)
+        # tree_container2 = tree_cont.build()
 
+
+        # assert tree_container == tree_container2
+        # assert np.isclose(tree_container.log_p, tree_container2.log_p)
+        # assert np.isclose(tree_container.log_p_one, tree_container2.log_p_one)
+        # assert np.isclose(tree_container.log_pdf, tree_container2.log_pdf)
+
+        return tree_container2
+
+
+# @lru_cache(maxsize=2048)
+# def get_cached_tree_shell_node_adder(parent_particle, perm_dist):
+#     ret_val = TreeShellNodeAdder(parent_particle.tree, perm_dist)
+#     return ret_val
+
+
+@lru_cache(maxsize=2048)
+def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_dist):
+    # tree = parent_particle.tree
+    #
+    # tree.create_root_node(children=children, data=[data_point])
+    #
+    # tree_container = TreeHolder(tree, tree_dist, perm_dist)
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
+    tree_container = tree_holder_builder.build()
+
+    return tree_container
 
 @lru_cache(maxsize=1024)
 def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_dist):
@@ -220,22 +279,22 @@ class SemiAdaptedKernel(Kernel):
         )
 
 
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=2048)
 def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
-    if parent_particle is not None:
-        ret = SemiAdaptedProposalDistribution(
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_modelling_active=outlier_modelling_active,
-            parent_tree=parent_particle.built_tree,
-        )
-    else:
-        ret = SemiAdaptedProposalDistribution(
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_modelling_active=outlier_modelling_active,
-            parent_tree=None,
-        )
+    # if parent_particle is not None:
+    #     ret = SemiAdaptedProposalDistribution(
+    #         data_point,
+    #         kernel,
+    #         parent_particle,
+    #         outlier_modelling_active=outlier_modelling_active,
+    #         parent_tree=parent_particle.tree,
+    #     )
+    # else:
+    ret = SemiAdaptedProposalDistribution(
+        data_point,
+        kernel,
+        parent_particle,
+        outlier_modelling_active=outlier_modelling_active,
+        parent_tree=None,
+    )
     return ret

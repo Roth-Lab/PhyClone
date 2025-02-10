@@ -44,8 +44,8 @@ def define_initial_data_order_on_df(df):
 
 def add_rank_order_col_to_cluster_df(cell_prev_sorted_list, df):
     cluster_sort_ranks = {v.cluster_id: k for k, v in enumerate(cell_prev_sorted_list)}
-    print("\nThe following initial data order has been defined:")
-    print(json.dumps(cluster_sort_ranks, indent=4, sort_keys=False))
+    # print("\nThe following initial data order has been defined:")
+    # print(json.dumps(cluster_sort_ranks, indent=4, sort_keys=False))
     df["order_rank"] = -1
     for cluster_id, order_rank in cluster_sort_ranks.items():
         df.loc[df["cluster_id"] == cluster_id, "order_rank"] = order_rank
