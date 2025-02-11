@@ -60,22 +60,12 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
                 num_children = tree.num_children_on_node_that_matters
 
-                # try:
-                #     num_children = tree.num_children_on_node_that_matters
-                # except AttributeError:
-                #     num_children = tree.get_number_of_children(tree.node_last_added_to)
-
                 log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
 
         return log_p
 
     def _get_log_p(self, tree):
         """Get the log probability of the given tree. From stored dict, using TreeHolder intermediate."""
-        # if isinstance(tree, Tree):
-        #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-        # else:
-        #     tree_particle = tree
-        # tree_particle = tree
         return self._log_p[tree]
 
     def sample(self):
@@ -94,7 +84,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
     def _init_dist(self):
         self._log_p = {}
-        # trees = self._get_existing_node_trees()
+
         trees = list()
 
         if self.outlier_modelling_active:
@@ -109,40 +99,17 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             tree.create_root_node(children=[], data=[self.data_point])
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-            # self._tree_shell_node_adder = TreeShellNodeAdder(tree)
             trees.append(tree_particle)
         else:
             self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.perm_dist)
-            # self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree, self.perm_dist)
-            # self._tree_shell_node_adder = get_cached_tree_shell_node_adder(self.parent_particle, self.perm_dist)
             old_num_roots = len(self.parent_particle.tree_roots)
             self._cached_log_old_num_roots = np.log(old_num_roots + 1)
-
-        # trees.extend(self._get_existing_node_trees())
 
         trees.extend(self._get_existing_node_trees())
 
         self._set_log_p_dist(trees)
 
         self.parent_tree = None
-
-    # @profile
-    # def _get_existing_node_trees(self):
-    #     """Enumerate all trees obtained by adding the data point to an existing node."""
-    #     trees = []
-    #
-    #     if self.parent_particle is None:
-    #         return trees
-    #
-    #     nodes = self.parent_particle.tree_roots
-    #
-    #     for node in nodes:
-    #         tree = self.parent_tree.copy()
-    #         tree.add_data_point_to_node(self.data_point, node)
-    #         tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-    #         trees.append(tree_particle)
-    #
-    #     return trees
 
     def _get_existing_node_trees(self):
         """Enumerate all trees obtained by adding the data point to an existing node."""
@@ -154,7 +121,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         nodes = self.parent_particle.tree_roots
 
         for node in nodes:
-            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist)
+            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
             trees.append(tree_holder)
 
         return trees
@@ -191,7 +158,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
     def _set_q_dist(self, log_q):
         q = np.exp(log_q)
-        q_sum = np.sum(q)
+        q_sum = q.sum()
         assert abs(1 - q_sum) < 1e-6
         q /= q_sum
         self._q_dist = q
@@ -207,80 +174,32 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             children = self._rng.choice(self.parent_particle.tree_roots, num_children, replace=False)
 
         frozen_children = frozenset(children)
-        #
-        # tree_container = get_cached_new_tree(
-        #     self.parent_particle,
-        #     self.data_point,
-        #     frozen_children,
-        #     self.tree_dist,
-        #     self.perm_dist,
-        # )
 
-        # if self.parent_particle != self._tree_shell_node_adder:
-        #     self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree)
-
-        # if self._tree_shell_node_adder is None:
-        #     self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_particle.tree, self.perm_dist)
-
-        tree_container2 = get_cached_new_tree_adder(
+        tree_container = get_cached_new_tree_adder(
             self._tree_shell_node_adder,
             self.data_point,
             frozen_children,
             self.tree_dist,
-            # self.perm_dist,
-            # self.parent_particle
         )
-        # tree_container2 = tree_container_builder.build()
-        #
-        # # assert tree_container == tree_container2
-        # if tree_container != tree_container2:
-        #     print('f')
-        #     tree_cont = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point, self.tree_dist)
-        #     tree_cont_check = tree_cont.build()
-        #     assert tree_cont_check == tree_container
 
-        # tree_cont = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point,
-        #                                                                          self.tree_dist)
-        # tree_container2 = tree_cont.build()
-
-
-        # assert tree_container == tree_container2
-        # assert np.isclose(tree_container.log_p, tree_container2.log_p)
-        # assert np.isclose(tree_container.log_p_one, tree_container2.log_p_one)
-        # assert np.isclose(tree_container.log_pdf, tree_container2.log_pdf)
-
-        return tree_container2
-
-
-# @lru_cache(maxsize=2048)
-# def get_cached_tree_shell_node_adder(parent_particle, perm_dist):
-#     ret_val = TreeShellNodeAdder(parent_particle.tree, perm_dist)
-#     return ret_val
+        return tree_container
 
 
 @lru_cache(maxsize=2048)
 def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_dist):
-    # tree = parent_particle.tree
-    #
-    # tree.create_root_node(children=children, data=[data_point])
-    #
-    # tree_container = TreeHolder(tree, tree_dist, perm_dist)
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
     tree_container = tree_holder_builder.build()
 
     return tree_container
 
+
 @lru_cache(maxsize=2048)
 def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id, tree_dist):
-    # tree = parent_particle.tree
-    #
-    # tree.create_root_node(children=children, data=[data_point])
-    #
-    # tree_container = TreeHolder(tree, tree_dist, perm_dist)
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point, tree_dist)
     tree_container = tree_holder_builder.build()
 
     return tree_container
+
 
 @lru_cache(maxsize=1024)
 def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_dist):
@@ -315,15 +234,6 @@ class SemiAdaptedKernel(Kernel):
 
 @lru_cache(maxsize=2048)
 def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
-    # if parent_particle is not None:
-    #     ret = SemiAdaptedProposalDistribution(
-    #         data_point,
-    #         kernel,
-    #         parent_particle,
-    #         outlier_modelling_active=outlier_modelling_active,
-    #         parent_tree=parent_particle.tree,
-    #     )
-    # else:
     ret = SemiAdaptedProposalDistribution(
         data_point,
         kernel,
