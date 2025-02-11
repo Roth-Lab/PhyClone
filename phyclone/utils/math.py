@@ -54,7 +54,8 @@ def exp_normalize(log_p):
 
     p = np.exp(log_p - log_norm)
 
-    p = p / p.sum()
+    # p = p / p.sum()
+    p /= p.sum()
 
     return p, log_norm
 
@@ -123,18 +124,7 @@ def log_sum_exp(log_X):
     return np.log(total) + max_exp
 
 
-# @numba.jit(nopython=True, fastmath=True)
-# def lower_clip(arr, lower):
-#     # rows = len(arr)
-#     cols = arr.shape[-1]
-#     for dim_arr in arr:
-#         # dim_arr = arr[i]
-#         for j in range(cols):
-#             if dim_arr[j] < lower:
-#                 dim_arr[j] = lower
-
-
-@numba.jit(nopython=True, fastmath=False)
+@numba.jit(nopython=True, fastmath=True)
 def log_sum_exp_over_dims(log_x_arr):
 
     sum_total = np.float64(0.0)
@@ -152,21 +142,15 @@ def log_sum_exp_over_dims_to_arr(log_x_arr):
 
     for dim, log_x_dim in enumerate(log_x_arr):
         ret_arr[dim] = log_sum_exp(log_x_dim)
-    # for ret_dim, log_x_dim in zip(ret_arr, log_x_arr):
-    #     ret_dim = log_sum_exp(log_x_dim)
 
     return ret_arr
 
 
 @numba.jit(nopython=True, fastmath=False)
 def log_sum_exp_over_dims_to_arr_supplied(log_x_arr, ret_arr):
-    # num_dims = log_x_arr.shape[0]
-    # ret_arr = np.empty(num_dims, np.float64)
 
     for dim, log_x_dim in enumerate(log_x_arr):
         ret_arr[dim] = log_sum_exp(log_x_dim)
-    # for ret_dim, log_x_dim in zip(ret_arr, log_x_arr):
-    #     ret_dim = log_sum_exp(log_x_dim)
 
     return ret_arr
 
@@ -222,10 +206,11 @@ def log_multinomial_coefficient(x):
 
     n = sum(x)
 
-    result = log_factorial(n)
+    result = cached_log_factorial(n)
 
-    for x_i in x:
-        result -= log_factorial(x_i)
+    # for x_i in x:
+    #     result -= cached_log_factorial(x_i)
+    result -= sum(map(cached_log_factorial, x))
 
     return result
 
@@ -342,24 +327,6 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
 
     return ans_arr
-
-# @numba.jit(nopython=True, fastmath=False)
-# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-#     """Direct convolution in numba-time."""
-#
-#     n = log_x_arr.shape[-1]
-#     # dims = log_x_arr.shape[0]
-#
-#     for l, (log_x, log_y) in enumerate(zip(log_x_arr, log_y_arr)):
-#         # log_x = log_x_arr[l]
-#         # log_y = log_y_arr[l]
-#         log_y = log_y[::-1]
-#         ans = ans_arr[l]
-#         for k in range(1, n + 1):
-#             for j in range(k):
-#                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
-#
-#     return ans_arr
 
 
 def fft_convolve_two_children(child_1, child_2):

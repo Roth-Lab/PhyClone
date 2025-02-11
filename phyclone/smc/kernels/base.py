@@ -1,4 +1,12 @@
-from phyclone.smc.swarm import Particle
+from functools import lru_cache
+
+import numpy as np
+
+from phyclone.data.base import DataPoint
+from phyclone.smc.swarm import Particle, TreeHolder
+from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree import Tree
+from phyclone.utils.math import log_normalize
 
 
 class Kernel(object):
@@ -83,6 +91,10 @@ class ProposalDistribution(object):
         "_rng",
         "parent_tree",
         "outlier_modelling_active",
+        "_q_dist",
+        "_tree_shell_node_adder",
+        "_log_p",
+        "_curr_trees"
     )
 
     def __init__(
@@ -93,6 +105,10 @@ class ProposalDistribution(object):
         outlier_modelling_active=False,
         parent_tree=None,
     ):
+        self._q_dist = None
+        self._tree_shell_node_adder = None
+        self._log_p = {}
+        self._curr_trees = None
         self.data_point = data_point
 
         self.tree_dist = kernel.tree_dist
@@ -116,19 +132,8 @@ class ProposalDistribution(object):
         """Tree has no nodes"""
         return (self.parent_particle is None) or (len(self.parent_particle.tree_roots) == 0)
 
-    # def _set_parent_tree(self, parent_tree):
-    #     if self.parent_particle is not None:
-    #         if parent_tree is not None:
-    #             self.parent_tree = parent_tree
-    #         else:
-    #             self.parent_tree = self.parent_particle.tree
-    #     else:
-    #         self.parent_tree = None
     def _set_parent_tree(self):
         if self.parent_particle is not None:
-            # if parent_tree is not None:
-            #     self.parent_tree = parent_tree
-            # else:
             self.parent_tree = self.parent_particle.tree
         else:
             self.parent_tree = None
@@ -140,3 +145,62 @@ class ProposalDistribution(object):
     def sample(self):
         """Sample a new tree from the proposal distribution."""
         raise NotImplementedError
+
+    def _get_existing_node_trees(self):
+        """Enumerate all trees obtained by adding the data point to an existing node."""
+        trees = []
+
+        if self.parent_particle is None:
+            return trees
+
+        nodes = self.parent_particle.tree_roots
+
+        for node in nodes:
+            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
+            trees.append(tree_holder)
+
+        return trees
+
+    def _get_outlier_tree(self):
+        """Get the tree obtained by adding data point as outlier"""
+        if self.parent_particle is None:
+            tree = Tree(self.data_point.grid_size)
+
+        else:
+            tree = self.parent_tree.copy()
+
+        tree.add_data_point_to_outliers(self.data_point)
+
+        tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+
+        return tree_particle
+
+    def _set_log_p_dist(self, trees):
+        log_q = np.array([x.log_p for x in trees])
+        log_q = log_normalize(log_q)
+        self._curr_trees = trees
+        self._set_q_dist(log_q)
+        self._log_p = dict(zip(trees, log_q))
+
+    def _set_q_dist(self, log_q):
+        q = np.exp(log_q)
+        q_sum = q.sum()
+        assert abs(1 - q_sum) < 1e-6
+        q /= q_sum
+        self._q_dist = q
+
+
+@lru_cache(maxsize=2048)
+def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_dist):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
+    tree_container = tree_holder_builder.build()
+
+    return tree_container
+
+
+@lru_cache(maxsize=2048)
+def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id, tree_dist):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point, tree_dist)
+    tree_container = tree_holder_builder.build()
+
+    return tree_container

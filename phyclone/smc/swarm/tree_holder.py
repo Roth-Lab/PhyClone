@@ -74,7 +74,6 @@ class TreeHolder(object):
         self.node_last_added_to = tree.node_last_added_to
         if self.node_last_added_to != tree.outlier_node_name:
             self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
-            # self.num_children_on_node_that_matters = tree.num_children_on_node_that_matters
         else:
             self.num_children_on_node_that_matters = 0
 

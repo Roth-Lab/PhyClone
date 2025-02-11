@@ -2,12 +2,11 @@ from functools import lru_cache
 
 import numpy as np
 
-from phyclone.data.base import DataPoint
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
-from phyclone.utils.math import log_normalize, cached_log_binomial_coefficient
+from phyclone.utils.math import cached_log_binomial_coefficient
 
 
 class SemiAdaptedProposalDistribution(ProposalDistribution):
@@ -17,7 +16,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("_log_p", "log_half", "_q_dist", "_curr_trees", "parent_is_empty_tree", "_cached_log_old_num_roots", "_tree_shell_node_adder")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots")
 
     def __init__(
         self,
@@ -32,8 +31,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.log_half = kernel.log_half
 
         self.parent_is_empty_tree = False
-
-        self._tree_shell_node_adder = None
 
         self._init_dist()
 
@@ -111,35 +108,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         self.parent_tree = None
 
-    def _get_existing_node_trees(self):
-        """Enumerate all trees obtained by adding the data point to an existing node."""
-        trees = []
-
-        if self.parent_particle is None:
-            return trees
-
-        nodes = self.parent_particle.tree_roots
-
-        for node in nodes:
-            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
-            trees.append(tree_holder)
-
-        return trees
-
-    def _get_outlier_tree(self):
-        """Get the tree obtained by adding data point as outlier"""
-        if self.parent_particle is None:
-            tree = Tree(self.data_point.grid_size)
-
-        else:
-            tree = self.parent_tree.copy()
-
-        tree.add_data_point_to_outliers(self.data_point)
-
-        tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-
-        return tree_particle
-
     def _propose_existing_node(self):
         q = self._q_dist
 
@@ -148,20 +116,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         tree = self._curr_trees[idx]
 
         return tree
-
-    def _set_log_p_dist(self, trees):
-        log_q = np.array([x.log_p for x in trees])
-        log_q = log_normalize(log_q)
-        self._curr_trees = trees
-        self._set_q_dist(log_q)
-        self._log_p = dict(zip(trees, log_q))
-
-    def _set_q_dist(self, log_q):
-        q = np.exp(log_q)
-        q_sum = q.sum()
-        assert abs(1 - q_sum) < 1e-6
-        q /= q_sum
-        self._q_dist = q
 
     def _propose_new_node(self):
         num_roots = len(self.parent_particle.tree_roots)
@@ -183,22 +137,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         )
 
         return tree_container
-
-
-@lru_cache(maxsize=2048)
-def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_dist):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
-    tree_container = tree_holder_builder.build()
-
-    return tree_container
-
-
-@lru_cache(maxsize=2048)
-def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id, tree_dist):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point, tree_dist)
-    tree_container = tree_holder_builder.build()
-
-    return tree_container
 
 
 @lru_cache(maxsize=1024)
