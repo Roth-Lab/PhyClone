@@ -2,6 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 
+from phyclone.data.base import DataPoint
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
@@ -93,7 +94,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
     def _init_dist(self):
         self._log_p = {}
-        trees = self._get_existing_node_trees()
+        # trees = self._get_existing_node_trees()
+        trees = list()
 
         if self.outlier_modelling_active:
             trees.append(self._get_outlier_tree())
@@ -116,9 +118,31 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             old_num_roots = len(self.parent_particle.tree_roots)
             self._cached_log_old_num_roots = np.log(old_num_roots + 1)
 
+        # trees.extend(self._get_existing_node_trees())
+
+        trees.extend(self._get_existing_node_trees())
+
         self._set_log_p_dist(trees)
 
         self.parent_tree = None
+
+    # @profile
+    # def _get_existing_node_trees(self):
+    #     """Enumerate all trees obtained by adding the data point to an existing node."""
+    #     trees = []
+    #
+    #     if self.parent_particle is None:
+    #         return trees
+    #
+    #     nodes = self.parent_particle.tree_roots
+    #
+    #     for node in nodes:
+    #         tree = self.parent_tree.copy()
+    #         tree.add_data_point_to_node(self.data_point, node)
+    #         tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+    #         trees.append(tree_particle)
+    #
+    #     return trees
 
     def _get_existing_node_trees(self):
         """Enumerate all trees obtained by adding the data point to an existing node."""
@@ -130,10 +154,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         nodes = self.parent_particle.tree_roots
 
         for node in nodes:
-            tree = self.parent_tree.copy()
-            tree.add_data_point_to_node(self.data_point, node)
-            tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-            trees.append(tree_particle)
+            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist)
+            trees.append(tree_holder)
 
         return trees
 
@@ -244,6 +266,18 @@ def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_
     #
     # tree_container = TreeHolder(tree, tree_dist, perm_dist)
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
+    tree_container = tree_holder_builder.build()
+
+    return tree_container
+
+@lru_cache(maxsize=2048)
+def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id, tree_dist):
+    # tree = parent_particle.tree
+    #
+    # tree.create_root_node(children=children, data=[data_point])
+    #
+    # tree_container = TreeHolder(tree, tree_dist, perm_dist)
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point, tree_dist)
     tree_container = tree_holder_builder.build()
 
     return tree_container

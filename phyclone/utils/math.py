@@ -123,15 +123,15 @@ def log_sum_exp(log_X):
     return np.log(total) + max_exp
 
 
-@numba.jit(nopython=True, fastmath=True)
-def lower_clip(arr, lower):
-    # rows = len(arr)
-    cols = arr.shape[-1]
-    for dim_arr in arr:
-        # dim_arr = arr[i]
-        for j in range(cols):
-            if dim_arr[j] < lower:
-                dim_arr[j] = lower
+# @numba.jit(nopython=True, fastmath=True)
+# def lower_clip(arr, lower):
+#     # rows = len(arr)
+#     cols = arr.shape[-1]
+#     for dim_arr in arr:
+#         # dim_arr = arr[i]
+#         for j in range(cols):
+#             if dim_arr[j] < lower:
+#                 dim_arr[j] = lower
 
 
 @numba.jit(nopython=True, fastmath=False)
