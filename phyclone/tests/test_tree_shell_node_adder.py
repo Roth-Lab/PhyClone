@@ -3,7 +3,6 @@ import unittest
 import numpy as np
 
 from phyclone.smc.swarm import TreeHolder
-# from phyclone.tests.old_implementations import OldTree
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tests.simulate import simulate_binomial_data
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
@@ -57,28 +56,6 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         data = self._create_data_points(6, n, p)
         return data
 
-    # def test_copy(self):
-    #     original_tree = self.build_cherry_tree(Tree)
-    #
-    #     copied_tree = original_tree.copy()
-    #
-    #     original_nodes = original_tree._graph.nodes()
-    #     copied_nodes = copied_tree._graph.nodes()
-    #
-    #     for orig_node, copied_node in zip(original_nodes, copied_nodes):
-    #         self.assertIsNot(orig_node, copied_node)
-    #         np.testing.assert_array_equal(copied_node.log_r, orig_node.log_r)
-    #         np.testing.assert_array_equal(copied_node.log_p, orig_node.log_p)
-    #         self.assertIsNot(copied_node.log_r, orig_node.log_r)
-    #         self.assertIsNot(copied_node.log_p, orig_node.log_p)
-    #         self.assertEqual(copied_node.node_id, orig_node.node_id)
-    #
-    #         copied_node.log_r += 1
-    #
-    #         self.assertFalse(np.array_equal(copied_node.log_r, orig_node.log_r))
-    #
-    #     self.assertEqual(copied_tree, original_tree)
-    #     self.assertIsNot(copied_tree, original_tree)
 
     def test_single_node_tree_hash(self):
         n = 100
@@ -170,8 +147,6 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built_roots = actual_tree_built.roots
 
-        # actual_tree_built.create_root_node(children=[actual_tree_built_roots[0]], data=[data[-1]])
-
         tree_holder_builder = tree_shell.create_tree_holder_with_new_node(children=[actual_tree_built_roots[0]],
                                                                           datapoint=data[-1],
                                                                           tree_dist=self.tree_joint_dist)
@@ -188,11 +163,56 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
 
         self.assertEqual(actual_tree_holder, expected_tree_holder)
-
         self.assertEqual(self.tree_joint_dist.log_p(expected_rebuilt_tree), self.tree_joint_dist.log_p(tree_holder_builder))
         self.assertEqual(actual_tree_holder.log_p,
                          self.tree_joint_dist.log_p(tree_holder_builder))
         self.assertEqual(self.tree_joint_dist.log_p_one(expected_rebuilt_tree), self.tree_joint_dist.log_p_one(tree_holder_builder))
+        self.assertEqual(actual_tree_holder.log_pdf, expected_tree_holder.log_pdf)
+        self.assertListEqual(expected_rebuilt_tree.nodes, tree_holder_builder.nodes)
+        self.assertListEqual(expected_rebuilt_tree.roots, tree_holder_builder.roots)
+        self.assertEqual(expected_rebuilt_tree.multiplicity, tree_holder_builder.multiplicity)
+
+    def test_cherry_tree_add_datapoint_to_node(self):
+        n = 100
+        p = 1.0
+
+        data = self._create_data_points(7, n, p)
+
+        actual_tree_built = self.build_cherry_tree(Tree, data[:-1])
+
+        tree_shell = TreeShellNodeAdder(actual_tree_built)
+
+        actual_tree_built_roots = actual_tree_built.roots
+
+        # tree_holder_builder = tree_shell.create_tree_holder_with_new_node(children=[actual_tree_built_roots[0]],
+        #                                                                   datapoint=data[-1],
+        #                                                                   tree_dist=self.tree_joint_dist)
+        tree_holder_builder = tree_shell.create_tree_holder_with_datapoint_added_to_node(actual_tree_built_roots[0],
+                                                                                         datapoint=data[-1],
+                                                                                         tree_dist=self.tree_joint_dist)
+
+        self.assertEqual(tree_holder_builder.multiplicity, actual_tree_built.multiplicity)
+
+        actual_tree_holder = tree_holder_builder.build()
+
+        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_joint_dist, None)
+
+        expected_rebuilt_tree = expected_tree_holder.tree
+        expected_rebuilt_tree.add_data_point_to_node(data[-1], actual_tree_built_roots[0])
+        expected_tree_holder = TreeHolder(expected_rebuilt_tree, self.tree_joint_dist, None)
+
+
+        self.assertEqual(actual_tree_holder, expected_tree_holder)
+        self.assertEqual(self.tree_joint_dist.log_p(expected_rebuilt_tree), self.tree_joint_dist.log_p(tree_holder_builder))
+        self.assertEqual(actual_tree_holder.log_p,
+                         self.tree_joint_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_joint_dist.log_p_one(expected_rebuilt_tree), self.tree_joint_dist.log_p_one(tree_holder_builder))
+        self.assertEqual(actual_tree_holder.log_pdf, expected_tree_holder.log_pdf)
+        self.assertListEqual(expected_rebuilt_tree.nodes, tree_holder_builder.nodes)
+        self.assertListEqual(expected_rebuilt_tree.roots, tree_holder_builder.roots)
+        self.assertListEqual(expected_rebuilt_tree.roots, list(actual_tree_holder.tree_roots))
+        self.assertListEqual(expected_rebuilt_tree.nodes, actual_tree_holder.tree_nodes)
+        self.assertEqual(expected_rebuilt_tree.multiplicity, tree_holder_builder.multiplicity)
 
     # def test_cherry_tree_from_dict_representation(self):
     #     data = self.build_six_datapoints()

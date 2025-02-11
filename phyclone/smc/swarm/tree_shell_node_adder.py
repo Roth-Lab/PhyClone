@@ -123,9 +123,11 @@ class TreeHolderBuilder(object):
     def with_log_pdf(self, log_pdf):
         self._log_pdf = log_pdf
 
-    def with_node_last_added_to(self, node_last_added_to):
+    def with_node_last_added_to(self, node_last_added_to, datapoint_add=False):
         self._node_last_added_to = node_last_added_to
-        self.nodes = self._nodes + [node_last_added_to]
+        # self.nodes = self._nodes + [node_last_added_to]
+        if not datapoint_add:
+            self.nodes = self._nodes + [node_last_added_to]
         return self
 
     def with_num_children_on_node_that_matters(self, num_children_on_node_that_matters):
@@ -331,7 +333,7 @@ class TreeShellNodeAdder(object):
 
 
         num_children = self.roots_num_children[node_id]
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, tree_dist)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, tree_dist, datapoint_add=True)
 
         node_obj = self._root_nodes_dict[node_id].copy()
 
@@ -428,9 +430,9 @@ class TreeShellNodeAdder(object):
             graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
         return new_node_obj, node_idx
 
-    def _add_num_children_and_node_id(self, node_id, num_children, tree_dist):
+    def _add_num_children_and_node_id(self, node_id, num_children, tree_dist, datapoint_add=False):
         tree_holder_builder = self._get_initial_tree_holder_builder()
-        tree_holder_builder.with_node_last_added_to(node_id)
+        tree_holder_builder.with_node_last_added_to(node_id, datapoint_add)
         tree_holder_builder.with_num_children_on_node_that_matters(num_children)
         tree_holder_builder.with_tree_dist(tree_dist)
         return tree_holder_builder

@@ -148,16 +148,17 @@ class ProposalDistribution(object):
 
     def _get_existing_node_trees(self):
         """Enumerate all trees obtained by adding the data point to an existing node."""
-        trees = []
+        # trees = []
 
         if self.parent_particle is None:
-            return trees
+            return []
 
         nodes = self.parent_particle.tree_roots
 
-        for node in nodes:
-            tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
-            trees.append(tree_holder)
+        # for node in nodes:
+        #     tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
+        #     trees.append(tree_holder)
+        trees = [get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,) for node in nodes]
 
         return trees
 
@@ -178,7 +179,7 @@ class ProposalDistribution(object):
     def _set_log_p_dist(self, trees):
         log_q = np.array([x.log_p for x in trees])
         log_q = log_normalize(log_q)
-        self._curr_trees = trees
+        self._curr_trees = np.array(trees)
         self._set_q_dist(log_q)
         self._log_p = dict(zip(trees, log_q))
 

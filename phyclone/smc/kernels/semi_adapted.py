@@ -1,7 +1,6 @@
 from functools import lru_cache
 
 import numpy as np
-
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
@@ -16,7 +15,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots",
+                 "_computed_prob", "_max_samples", "_sample_idx", "_sample_arr", "_u_draws", "_u_idx")
 
     def __init__(
         self,
@@ -32,7 +32,20 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         self.parent_is_empty_tree = False
 
+        self._max_samples = 100
+
+        self._sample_idx = self._max_samples
+
+        self._u_draws = None
+
+        self._u_idx = self._max_samples
+
+        self._sample_arr = None
+
+        self._computed_prob = dict()
+
         self._init_dist()
+
 
     def log_p(self, tree):
         """Get the log probability of proposing the tree."""
@@ -51,13 +64,17 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             # New node
             else:
-                old_num_roots = len(self.parent_particle.tree_roots)
+                if tree in self._computed_prob:
+                    log_p = self._computed_prob[tree]
+                else:
+                    old_num_roots = len(self.parent_particle.tree_roots)
 
-                log_p = self.log_half
+                    log_p = self.log_half
 
-                num_children = tree.num_children_on_node_that_matters
+                    num_children = tree.num_children_on_node_that_matters
 
-                log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
+                    log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
+                    self._computed_prob[tree] = log_p
 
         return log_p
 
@@ -70,7 +87,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         if self.parent_is_empty_tree:
             tree = self._propose_existing_node()
         else:
-            u = self._rng.random()
+            # u = self._rng.random()
+            if self._u_idx == self._max_samples:
+                self._u_draws = self._rng.random(size=self._max_samples, dtype=np.float32)
+                self._u_idx = 0
+
+            u = self._u_draws[self._u_idx]
+            self._u_idx += 1
 
             if u < 0.5:
                 tree = self._propose_existing_node()
@@ -109,23 +132,34 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.parent_tree = None
 
     def _propose_existing_node(self):
-        q = self._q_dist
+        # q = self._q_dist
 
-        idx = self._rng.multinomial(1, q).argmax()
+        # idx = self._rng.multinomial(1, q).argmax()
+        #
+        # tree = self._curr_trees[idx]
 
-        tree = self._curr_trees[idx]
+        # tree = self._rng.choice(trees, size=None, p=q)
+        if self._sample_idx == self._max_samples:
+            self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
+            self._sample_idx = 0
+
+        tree = self._curr_trees[self._sample_arr[self._sample_idx]]
+        self._sample_idx += 1
 
         return tree
 
     def _propose_new_node(self):
-        num_roots = len(self.parent_particle.tree_roots)
+        roots = self.parent_particle.tree_roots
+        num_roots = len(roots)
 
         num_children = self._rng.integers(0, num_roots + 1)
 
         if num_children == 0:
             children = []
+        elif num_children == num_roots:
+            children = roots
         else:
-            children = self._rng.choice(self.parent_particle.tree_roots, num_children, replace=False)
+            children = self._rng.choice(roots, num_children, replace=False)
 
         frozen_children = frozenset(children)
 
