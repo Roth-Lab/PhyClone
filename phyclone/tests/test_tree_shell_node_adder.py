@@ -135,6 +135,13 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         self.assertEqual(self.tree_joint_dist.log_p(actual_tree_built), self.tree_joint_dist.log_p(tree_holder_builder))
         self.assertEqual(self.tree_joint_dist.log_p_one(actual_tree_built), self.tree_joint_dist.log_p_one(tree_holder_builder))
 
+        actual_tree_from_holder = actual_tree_holder.tree
+        expected_tree_from_holder = expected_tree_holder.tree
+        self.assertEqual(actual_tree_from_holder, expected_tree_from_holder)
+        self.assertEqual(actual_tree_from_holder, actual_tree_built)
+
+
+
     def test_cherry_tree_add_node_to_node(self):
         n = 100
         p = 1.0

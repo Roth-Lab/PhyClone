@@ -310,41 +310,6 @@ def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
     return ans_arr
 
 
-# @numba.jit(nopython=True, fastmath=False)
-# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-#     """Direct convolution in numba-time."""
-#
-#     n = log_x_arr.shape[-1]
-#     dims = log_x_arr.shape[0]
-#
-#     for l in range(dims):
-#         log_x = log_x_arr[l]
-#         log_y = log_y_arr[l]
-#         log_y = log_y[::-1]
-#         ans = ans_arr[l]
-#         for k in range(1, n + 1):
-#             for j in range(k):
-#                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
-#
-#     return ans_arr
-# @numba.jit(nopython=True, fastmath=True)
-# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-#     """Direct convolution in numba-time."""
-#
-#     n = log_x_arr.shape[-1]
-#     dims = log_x_arr.shape[0]
-#
-#     for l in range(dims):
-#         log_x = log_x_arr[l]
-#         log_y = log_y_arr[l]
-#         # log_y = log_y[::-1]
-#         ans = ans_arr[l]
-#         for k in range(1, n + 1):
-#             for j in range(k):
-#                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
-#
-#     return ans_arr
-
 @numba.jit(nopython=True, fastmath=True)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
