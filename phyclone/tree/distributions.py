@@ -1,6 +1,6 @@
 import numpy as np
 from math import ulp
-from phyclone.utils.math import cached_log_factorial, log_sum_exp
+from phyclone.utils.math import cached_log_factorial, log_sum_exp, log_sum_exp_over_dims
 
 
 class FSCRPDistribution(object):
@@ -159,9 +159,9 @@ class TreeJointDistribution(object):
         log_p += self.outlier_prior(tree_node_data, tree.outlier_node_name)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
-            log_p += sum(map(log_sum_exp, tree.data_log_likelihood))
+            # log_p += sum(map(log_sum_exp, tree.data_log_likelihood))
             # log_p += sum(log_sum_exp(tree.data_log_likelihood[i, :]) for i in range(tree.grid_size[0]))
-            # log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
+            log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
             # for i in range(tree.grid_size[0]):
             #     log_p += log_sum_exp(tree.data_log_likelihood[i, :])
 
@@ -197,11 +197,11 @@ class TreeJointDistribution(object):
         log_p_one += log_outlier_prior
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
-            # log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
+            log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
             # for i in range(tree.grid_size[0]):
             #     log_p += log_sum_exp(tree.data_log_likelihood[i, :])
             # log_p += sum(log_sum_exp(tree.data_log_likelihood[i, :]) for i in range(tree.grid_size[0]))
-            log_p += sum(map(log_sum_exp, tree.data_log_likelihood))
+            # log_p += sum(map(log_sum_exp, tree.data_log_likelihood))
             log_p_one += tree.data_log_likelihood[:, -1].sum()
 
 

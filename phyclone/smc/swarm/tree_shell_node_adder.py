@@ -282,13 +282,13 @@ class TreeShellNodeAdder(object):
         "roots_num_children",
         "roots_num_desc",
         "_nodes",
-        "tree_dict",
+        "tree_dist",
         "perm_dist",
         "_perm_dist_dict",
         "_num_datapoints"
     )
 
-    def __init__(self, tree: Tree, perm_dist: RootPermutationDistribution = None):
+    def __init__(self, tree: Tree, tree_dist: TreeJointDistribution, perm_dist: RootPermutationDistribution = None):
         self._hash_val = hash(tree)
         self._tree_info = TreeInfo(**tree.to_dict())
         self._grid_size = self._tree_info.grid_size
@@ -302,6 +302,7 @@ class TreeShellNodeAdder(object):
         self._root_node_names_set = self._root_nodes_dict.keys()
         self._nodes = tree.nodes
         self.perm_dist = perm_dist
+        self.tree_dist = tree_dist
         self._perm_dist_dict = None
         self._num_datapoints = 0
 
@@ -328,12 +329,11 @@ class TreeShellNodeAdder(object):
 
     def create_tree_holder_with_datapoint_added_to_node(self,
                                                         node_id: int | str,
-                                                        datapoint: DataPoint,
-                                                        tree_dist: TreeJointDistribution):
+                                                        datapoint: DataPoint):
 
 
         num_children = self.roots_num_children[node_id]
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, tree_dist, datapoint_add=True)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
 
         node_obj = self._root_nodes_dict[node_id].copy()
 
@@ -383,8 +383,7 @@ class TreeShellNodeAdder(object):
     def create_tree_holder_with_new_node(
         self,
         children: frozenset[int | str] | list[int | str] | None,
-        datapoint: DataPoint,
-        tree_dist: TreeJointDistribution
+        datapoint: DataPoint
     ):
         if children is None:
             children = set()
@@ -394,7 +393,7 @@ class TreeShellNodeAdder(object):
         node_id = self._next_node_id
 
         num_children = len(children)
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, tree_dist)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children)
 
         graph = self._tree_info.build_graph_shell()
         node_idx_dict = self._tree_info.get_node_idx_dict()
@@ -430,11 +429,11 @@ class TreeShellNodeAdder(object):
             graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
         return new_node_obj, node_idx
 
-    def _add_num_children_and_node_id(self, node_id, num_children, tree_dist, datapoint_add=False):
+    def _add_num_children_and_node_id(self, node_id, num_children, datapoint_add=False):
         tree_holder_builder = self._get_initial_tree_holder_builder()
         tree_holder_builder.with_node_last_added_to(node_id, datapoint_add)
         tree_holder_builder.with_num_children_on_node_that_matters(num_children)
-        tree_holder_builder.with_tree_dist(tree_dist)
+        tree_holder_builder.with_tree_dist(self.tree_dist)
         return tree_holder_builder
 
     def _compute_new_log_pdf_added_datapoint(self, node_id, roots, tree_holder_builder, node_data):

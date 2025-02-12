@@ -23,7 +23,7 @@ from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
+from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches, print_cache_info
 
 
 def run(
@@ -303,6 +303,7 @@ def _run_main_sampler(
     for i in range(num_iters):
         with timer:
             if i % print_freq == 0:
+                # print_cache_info()
                 print_stats(i, tree, tree_dist, chain_num)
 
             clear_proposal_dist_caches()
@@ -388,9 +389,10 @@ def _run_burnin(
         for i in range(burnin):
             with timer:
                 if i % print_freq == 0:
+                    print_cache_info()
                     print_stats(i, tree, tree_dist, chain_num)
 
-                clear_proposal_dist_caches()
+                # clear_proposal_dist_caches()
 
                 tree = burnin_sampler.sample_tree(tree)
 

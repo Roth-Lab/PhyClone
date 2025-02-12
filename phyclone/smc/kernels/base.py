@@ -153,9 +153,21 @@ class ProposalDistribution(object):
 
         nodes = self.parent_particle.tree_roots
 
-        trees = [get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,) for node in nodes]
+        # trees = [get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,) for node in nodes]
+        trees = [
+            self._build_existing_node_tree(node)
+            for node in nodes]
+        # tree_adder = self._tree_shell_node_adder
+        # dp = self.data_point
+        # tree_dist = self.tree_dist
+        #
+        # trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp, tree_dist).build() for node in nodes]
 
         return trees
+
+    def _build_existing_node_tree(self, node_id):
+        tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, self.data_point,)
+        return tree_holder_builder.build()
 
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
@@ -186,9 +198,9 @@ class ProposalDistribution(object):
         self._q_dist = q
 
 
-@lru_cache(maxsize=2048)
-def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_dist):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point, tree_dist)
+@lru_cache(maxsize=4096)
+def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
     tree_container = tree_holder_builder.build()
 
     return tree_container
@@ -196,7 +208,7 @@ def get_cached_new_tree_adder(tree_shell_node_adder, data_point, children, tree_
 
 @lru_cache(maxsize=2048)
 def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id, tree_dist):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point, tree_dist)
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point)
     tree_container = tree_holder_builder.build()
 
     return tree_container

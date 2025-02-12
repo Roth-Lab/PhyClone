@@ -16,9 +16,9 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         self._rng = np.random.default_rng(12345)
 
-        self.tree_dist = FSCRPDistribution(1.0)
+        # self.tree_dist = FSCRPDistribution(1.0)
 
-        self.tree_joint_dist = TreeJointDistribution(self.tree_dist, outlier_modelling_active=True)
+        self.tree_dist = TreeJointDistribution(FSCRPDistribution(1.0), outlier_modelling_active=True)
 
     def build_cherry_tree(self, tree_class, data=None):
         if data is None:
@@ -67,7 +67,7 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built = Tree.get_single_node_tree(data)
 
-        tree_shell = TreeShellNodeAdder(actual_tree_built)
+        tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         self.assertEqual(hash(tree_shell), hash(actual_tree_built))
 
@@ -80,24 +80,23 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built = Tree.get_single_node_tree(data[:-1])
 
-        tree_shell = TreeShellNodeAdder(actual_tree_built)
+        tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         actual_tree_built.create_root_node(children=[], data=[data[-1]])
 
         tree_holder_builder = tree_shell.create_tree_holder_with_new_node(children=[],
-                                                                          datapoint=data[-1],
-                                                                          tree_dist=self.tree_joint_dist)
+                                                                          datapoint=data[-1])
 
         self.assertEqual(tree_holder_builder.multiplicity, actual_tree_built.multiplicity)
 
         actual_tree_holder = tree_holder_builder.build()
 
-        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_dist, None)
 
         self.assertEqual(actual_tree_holder, expected_tree_holder)
 
-        self.assertEqual(self.tree_joint_dist.log_p(actual_tree_built), self.tree_joint_dist.log_p(tree_holder_builder))
-        self.assertEqual(self.tree_joint_dist.log_p_one(actual_tree_built), self.tree_joint_dist.log_p_one(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p(actual_tree_built), self.tree_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p_one(actual_tree_built), self.tree_dist.log_p_one(tree_holder_builder))
 
 
         # self.assertEqual(hash(tree_shell), hash(actual_tree_built))
@@ -116,24 +115,23 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built = self.build_cherry_tree(Tree, data[:-1])
 
-        tree_shell = TreeShellNodeAdder(actual_tree_built)
+        tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         actual_tree_built.create_root_node(children=[], data=[data[-1]])
 
         tree_holder_builder = tree_shell.create_tree_holder_with_new_node(children=[],
-                                                                          datapoint=data[-1],
-                                                                          tree_dist=self.tree_joint_dist)
+                                                                          datapoint=data[-1])
 
         self.assertEqual(tree_holder_builder.multiplicity, actual_tree_built.multiplicity)
 
         actual_tree_holder = tree_holder_builder.build()
 
-        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_dist, None)
 
         self.assertEqual(actual_tree_holder, expected_tree_holder)
 
-        self.assertEqual(self.tree_joint_dist.log_p(actual_tree_built), self.tree_joint_dist.log_p(tree_holder_builder))
-        self.assertEqual(self.tree_joint_dist.log_p_one(actual_tree_built), self.tree_joint_dist.log_p_one(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p(actual_tree_built), self.tree_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p_one(actual_tree_built), self.tree_dist.log_p_one(tree_holder_builder))
 
         actual_tree_from_holder = actual_tree_holder.tree
         expected_tree_from_holder = expected_tree_holder.tree
@@ -150,30 +148,29 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built = self.build_cherry_tree(Tree, data[:-1])
 
-        tree_shell = TreeShellNodeAdder(actual_tree_built)
+        tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         actual_tree_built_roots = actual_tree_built.roots
 
         tree_holder_builder = tree_shell.create_tree_holder_with_new_node(children=[actual_tree_built_roots[0]],
-                                                                          datapoint=data[-1],
-                                                                          tree_dist=self.tree_joint_dist)
+                                                                          datapoint=data[-1])
 
         self.assertEqual(tree_holder_builder.multiplicity, actual_tree_built.multiplicity)
 
         actual_tree_holder = tree_holder_builder.build()
 
-        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_dist, None)
 
         expected_rebuilt_tree = expected_tree_holder.tree
         expected_rebuilt_tree.create_root_node(children=[actual_tree_built_roots[0]], data=[data[-1]])
-        expected_tree_holder = TreeHolder(expected_rebuilt_tree, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(expected_rebuilt_tree, self.tree_dist, None)
 
 
         self.assertEqual(actual_tree_holder, expected_tree_holder)
-        self.assertEqual(self.tree_joint_dist.log_p(expected_rebuilt_tree), self.tree_joint_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p(expected_rebuilt_tree), self.tree_dist.log_p(tree_holder_builder))
         self.assertEqual(actual_tree_holder.log_p,
-                         self.tree_joint_dist.log_p(tree_holder_builder))
-        self.assertEqual(self.tree_joint_dist.log_p_one(expected_rebuilt_tree), self.tree_joint_dist.log_p_one(tree_holder_builder))
+                         self.tree_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p_one(expected_rebuilt_tree), self.tree_dist.log_p_one(tree_holder_builder))
         self.assertEqual(actual_tree_holder.log_pdf, expected_tree_holder.log_pdf)
         self.assertListEqual(expected_rebuilt_tree.nodes, tree_holder_builder.nodes)
         self.assertListEqual(expected_rebuilt_tree.roots, tree_holder_builder.roots)
@@ -187,7 +184,7 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built = self.build_cherry_tree(Tree, data[:-1])
 
-        tree_shell = TreeShellNodeAdder(actual_tree_built)
+        tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         actual_tree_built_roots = actual_tree_built.roots
 
@@ -195,25 +192,24 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         #                                                                   datapoint=data[-1],
         #                                                                   tree_dist=self.tree_joint_dist)
         tree_holder_builder = tree_shell.create_tree_holder_with_datapoint_added_to_node(actual_tree_built_roots[0],
-                                                                                         datapoint=data[-1],
-                                                                                         tree_dist=self.tree_joint_dist)
+                                                                                         datapoint=data[-1])
 
         self.assertEqual(tree_holder_builder.multiplicity, actual_tree_built.multiplicity)
 
         actual_tree_holder = tree_holder_builder.build()
 
-        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(actual_tree_built, self.tree_dist, None)
 
         expected_rebuilt_tree = expected_tree_holder.tree
         expected_rebuilt_tree.add_data_point_to_node(data[-1], actual_tree_built_roots[0])
-        expected_tree_holder = TreeHolder(expected_rebuilt_tree, self.tree_joint_dist, None)
+        expected_tree_holder = TreeHolder(expected_rebuilt_tree, self.tree_dist, None)
 
 
         self.assertEqual(actual_tree_holder, expected_tree_holder)
-        self.assertEqual(self.tree_joint_dist.log_p(expected_rebuilt_tree), self.tree_joint_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p(expected_rebuilt_tree), self.tree_dist.log_p(tree_holder_builder))
         self.assertEqual(actual_tree_holder.log_p,
-                         self.tree_joint_dist.log_p(tree_holder_builder))
-        self.assertEqual(self.tree_joint_dist.log_p_one(expected_rebuilt_tree), self.tree_joint_dist.log_p_one(tree_holder_builder))
+                         self.tree_dist.log_p(tree_holder_builder))
+        self.assertEqual(self.tree_dist.log_p_one(expected_rebuilt_tree), self.tree_dist.log_p_one(tree_holder_builder))
         self.assertEqual(actual_tree_holder.log_pdf, expected_tree_holder.log_pdf)
         self.assertListEqual(expected_rebuilt_tree.nodes, tree_holder_builder.nodes)
         self.assertListEqual(expected_rebuilt_tree.roots, tree_holder_builder.roots)

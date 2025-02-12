@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Union
 import numpy as np
 from phyclone.tree.utils import compute_log_S
 
@@ -7,7 +6,7 @@ from phyclone.tree.utils import compute_log_S
 class TreeNode(object):
     __slots__ = ("log_p", "log_r", "node_id", "data_points")
 
-    def __init__(self, grid_size: tuple[int, int], log_prior: float, node_id: Union[str | int]):
+    def __init__(self, grid_size: tuple[int, int], log_prior: float, node_id: str | int):
         self.log_p = np.full(grid_size, log_prior, order="C")
         self.log_r = np.zeros(grid_size, order="C")
         self.node_id = node_id

@@ -67,7 +67,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
             trees.append(tree_particle)
         else:
-            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.perm_dist)
+            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
             trees.extend(self._get_new_node_trees())
 
         if self.outlier_modelling_active:
@@ -102,7 +102,6 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
                         self._tree_shell_node_adder,
                         self.data_point,
                         frozen_children,
-                        self.tree_dist,
                     )
                     trees.append(tree_container)
 

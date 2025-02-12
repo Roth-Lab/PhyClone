@@ -15,8 +15,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots",
-                 "_computed_prob", "_max_samples", "_sample_idx", "_sample_arr", "_u_draws", "_u_idx")
+    # __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots",
+    #              "_computed_prob", "_max_samples", "_sample_idx", "_sample_arr", "_u_draws", "_u_idx")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob")
 
     def __init__(
         self,
@@ -31,15 +32,15 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         self.parent_is_empty_tree = False
 
-        self._max_samples = 100
-
-        self._sample_idx = self._max_samples
-
-        self._u_draws = None
-
-        self._u_idx = self._max_samples
-
-        self._sample_arr = None
+        # self._max_samples = 100
+        #
+        # self._sample_idx = self._max_samples
+        #
+        # self._u_draws = None
+        #
+        # self._u_idx = self._max_samples
+        #
+        # self._sample_arr = None
 
         self._computed_prob = dict()
 
@@ -54,8 +55,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            node = tree.labels[self.data_point.idx]
-            assert node == tree.node_last_added_to
+            # node = tree.labels[self.data_point.idx]
+            # assert node == tree.node_last_added_to
+            node = tree.node_last_added_to #TODO: maybe just write a dp -> node mapping somewhere, save a bit of trouble here
 
             # Existing node
             if node in self.parent_particle.tree_nodes or node == tree.outlier_node_name:
@@ -86,13 +88,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         if self.parent_is_empty_tree:
             tree = self._propose_existing_node()
         else:
-            # u = self._rng.random()
-            if self._u_idx == self._max_samples:
-                self._u_draws = self._rng.random(size=self._max_samples, dtype=np.float32)
-                self._u_idx = 0
-
-            u = self._u_draws[self._u_idx]
-            self._u_idx += 1
+            u = self._rng.random()
+            # if self._u_idx == self._max_samples:
+            #     self._u_draws = self._rng.random(size=self._max_samples, dtype=np.float32)
+            #     self._u_idx = 0
+            #
+            # u = self._u_draws[self._u_idx]
+            # self._u_idx += 1
 
             if u < 0.5:
                 tree = self._propose_existing_node()
@@ -120,7 +122,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
             trees.append(tree_particle)
         else:
-            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.perm_dist)
+            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
             old_num_roots = len(self.parent_particle.tree_roots)
             self._cached_log_old_num_roots = np.log(old_num_roots + 1)
 
@@ -131,19 +133,19 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.parent_tree = None
 
     def _propose_existing_node(self):
-        # q = self._q_dist
+        q = self._q_dist
 
-        # idx = self._rng.multinomial(1, q).argmax()
-        #
-        # tree = self._curr_trees[idx]
+        idx = self._rng.multinomial(1, q).argmax()
+
+        tree = self._curr_trees[idx]
 
         # tree = self._rng.choice(trees, size=None, p=q)
-        if self._sample_idx == self._max_samples:
-            self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
-            self._sample_idx = 0
-
-        tree = self._curr_trees[self._sample_arr[self._sample_idx]]
-        self._sample_idx += 1
+        # if self._sample_idx == self._max_samples:
+        #     self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
+        #     self._sample_idx = 0
+        #
+        # tree = self._curr_trees[self._sample_arr[self._sample_idx]]
+        # self._sample_idx += 1
 
         return tree
 
@@ -166,7 +168,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             self._tree_shell_node_adder,
             self.data_point,
             frozen_children,
-            self.tree_dist,
         )
 
         return tree_container
@@ -203,7 +204,7 @@ class SemiAdaptedKernel(Kernel):
         )
 
 
-@lru_cache(maxsize=2048)
+@lru_cache(maxsize=4096)
 def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
     ret = SemiAdaptedProposalDistribution(
         data_point,

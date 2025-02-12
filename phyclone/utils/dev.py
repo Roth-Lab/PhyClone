@@ -15,7 +15,7 @@ def clear_proposal_dist_caches():
     _get_cached_full_proposal_dist.cache_clear()
     # get_cached_new_tree.cache_clear()
     get_cached_new_tree_adder.cache_clear()
-    get_cached_new_tree_adder_datapoint.cache_clear()
+    # get_cached_new_tree_adder_datapoint.cache_clear()
     # compute_log_S.cache_clear()
     # _convolve_two_children.cache_clear()
 
@@ -26,24 +26,24 @@ def clear_convolution_caches():
 
 def print_cache_info():
     print("\n***********************************************************")
-    print(
-        "get_cached_new_tree cache info: {}, hit ratio: {}".format(
-            get_cached_new_tree.cache_info(),
-            _cache_ratio(get_cached_new_tree.cache_info()),
-        )
-    )
+    # print(
+    #     "get_cached_new_tree cache info: {}, hit ratio: {}".format(
+    #         get_cached_new_tree.cache_info(),
+    #         _cache_ratio(get_cached_new_tree.cache_info()),
+    #     )
+    # )
     print(
         "get_cached_new_tree_adder cache info: {}, hit ratio: {}".format(
             get_cached_new_tree_adder.cache_info(),
             _cache_ratio(get_cached_new_tree_adder.cache_info()),
         )
     )
-    print(
-        "get_cached_new_tree_adder_datapoint cache info: {}, hit ratio: {}".format(
-            get_cached_new_tree_adder_datapoint.cache_info(),
-            _cache_ratio(get_cached_new_tree_adder_datapoint.cache_info()),
-        )
-    )
+    # print(
+    #     "get_cached_new_tree_adder_datapoint cache info: {}, hit ratio: {}".format(
+    #         get_cached_new_tree_adder_datapoint.cache_info(),
+    #         _cache_ratio(get_cached_new_tree_adder_datapoint.cache_info()),
+    #     )
+    # )
     print(
         "_get_cached_semi_proposal_dist cache info: {}, hit ratio: {}".format(
             _get_cached_semi_proposal_dist.cache_info(),
