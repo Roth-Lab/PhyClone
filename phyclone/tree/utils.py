@@ -52,7 +52,7 @@ def compute_log_D(child_log_R_values):
     return conv_res
 
 
-@two_np_arr_cache(maxsize=1024)
+@two_np_arr_cache(maxsize=2048)
 def _convolve_two_children(child_1, child_2):
     grid_size = child_1.shape[-1]
     if grid_size < 1000:

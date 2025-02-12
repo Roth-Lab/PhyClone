@@ -103,7 +103,6 @@ class ProposalDistribution(object):
         kernel,
         parent_particle,
         outlier_modelling_active=False,
-        parent_tree=None,
     ):
         self._q_dist = None
         self._tree_shell_node_adder = None
@@ -148,16 +147,12 @@ class ProposalDistribution(object):
 
     def _get_existing_node_trees(self):
         """Enumerate all trees obtained by adding the data point to an existing node."""
-        # trees = []
 
         if self.parent_particle is None:
             return []
 
         nodes = self.parent_particle.tree_roots
 
-        # for node in nodes:
-        #     tree_holder = get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,)
-        #     trees.append(tree_holder)
         trees = [get_cached_new_tree_adder_datapoint(self._tree_shell_node_adder, self.data_point, node, self.tree_dist,) for node in nodes]
 
         return trees

@@ -24,9 +24,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         kernel,
         parent_particle,
         outlier_modelling_active=False,
-        parent_tree=None,
     ):
-        super().__init__(data_point, kernel, parent_particle, outlier_modelling_active, parent_tree)
+        super().__init__(data_point, kernel, parent_particle, outlier_modelling_active)
 
         self.log_half = kernel.log_half
 
@@ -211,6 +210,5 @@ def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_
         kernel,
         parent_particle,
         outlier_modelling_active=outlier_modelling_active,
-        parent_tree=None,
     )
     return ret

@@ -21,9 +21,8 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
             kernel,
             parent_particle,
             outlier_modelling_active=False,
-            parent_tree=None,
     ):
-        super().__init__(data_point, kernel, parent_particle, outlier_modelling_active, parent_tree)
+        super().__init__(data_point, kernel, parent_particle, outlier_modelling_active)
 
         self._max_samples = 100
 
@@ -135,6 +134,5 @@ def _get_cached_full_proposal_dist(data_point, kernel, parent_particle, outlier_
         kernel,
         parent_particle,
         outlier_modelling_active=outlier_modelling_active,
-        parent_tree=None,
     )
     return ret
