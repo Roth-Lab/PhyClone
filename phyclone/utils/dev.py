@@ -3,7 +3,7 @@ from phyclone.smc.kernels.semi_adapted import (
     _get_cached_semi_proposal_dist,
     get_cached_new_tree
 )
-from phyclone.smc.kernels.base import get_cached_new_tree_adder, get_cached_new_tree_adder_datapoint
+from phyclone.smc.kernels.base import get_cached_new_tree_adder
 from phyclone.tree.utils import compute_log_S, _convolve_two_children
 
 
@@ -11,13 +11,13 @@ from phyclone.tree.utils import compute_log_S, _convolve_two_children
 
 
 def clear_proposal_dist_caches():
+    get_cached_new_tree_adder.cache_clear()
     _get_cached_semi_proposal_dist.cache_clear()
     _get_cached_full_proposal_dist.cache_clear()
-    # get_cached_new_tree.cache_clear()
-    get_cached_new_tree_adder.cache_clear()
     # get_cached_new_tree_adder_datapoint.cache_clear()
     # compute_log_S.cache_clear()
     # _convolve_two_children.cache_clear()
+    # get_cached_new_tree.cache_clear()
 
 def clear_convolution_caches():
     compute_log_S.cache_clear()

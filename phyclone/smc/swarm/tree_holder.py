@@ -24,7 +24,8 @@ class TreeHolder(object):
         "_partial_log_p",
         "_partial_log_p_one",
         "_num_nodes",
-        "_alpha_prior"
+        "_alpha_prior",
+        "_curr_alpha_val"
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -43,6 +44,8 @@ class TreeHolder(object):
 
         self._alpha_prior = 0.0
 
+        self._curr_alpha_val = 0.0
+
         self.tree = tree
 
     def __hash__(self):
@@ -60,8 +63,24 @@ class TreeHolder(object):
         return self._tree
 
     @property
+    def alpha_prior(self):
+        return self._alpha_prior
+
+    # @alpha_prior.setter
+    # def alpha_prior(self, value):
+    #     self._alpha_prior = value
+
+    @alpha_prior.getter
+    def alpha_prior(self):
+        curr_alpha = self._tree_dist.prior.alpha
+        if curr_alpha != self._curr_alpha_val:
+            self._curr_alpha_val = curr_alpha
+            self._alpha_prior = self._compute_alpha_prior()
+        return self._alpha_prior
+
+    @property
     def log_p(self):
-        return self._compute_alpha_prior() + self._partial_log_p
+        return self.alpha_prior + self._partial_log_p
 
     def _compute_alpha_prior(self):
         log_alpha = self._tree_dist.prior.log_alpha
@@ -71,7 +90,7 @@ class TreeHolder(object):
 
     @property
     def log_p_one(self):
-        return self._compute_alpha_prior() + self._partial_log_p_one
+        return self.alpha_prior + self._partial_log_p_one
 
     @tree.setter
     def tree(self, tree):
@@ -102,6 +121,9 @@ class TreeHolder(object):
             self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
         else:
             self.num_children_on_node_that_matters = 0
+
+        self._curr_alpha_val = self._tree_dist.prior.alpha
+        self._alpha_prior = self._compute_alpha_prior()
 
         # log_alpha = self._tree_dist.prior.log_alpha
         # alpha_prior = self._num_nodes * log_alpha
