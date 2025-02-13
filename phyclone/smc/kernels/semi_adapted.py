@@ -15,8 +15,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    # __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots",
-    #              "_computed_prob", "_max_samples", "_sample_idx", "_sample_arr", "_u_draws", "_u_idx")
     __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob")
 
     def __init__(
@@ -31,16 +29,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.log_half = kernel.log_half
 
         self.parent_is_empty_tree = False
-
-        # self._max_samples = 100
-        #
-        # self._sample_idx = self._max_samples
-        #
-        # self._u_draws = None
-        #
-        # self._u_idx = self._max_samples
-        #
-        # self._sample_arr = None
 
         self._computed_prob = dict()
 
@@ -89,12 +77,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             tree = self._propose_existing_node()
         else:
             u = self._rng.random()
-            # if self._u_idx == self._max_samples:
-            #     self._u_draws = self._rng.random(size=self._max_samples, dtype=np.float32)
-            #     self._u_idx = 0
-            #
-            # u = self._u_draws[self._u_idx]
-            # self._u_idx += 1
 
             if u < 0.5:
                 tree = self._propose_existing_node()
@@ -138,14 +120,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         idx = self._rng.multinomial(1, q).argmax()
 
         tree = self._curr_trees[idx]
-
-        # tree = self._rng.choice(trees, size=None, p=q)
-        # if self._sample_idx == self._max_samples:
-        #     self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
-        #     self._sample_idx = 0
-        #
-        # tree = self._curr_trees[self._sample_arr[self._sample_idx]]
-        # self._sample_idx += 1
 
         return tree
 

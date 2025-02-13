@@ -106,7 +106,6 @@ def log_sum_exp(log_X):
 
     This implementation is numerically safer than the naive method.
     """
-    # max_exp = np.max(log_X)
     max_exp = log_X[0]
 
     for val in log_X:
@@ -117,7 +116,6 @@ def log_sum_exp(log_X):
         return max_exp
 
     total = 0.0
-
     for x in log_X:
         total += np.exp(x - max_exp)
 
@@ -208,8 +206,6 @@ def log_multinomial_coefficient(x):
 
     result = cached_log_factorial(n)
 
-    # for x_i in x:
-    #     result -= cached_log_factorial(x_i)
     result -= sum(map(cached_log_factorial, x))
 
     return result

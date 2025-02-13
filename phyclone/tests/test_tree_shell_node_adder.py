@@ -63,8 +63,6 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         data = self._create_data_points(2, n, p)
 
-        # expected_tree = OldTree.get_single_node_tree(data)
-
         actual_tree_built = Tree.get_single_node_tree(data)
 
         tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
