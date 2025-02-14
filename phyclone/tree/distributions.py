@@ -228,13 +228,7 @@ class TreeJointDistribution(object):
 
         log_p_one_prior = self.prior.log_p_one(tree, tree_node_data, crp_prior, num_nodes, multiplicity)
 
-        # log_p, log_p_one = self.prior.compute_both_log_p_and_log_p_one_priors(tree, tree_node_data)
-
         log_outlier_prior = self.outlier_prior(tree_node_data, tree.outlier_node_name)
-
-        # log_p += log_outlier_prior
-        #
-        # log_p_one += log_outlier_prior
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
             log_p_data_likelihood = log_sum_exp_over_dims(tree.data_log_likelihood)
@@ -246,21 +240,33 @@ class TreeJointDistribution(object):
 
         outliers_marginal_prob = sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
 
-        # log_p += outliers_marginal_prob
-        # log_p_one += outliers_marginal_prob
+        partial_log_p_t1 = log_p_prior + log_outlier_prior
 
-        partial_log_p = sum([log_p_prior, log_outlier_prior, log_p_data_likelihood, outliers_marginal_prob])
+        partial_log_p_t2 = log_p_data_likelihood + outliers_marginal_prob
 
-        partial_log_p_one = sum([log_p_one_prior, log_outlier_prior, log_p_one_data_likelihood, outliers_marginal_prob])
+        partial_log_p = partial_log_p_t1 + partial_log_p_t2
 
-        likelihood_pieces_dict = {"crp_prior": crp_prior,
-                                  "log_p_prior": log_p_prior,
-                                  "log_p_one_prior": log_p_one_prior,
-                                  "log_outlier_prior": log_outlier_prior,
-                                  "log_p_data_likelihood": log_p_data_likelihood,
-                                  "log_p_one_data_likelihood": log_p_one_data_likelihood,
-                                  "outliers_marginal_prob": outliers_marginal_prob,
-                                  "partial_log_p": partial_log_p,
+        partial_log_p_one_t1 = log_p_one_prior + log_outlier_prior
+
+        partial_log_p_one_t2 = log_p_one_data_likelihood + outliers_marginal_prob
+
+        partial_log_p_one = partial_log_p_one_t1 + partial_log_p_one_t2
+
+        # partial_log_p = sum([log_p_prior, log_outlier_prior, log_p_data_likelihood, outliers_marginal_prob])
+        #
+        # partial_log_p_one = sum([log_p_one_prior, log_outlier_prior, log_p_one_data_likelihood, outliers_marginal_prob])
+
+        # likelihood_pieces_dict = {"crp_prior": crp_prior,
+        #                           "log_p_prior": log_p_prior,
+        #                           "log_p_one_prior": log_p_one_prior,
+        #                           "log_outlier_prior": log_outlier_prior,
+        #                           "log_p_data_likelihood": log_p_data_likelihood,
+        #                           "log_p_one_data_likelihood": log_p_one_data_likelihood,
+        #                           "outliers_marginal_prob": outliers_marginal_prob,
+        #                           "partial_log_p": partial_log_p,
+        #                           "partial_log_p_one": partial_log_p_one,}
+
+        likelihood_pieces_dict = {"partial_log_p": partial_log_p,
                                   "partial_log_p_one": partial_log_p_one,}
 
         return likelihood_pieces_dict
