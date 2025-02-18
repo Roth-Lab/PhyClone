@@ -20,7 +20,7 @@ class TreeHolder(object):
         "num_children_on_node_that_matters",
         "outlier_node_name",
         "multiplicity",
-        "_likelihood_parts_dict",
+        # "_likelihood_parts_dict",
         "_partial_log_p",
         "_partial_log_p_one",
         "_num_nodes",
@@ -66,9 +66,6 @@ class TreeHolder(object):
     def alpha_prior(self):
         return self._alpha_prior
 
-    # @alpha_prior.setter
-    # def alpha_prior(self, value):
-    #     self._alpha_prior = value
 
     @alpha_prior.getter
     def alpha_prior(self):
@@ -104,11 +101,8 @@ class TreeHolder(object):
 
         self.multiplicity = tree.multiplicity
 
-        # log_p, log_p_one = self._tree_dist.compute_both_log_p_and_log_p_one(tree)
-        self._likelihood_parts_dict = self._tree_dist.compute_likelihood_parts_for_tree_holder(tree)
+        self._partial_log_p, self._partial_log_p_one = self._tree_dist.compute_likelihood_parts_for_tree_holder(tree)
 
-        self._partial_log_p = self._likelihood_parts_dict["partial_log_p"]
-        self._partial_log_p_one = self._likelihood_parts_dict["partial_log_p_one"]
         self._num_nodes = tree.get_number_of_nodes()
 
         self.tree_roots = np.asarray(tree.roots)
@@ -125,8 +119,6 @@ class TreeHolder(object):
         self._curr_alpha_val = self._tree_dist.prior.alpha
         self._alpha_prior = self._compute_alpha_prior()
 
-        # log_alpha = self._tree_dist.prior.log_alpha
-        # alpha_prior = self._num_nodes * log_alpha
 
     @tree.getter
     def tree(self) -> Tree:

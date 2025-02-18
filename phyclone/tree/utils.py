@@ -90,27 +90,27 @@ def _np_conv_dims(child_1, child_2):
     return log_D
 
 
-def _nb_conv_dims(child_1, child_2):
-
-    # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
-    #
-    # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
-    #
-    # child_1_norm = np.exp(child_1 - child_1_maxes, order="C")
-    #
-    # child_2_norm = np.exp(child_2 - child_2_maxes, order="C")
-
-    log_D = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
-
-    # log_D[log_D <= 0] = 1e-100
-    #
-    # log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
-    #
-    # log_D += child_1_maxes
-    #
-    # log_D += child_2_maxes
-
-    return log_D
+# def _nb_conv_dims(child_1, child_2):
+#
+#     # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+#     #
+#     # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+#     #
+#     # child_1_norm = np.exp(child_1 - child_1_maxes, order="C")
+#     #
+#     # child_2_norm = np.exp(child_2 - child_2_maxes, order="C")
+#
+#     log_D = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
+#
+#     # log_D[log_D <= 0] = 1e-100
+#     #
+#     # log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
+#     #
+#     # log_D += child_1_maxes
+#     #
+#     # log_D += child_2_maxes
+#
+#     return log_D
 
 
 def get_clades(tree):

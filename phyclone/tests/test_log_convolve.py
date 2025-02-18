@@ -72,8 +72,8 @@ class Test(unittest.TestCase):
         grid_size = 101
         # child_1 = np.full(grid_size, -np.log(grid_size))
         # child_2 = np.full(grid_size, -np.log(grid_size))
-        child_1 = np.full(grid_size, 5)
-        child_2 = np.full(grid_size, 6)
+        child_1 = np.full(grid_size, 5.5)
+        child_2 = np.full(grid_size, 6.5)
         child_1_two_d = np.atleast_2d(child_1)
         child_2_two_d = np.atleast_2d(child_2)
 
