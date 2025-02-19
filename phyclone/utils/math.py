@@ -271,7 +271,6 @@ def conv_log(log_x, log_y, ans):
 
     return ans
 
-
 @numba.jit(nopython=True, fastmath=True)
 def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in log space."""
@@ -335,7 +334,6 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     for l in range(dims):
         log_x = log_x_arr[l]
         log_y = log_y_arr[l]
-        # log_y = log_y[::-1]
         ans = ans_arr[l]
         for k in range(1, m):
             for j in range(k):

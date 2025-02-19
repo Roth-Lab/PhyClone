@@ -1,5 +1,5 @@
 import numpy as np
-
+from itertools import repeat
 from phyclone.smc.samplers.base import AbstractSMCSampler
 from phyclone.smc.swarm import ParticleSwarm
 
@@ -25,9 +25,13 @@ class SMCSampler(AbstractSMCSampler):
 
             multiplicities = self._rng.multinomial(self.num_particles, self.swarm.weights)
 
-            for particle, multiplicity in zip(self.swarm.particles, multiplicities):
-                for _ in range(multiplicity):
-                    new_swarm.add_particle(log_uniform_weight, particle)
+            # for particle, multiplicity in zip(self.swarm.particles, multiplicities):
+            #     for _ in range(multiplicity):
+            #         new_swarm.add_particle(log_uniform_weight, particle)
+            for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
+                # assert not np.isneginf(particle.log_w)
+                new_swarm.add_particles_from_iterators(repeat(log_uniform_weight, multiplicity),
+                                                       repeat(particle, multiplicity))
 
             self.swarm = new_swarm
 
