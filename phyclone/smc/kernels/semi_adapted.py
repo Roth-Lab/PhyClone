@@ -15,7 +15,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob", "_tree_nodes")
 
     def __init__(
         self,
@@ -48,7 +48,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             node = tree.node_last_added_to #TODO: maybe just write a dp -> node mapping somewhere, save a bit of trouble here
 
             # Existing node
-            if node in self.parent_particle.tree_nodes or node == tree.outlier_node_name:
+            if node in self._tree_nodes or node == tree.outlier_node_name:
                 log_p = self.log_half + self._log_p[tree]
 
             # New node
@@ -56,7 +56,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
                 if tree in self._computed_prob:
                     log_p = self._computed_prob[tree]
                 else:
-                    old_num_roots = len(self.parent_particle.tree_roots)
+                    old_num_roots = self._num_roots
 
                     log_p = self.log_half
 
@@ -104,8 +104,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
             trees.append(tree_particle)
         else:
+            self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-            old_num_roots = len(self.parent_particle.tree_roots)
+            old_num_roots = self._num_roots
             self._cached_log_old_num_roots = np.log(old_num_roots + 1)
 
         trees.extend(self._get_existing_node_trees())
@@ -124,8 +125,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         return tree
 
     def _propose_new_node(self):
-        roots = self.parent_particle.tree_roots
-        num_roots = len(roots)
+        roots = self._tree_roots
+        num_roots = self._num_roots
 
         num_children = self._rng.integers(0, num_roots + 1)
 

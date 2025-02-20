@@ -92,12 +92,15 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         #     trees.append(tree_particle)
         #
         # else:
-        if self.parent_particle is None:
-            num_roots = 0
-            tree_roots = []
-        else:
-            tree_roots = self.parent_particle.tree_roots
-            num_roots = len(tree_roots)
+        # if self.parent_particle is None:
+        #     num_roots = 0
+        #     tree_roots = []
+        # else:
+        #     tree_roots = self.parent_particle.tree_roots
+        #     num_roots = len(tree_roots)
+
+        num_roots = self._num_roots
+        tree_roots = self._tree_roots
 
         for r in range(0, num_roots + 1):
             for children in itertools.combinations(tree_roots, r):

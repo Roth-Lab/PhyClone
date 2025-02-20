@@ -94,7 +94,9 @@ class ProposalDistribution(object):
         "_q_dist",
         "_tree_shell_node_adder",
         "_log_p",
-        "_curr_trees"
+        "_curr_trees",
+        "_tree_roots",
+        "_num_roots"
     )
 
     def __init__(
@@ -134,8 +136,12 @@ class ProposalDistribution(object):
     def _set_parent_tree(self):
         if self.parent_particle is not None:
             self.parent_tree = self.parent_particle.tree
+            self._tree_roots = self.parent_particle.tree_roots.copy()
+            self._num_roots = len(self._tree_roots)
         else:
             self.parent_tree = Tree(self.data_point.grid_size)
+            self._tree_roots = np.array([])
+            self._num_roots = 0
 
     def log_p(self, state):
         """Get the log probability of proposing a tree."""
