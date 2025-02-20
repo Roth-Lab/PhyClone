@@ -135,7 +135,7 @@ class ProposalDistribution(object):
         if self.parent_particle is not None:
             self.parent_tree = self.parent_particle.tree
         else:
-            self.parent_tree = None
+            self.parent_tree = Tree(self.data_point.grid_size)
 
     def log_p(self, state):
         """Get the log probability of proposing a tree."""
@@ -160,17 +160,17 @@ class ProposalDistribution(object):
 
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
-        if self.parent_particle is None:
-            tree = Tree(self.data_point.grid_size)
-
-        else:
-            tree = self.parent_tree.copy()
+        # if self.parent_particle is None:
+        #     tree = Tree(self.data_point.grid_size)
+        #
+        # else:
+        tree = self.parent_tree.copy()
 
         tree.add_data_point_to_outliers(self.data_point)
 
-        tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+        tree_holder = TreeHolder(tree, self.tree_dist, self.perm_dist)
 
-        return tree_particle
+        return tree_holder
 
     def _set_log_p_dist(self, trees):
         log_q = np.array([x.log_p for x in trees])

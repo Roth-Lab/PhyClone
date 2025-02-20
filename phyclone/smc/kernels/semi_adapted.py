@@ -95,10 +95,10 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         if self._empty_tree():
             self.parent_is_empty_tree = True
-            if self.parent_particle is None:
-                tree = Tree(self.data_point.grid_size)
-            else:
-                tree = self.parent_tree.copy()
+            # if self.parent_particle is None:
+            #     tree = Tree(self.data_point.grid_size)
+            # else:
+            tree = self.parent_tree.copy()
 
             tree.create_root_node(children=[], data=[self.data_point])
             tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
@@ -115,9 +115,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.parent_tree = None
 
     def _propose_existing_node(self):
-        q = self._q_dist
+        # q = self._q_dist
 
-        idx = self._rng.multinomial(1, q).argmax()
+        idx = self._rng.multinomial(1, self._q_dist).argmax()
 
         tree = self._curr_trees[idx]
 
