@@ -23,7 +23,10 @@ class TreeInfo:
 
     def build_graph_shell(self):
         graph = rx.PyDiGraph(multigraph=False)
-        graph.extend_from_edge_list(self.graph)
+        if len(self.graph) == 0:
+            graph.add_node(0)
+        else:
+            graph.extend_from_edge_list(self.graph)
         return graph
 
     def get_node_idx_dict(self):
