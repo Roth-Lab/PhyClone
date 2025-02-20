@@ -4,7 +4,7 @@ import numpy as np
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
-from phyclone.tree import Tree
+# from phyclone.tree import Tree
 from phyclone.utils.math import cached_log_binomial_coefficient
 
 
@@ -39,7 +39,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         """Get the log probability of proposing the tree."""
 
         if self.parent_is_empty_tree:
-            log_p = self._get_log_p(tree)
+            log_p = self._log_p[tree]
 
         else:
 
@@ -49,7 +49,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             # Existing node
             if node in self.parent_particle.tree_nodes or node == tree.outlier_node_name:
-                log_p = self.log_half + self._get_log_p(tree)
+                log_p = self.log_half + self._log_p[tree]
 
             # New node
             else:
@@ -67,9 +67,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         return log_p
 
-    def _get_log_p(self, tree):
-        """Get the log probability of the given tree. From stored dict, using TreeHolder intermediate."""
-        return self._log_p[tree]
+    # def _get_log_p(self, tree):
+    #     """Get the log probability of the given tree. From stored dict, using TreeHolder intermediate."""
+    #     return self._log_p[tree]
 
     def sample(self):
         """Sample a new tree from the proposal distribution."""
