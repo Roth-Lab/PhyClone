@@ -1,9 +1,9 @@
 import itertools
 from functools import lru_cache
-import numpy as np
+# import numpy as np
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm import TreeHolder
-from phyclone.tree import Tree
+# from phyclone.tree import Tree
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 
 
@@ -57,18 +57,15 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         self._log_p = {}
         trees = list()
 
-        # if self._empty_tree():
-        #     if self.parent_particle is None:
-        #         tree = Tree(self.data_point.grid_size)
-        #     else:
-        #         tree = self.parent_tree.copy()
-        #
-        #     tree.create_root_node(children=[], data=[self.data_point])
-        #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-        #     trees.append(tree_particle)
-        # else:
-        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-        trees.extend(self._get_new_node_trees())
+        if self._empty_tree():
+            tree = self.parent_tree.copy()
+
+            tree.create_root_node(children=[], data=[self.data_point])
+            tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+            trees.append(tree_particle)
+        else:
+            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
+            trees.extend(self._get_new_node_trees())
 
         if self.outlier_modelling_active:
             trees.append(self._get_outlier_tree())
@@ -82,22 +79,6 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
     def _get_new_node_trees(self):
         """Enumerate all trees obtained by adding the data point to a new node."""
         trees = []
-
-        # if self.parent_particle is None:
-        #     tree = Tree(self.data_point.grid_size)
-        #
-        #     tree.create_root_node(children=[], data=[self.data_point])
-        #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-        #
-        #     trees.append(tree_particle)
-        #
-        # else:
-        # if self.parent_particle is None:
-        #     num_roots = 0
-        #     tree_roots = []
-        # else:
-        #     tree_roots = self.parent_particle.tree_roots
-        #     num_roots = len(tree_roots)
 
         num_roots = self._num_roots
         tree_roots = self._tree_roots

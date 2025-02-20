@@ -32,6 +32,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         self._computed_prob = dict()
 
+        self._tree_nodes = None
+
         self._init_dist()
 
 
@@ -67,9 +69,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         return log_p
 
-    # def _get_log_p(self, tree):
-    #     """Get the log probability of the given tree. From stored dict, using TreeHolder intermediate."""
-    #     return self._log_p[tree]
 
     def sample(self):
         """Sample a new tree from the proposal distribution."""
@@ -95,9 +94,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         if self._empty_tree():
             self.parent_is_empty_tree = True
-            # if self.parent_particle is None:
-            #     tree = Tree(self.data_point.grid_size)
-            # else:
             tree = self.parent_tree.copy()
 
             tree.create_root_node(children=[], data=[self.data_point])
@@ -106,8 +102,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         else:
             self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-            old_num_roots = self._num_roots
-            self._cached_log_old_num_roots = np.log(old_num_roots + 1)
+            self._cached_log_old_num_roots = np.log(self._num_roots + 1)
 
         trees.extend(self._get_existing_node_trees())
 
@@ -116,7 +111,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.parent_tree = None
 
     def _propose_existing_node(self):
-        # q = self._q_dist
 
         idx = self._rng.multinomial(1, self._q_dist).argmax()
 
@@ -148,7 +142,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         return tree_container
 
 
-@lru_cache(maxsize=1024)
+@lru_cache(maxsize=2048)
 def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_dist):
     tree = parent_particle.tree
 
