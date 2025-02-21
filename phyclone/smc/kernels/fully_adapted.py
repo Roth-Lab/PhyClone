@@ -57,15 +57,15 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         self._log_p = {}
         trees = []
 
-        if self._empty_tree():
-            tree = self.parent_tree.copy()
-
-            tree.create_root_node(children=[], data=[self.data_point])
-            tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-            trees.append(tree_particle)
-        else:
-            self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-            trees.extend(self._get_new_node_trees())
+        # if self._empty_tree():
+        #     tree = self.parent_tree.copy()
+        #
+        #     tree.create_root_node(children=[], data=[self.data_point])
+        #     tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
+        #     trees.append(tree_particle)
+        # else:
+        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
+        trees.extend(self._get_new_node_trees())
 
         if self.outlier_modelling_active:
             trees.append(self._get_outlier_tree())
