@@ -305,23 +305,6 @@ def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
     return ans_arr
 
 
-# @numba.jit(nopython=True, fastmath=True)
-# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-#     """Direct convolution in numba-time."""
-#
-#     n = log_x_arr.shape[-1]
-#     dims = log_x_arr.shape[0]
-#
-#     for l in range(dims):
-#         log_x = log_x_arr[l]
-#         log_y = log_y_arr[l]
-#         log_y = log_y[::-1]
-#         ans = ans_arr[l]
-#         for k in range(1, n + 1):
-#             for j in range(k):
-#                 ans[k - 1] += log_x[j] * log_y[n - (k - j)]
-#
-#     return ans_arr
 @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
@@ -345,25 +328,10 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
 
 def fft_convolve_two_children(child_1, child_2):
     """FFT convolution"""
-    # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
-    #
-    # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
-    #
-    # child_1_norm = np.exp(child_1 - child_1_maxes)
-    #
-    # child_2_norm = np.exp(child_2 - child_2_maxes)
 
     result = fftconvolve(child_1, child_2, axes=[-1])
 
     result = result[..., : child_1.shape[-1]]
-
-    # result[result <= 0] = 1e-100
-
-    # result = np.log(result, order="C", dtype=np.float64)
-    #
-    # result += child_2_maxes
-    #
-    # result += child_1_maxes
 
     return result
 
