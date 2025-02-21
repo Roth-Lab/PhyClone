@@ -97,8 +97,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             tree = self.parent_tree.copy()
 
             tree.create_root_node(children=[], data=[self.data_point])
-            tree_particle = TreeHolder(tree, self.tree_dist, self.perm_dist)
-            trees.append(tree_particle)
+            tree_holder = TreeHolder(tree, self.tree_dist, self.perm_dist)
+            trees.append(tree_holder)
         else:
             self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
@@ -111,11 +111,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.parent_tree = None
 
     def _propose_existing_node(self):
-
         idx = self._rng.multinomial(1, self._q_dist).argmax()
 
         tree = self._curr_trees[idx]
-
         return tree
 
     def _propose_new_node(self):
@@ -142,7 +140,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         return tree_container
 
 
-@lru_cache(maxsize=2048)
+@lru_cache(maxsize=1024)
 def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_dist):
     tree = parent_particle.tree
 

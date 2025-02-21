@@ -1,7 +1,7 @@
 import itertools
 from functools import lru_cache
 # import numpy as np
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution
 from phyclone.smc.swarm import TreeHolder
 # from phyclone.tree import Tree
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
@@ -13,7 +13,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
     Considers all possible proposals and weight according to log probability.
     """
 
-    __slots__ = "_max_samples", "_sample_idx", "_sample_arr"
+    __slots__ = ("_max_samples", "_sample_idx", "_sample_arr")
 
     def __init__(
             self,
@@ -30,7 +30,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
 
         self._init_dist()
 
-        self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
+        # self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
 
     def log_p(self, tree):
         """Get the log probability of the tree."""
@@ -40,16 +40,16 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         """Sample a new tree from the proposal distribution."""
         # q = self._q_dist
         #
-        # idx = self._rng.multinomial(1, q).argmax()
-        # #
-        # tree = self._curr_trees[idx]
-        # tree = self._rng.choice(self._curr_trees, size=None, p=q)
-        if self._sample_idx == self._max_samples:
-            self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
-            self._sample_idx = 0
+        idx = self._rng.multinomial(1, self._q_dist).argmax()
 
-        tree = self._curr_trees[self._sample_arr[self._sample_idx]]
-        self._sample_idx += 1
+        tree = self._curr_trees[idx]
+        # tree = self._rng.choice(self._curr_trees, size=None, p=q)
+        # if self._sample_idx == self._max_samples:
+        #     self._sample_arr = self._rng.multinomial(1, self._q_dist, size=self._max_samples).argmax(1)
+        #     self._sample_idx = 0
+        #
+        # tree = self._curr_trees[self._sample_arr[self._sample_idx]]
+        # self._sample_idx += 1
 
         return tree
 
@@ -85,16 +85,38 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
 
         for r in range(0, num_roots + 1):
             for children in itertools.combinations(tree_roots, r):
-                frozen_children = frozenset(children)
-
-                tree_container = get_cached_new_tree_adder(
-                    self._tree_shell_node_adder,
-                    self.data_point,
-                    frozen_children,
-                )
-                trees.append(tree_container)
+                tree_container = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point)
+                trees.append(tree_container.build())
+                # frozen_children = frozenset(children)
+                #
+                # tree_container = get_cached_new_tree_adder(
+                #     self._tree_shell_node_adder,
+                #     self.data_point,
+                #     frozen_children,
+                # )
+                # trees.append(tree_container)
 
         return trees
+
+    # def _get_new_node_trees(self):
+    #     """Enumerate all trees obtained by adding the data point to a new node."""
+    #     trees = []
+    #
+    #     num_roots = self._num_roots
+    #     tree_roots = self._tree_roots
+    #
+    #     for r in range(0, num_roots + 1):
+    #         for children in itertools.combinations(tree_roots, r):
+    #             frozen_children = frozenset(children)
+    #
+    #             tree_container = get_cached_new_tree_adder(
+    #                 self._tree_shell_node_adder,
+    #                 self.data_point,
+    #                 frozen_children,
+    #             )
+    #             trees.append(tree_container)
+    #
+    #     return trees
 
 
 class FullyAdaptedKernel(Kernel):

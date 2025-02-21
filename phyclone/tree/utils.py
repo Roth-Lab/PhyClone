@@ -39,6 +39,8 @@ def compute_log_D(child_log_R_values):
 
     np.exp(normed_children, out=normed_children)
 
+    normed_children = np.ascontiguousarray(normed_children)
+
     conv_res = _convolve_two_children(normed_children[0], normed_children[1])
     for j in range(2, num_children):
         conv_res = _convolve_two_children(normed_children[j], conv_res)

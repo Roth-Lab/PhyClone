@@ -38,12 +38,12 @@ def print_cache_info():
             _cache_ratio(get_cached_new_tree_adder.cache_info()),
         )
     )
-    # print(
-    #     "get_cached_new_tree_adder_datapoint cache info: {}, hit ratio: {}".format(
-    #         get_cached_new_tree_adder_datapoint.cache_info(),
-    #         _cache_ratio(get_cached_new_tree_adder_datapoint.cache_info()),
-    #     )
-    # )
+    print(
+        "_get_cached_full_proposal_dist cache info: {}, hit ratio: {}".format(
+            _get_cached_full_proposal_dist.cache_info(),
+            _cache_ratio(_get_cached_full_proposal_dist.cache_info()),
+        )
+    )
     print(
         "_get_cached_semi_proposal_dist cache info: {}, hit ratio: {}".format(
             _get_cached_semi_proposal_dist.cache_info(),

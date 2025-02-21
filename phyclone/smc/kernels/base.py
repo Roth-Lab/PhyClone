@@ -131,7 +131,7 @@ class ProposalDistribution(object):
 
     def _empty_tree(self):
         """Tree has no nodes"""
-        return (self.parent_particle is None) or (len(self.parent_particle.tree_roots) == 0)
+        return (self.parent_particle is None) or (self._num_roots == 0)
 
     def _set_parent_tree(self):
         if self.parent_particle is not None:
@@ -140,7 +140,7 @@ class ProposalDistribution(object):
             self._num_roots = len(self._tree_roots)
         else:
             self.parent_tree = Tree(self.data_point.grid_size)
-            self._tree_roots = np.array([])
+            self._tree_roots = []
             self._num_roots = 0
 
     def log_p(self, state):
@@ -157,7 +157,7 @@ class ProposalDistribution(object):
         if self.parent_particle is None:
             return []
 
-        nodes = self.parent_particle.tree_roots
+        nodes = self._tree_roots
         tree_adder = self._tree_shell_node_adder
         dp = self.data_point
         trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp).build() for node in nodes]
@@ -201,9 +201,9 @@ def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_po
     return tree_container
 
 
-@lru_cache(maxsize=2048)
-def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point)
-    tree_container = tree_holder_builder.build()
-
-    return tree_container
+# @lru_cache(maxsize=2048)
+# def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id):
+#     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point)
+#     tree_container = tree_holder_builder.build()
+#
+#     return tree_container
