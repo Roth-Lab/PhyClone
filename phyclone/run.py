@@ -285,7 +285,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    # clear_convolution_caches()
+    clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
