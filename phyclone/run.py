@@ -20,7 +20,6 @@ from phyclone.mcmc.particle_gibbs import (
 from phyclone.process_trace import create_main_run_output
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.samplers import UnconditionalSMCSampler
-# from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
 from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
@@ -291,7 +290,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    clear_convolution_caches()
+    # clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
@@ -306,7 +305,6 @@ def _run_main_sampler(
                 print_stats(i, tree, tree_dist, chain_num)
 
             clear_proposal_dist_caches()
-            # clear_convolution_caches()
 
             if rng.random() < subtree_update_prob:
                 tree = subtree_sampler.sample_tree(tree)
@@ -392,7 +390,6 @@ def _run_burnin(
                     print_stats(i, tree, tree_dist, chain_num)
 
                 clear_proposal_dist_caches()
-                # clear_convolution_caches()
 
                 tree = burnin_sampler.sample_tree(tree)
 
