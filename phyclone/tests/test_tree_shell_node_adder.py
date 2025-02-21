@@ -65,6 +65,15 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         return actual_tree_builder, actual_tree_holder, expected_tree_holder
 
 
+    def _add_a_dp_to_outliers(self, expected_tree, n, p, tree_shell, start_idx=0):
+        new_data = self._create_data_points(1, n, p, start_idx=start_idx)
+        expected_tree.add_data_point_to_outliers(new_data[0])
+        expected_tree_holder = TreeHolder(expected_tree, self.tree_dist, None)
+        actual_tree_builder = tree_shell.create_tree_holder_with_datapoint_added_to_outliers(new_data[0])
+        actual_tree_holder = actual_tree_builder.build()
+        return actual_tree_builder, actual_tree_holder, expected_tree_holder
+
+
     def _run_asserts(self, actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder):
         self.assertEqual(actual_tree_builder.multiplicity, expected_tree.multiplicity)
         self.assertEqual(expected_tree_holder, actual_tree_holder)
@@ -121,6 +130,20 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
 
+    def test_zero_node_tree_no_outliers_add_to_outliers(self):
+        grid_size = (10, 101)
+        expected_tree = Tree(grid_size)
+        tree_shell = TreeShellNodeAdder(expected_tree, self.tree_dist)
+
+        n = 100
+        p = [1.0] * 10
+
+        actual_tree_builder, actual_tree_holder, expected_tree_holder = self._add_a_dp_to_outliers(expected_tree, n, p,
+                                                                                                   tree_shell)
+
+        self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
+
+
 
     def test_zero_node_tree_one_outlier_dp_create_node(self):
         n = 100
@@ -139,6 +162,22 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
 
 
+    def test_zero_node_tree_one_outlier_add_to_outliers(self):
+        n = 100
+        p = [1.0] * 10
+
+        data = self._create_data_points(1, n, p)
+        grid_size = data[0].grid_size
+        expected_tree = Tree(grid_size)
+        expected_tree.add_data_point_to_outliers(data[0])
+        tree_shell = TreeShellNodeAdder(expected_tree, self.tree_dist)
+
+        actual_tree_builder, actual_tree_holder, expected_tree_holder = self._add_a_dp_to_outliers(expected_tree, n, p,
+                                                                                                   tree_shell, 1)
+
+        self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
+
+
     def test_zero_node_tree_three_outlier_dps_create_node(self):
         n = 100
         p = [1.0] * 10
@@ -153,6 +192,23 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         actual_tree_builder, actual_tree_holder, expected_tree_holder = self._create_new_node_no_children(expected_tree,
                                                                                                           n, p,
                                                                                                           tree_shell)
+
+        self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
+
+
+    def test_zero_node_tree_three_outlier_dps_add_to_outliers(self):
+        n = 100
+        p = [1.0] * 10
+
+        data = self._create_data_points(3, n, p)
+        grid_size = data[0].grid_size
+        expected_tree = Tree(grid_size)
+        for dp in data:
+            expected_tree.add_data_point_to_outliers(dp)
+        tree_shell = TreeShellNodeAdder(expected_tree, self.tree_dist)
+
+        actual_tree_builder, actual_tree_holder, expected_tree_holder = self._add_a_dp_to_outliers(expected_tree, n, p,
+                                                                                                   tree_shell, 3)
 
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
 
@@ -192,6 +248,22 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
 
 
+    def test_single_node_tree_add_to_outliers(self):
+        n = 100
+        p = 1.0
+
+        data = self._create_data_points(3, n, p)
+
+        expected_tree = Tree.get_single_node_tree(data[:-1])
+
+        tree_shell = TreeShellNodeAdder(expected_tree, self.tree_dist)
+
+        actual_tree_builder, actual_tree_holder, expected_tree_holder = self._add_a_dp_to_outliers(expected_tree, n, p,
+                                                                                                   tree_shell, 3)
+
+        self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
+
+
     def test_cherry_tree_add_node_to_root(self):
         n = 100
         p = 1.0
@@ -210,6 +282,21 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         actual_tree_holder = actual_tree_builder.build()
 
         expected_tree_holder = TreeHolder(expected_tree, self.tree_dist, None)
+
+        self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
+
+    def test_cherry_tree_add_to_outliers(self):
+        n = 100
+        p = 1.0
+
+        data = self._create_data_points(7, n, p)
+
+        expected_tree = self.build_cherry_tree(Tree, data[:-1])
+
+        tree_shell = TreeShellNodeAdder(expected_tree, self.tree_dist)
+
+        actual_tree_builder, actual_tree_holder, expected_tree_holder = self._add_a_dp_to_outliers(expected_tree, n, p,
+                                                                                                   tree_shell, 7)
 
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
 
@@ -264,34 +351,6 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         expected_tree_holder = TreeHolder(expected_tree, self.tree_dist, None)
 
         self._run_asserts(actual_tree_builder, actual_tree_holder, expected_tree, expected_tree_holder)
-
-
-    # def test_cherry_tree_from_dict_representation(self):
-    #     data = self.build_six_datapoints()
-    #
-    #     # expected_tree = self.build_cherry_tree(OldTree, data)
-    #
-    #     actual_tree_built = self.build_cherry_tree(Tree, data)
-    #
-    #     actual_tree_dict = actual_tree_built.to_dict()
-    #
-    #     actual_tree = Tree.from_dict(actual_tree_dict)
-    #
-    #     self.assertTrue(tree_eq(expected_tree, actual_tree))
-    #
-    # def test_linear_tree_from_dict_representation(self):
-    #
-    #     data = self.build_six_datapoints()
-    #
-    #     # expected_tree = self.build_linear_tree(OldTree, data)
-    #
-    #     actual_tree_built = self.build_linear_tree(Tree, data)
-    #
-    #     actual_tree_dict = actual_tree_built.to_dict()
-    #
-    #     actual_tree = Tree.from_dict(actual_tree_dict)
-    #
-    #     self.assertTrue(tree_eq(expected_tree, actual_tree))
 
 
     def _create_data_point(self, idx, n, p):
