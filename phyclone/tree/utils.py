@@ -67,27 +67,27 @@ def _convolve_two_children(child_1, child_2):
 def _np_conv_dims(child_1, child_2):
     num_dims = child_1.shape[0]
 
-    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
-
-    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
-
-    child_1_norm = np.exp(child_1 - child_1_maxes)
-
-    child_2_norm = np.exp(child_2 - child_2_maxes)
+    # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+    #
+    # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    #
+    # child_1_norm = np.exp(child_1 - child_1_maxes)
+    #
+    # child_2_norm = np.exp(child_2 - child_2_maxes)
 
     grid_size = child_1.shape[-1]
 
-    arr_list = [np.convolve(child_2_norm[i, :], child_1_norm[i, :])[:grid_size] for i in range(num_dims)]
+    arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
 
     log_D = np.ascontiguousarray(arr_list)
 
-    log_D[log_D <= 0] = 1e-100
-
-    log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
-
-    log_D += child_1_maxes
-
-    log_D += child_2_maxes
+    # log_D[log_D <= 0] = 1e-100
+    #
+    # log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
+    #
+    # log_D += child_1_maxes
+    #
+    # log_D += child_2_maxes
 
     return log_D
 

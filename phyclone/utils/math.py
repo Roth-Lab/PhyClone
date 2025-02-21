@@ -345,25 +345,25 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
 
 def fft_convolve_two_children(child_1, child_2):
     """FFT convolution"""
-    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+    # child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+    #
+    # child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    #
+    # child_1_norm = np.exp(child_1 - child_1_maxes)
+    #
+    # child_2_norm = np.exp(child_2 - child_2_maxes)
 
-    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    result = fftconvolve(child_1, child_2, axes=[-1])
 
-    child_1_norm = np.exp(child_1 - child_1_maxes)
+    result = result[..., : child_1.shape[-1]]
 
-    child_2_norm = np.exp(child_2 - child_2_maxes)
+    # result[result <= 0] = 1e-100
 
-    result = fftconvolve(child_1_norm, child_2_norm, axes=[-1])
-
-    result = result[..., : child_1_norm.shape[-1]]
-
-    result[result <= 0] = 1e-100
-
-    result = np.log(result, order="C", dtype=np.float64)
-
-    result += child_2_maxes
-
-    result += child_1_maxes
+    # result = np.log(result, order="C", dtype=np.float64)
+    #
+    # result += child_2_maxes
+    #
+    # result += child_1_maxes
 
     return result
 
