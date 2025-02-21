@@ -71,14 +71,7 @@ def run(
     outlier_modelling_active = outlier_prob > 0
 
     print_welcome_message(
-        burnin,
-        density,
-        num_chains,
-        num_iters,
-        num_particles,
-        seed,
-        outlier_modelling_active,
-        rng_main,
+        burnin, density, num_chains, num_iters, num_particles, seed, outlier_modelling_active, rng_main, proposal
     )
 
     data, samples, init_sigma = load_data(
@@ -177,6 +170,7 @@ def print_welcome_message(
     seed,
     outlier_modelling_active,
     rng_main,
+    proposal_kernel,
 ):
     print()
     print("#" * 100)
@@ -187,6 +181,7 @@ def print_welcome_message(
     print("Number of independent chains: {}".format(num_chains))
     print("Number of PG particles: {}".format(num_particles))
     print("Density: {}".format(density))
+    print("Proposal distribution: {}".format(proposal_kernel))
     print("Number of burn-in iterations: {}".format(burnin))
     print("Number of MCMC iterations: {}".format(num_iters))
     if seed is not None:
