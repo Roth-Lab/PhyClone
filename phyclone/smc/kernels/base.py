@@ -170,11 +170,15 @@ class ProposalDistribution(object):
         #     tree = Tree(self.data_point.grid_size)
         #
         # else:
-        tree = self.parent_tree.copy()
+        if self._empty_tree():
+            tree = self.parent_tree.copy()
 
-        tree.add_data_point_to_outliers(self.data_point)
+            tree.add_data_point_to_outliers(self.data_point)
 
-        tree_holder = TreeHolder(tree, self.tree_dist, self.perm_dist)
+            tree_holder = TreeHolder(tree, self.tree_dist, self.perm_dist)
+        else:
+            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(self.data_point)
+            tree_holder = tree_holder_builder.build()
 
         return tree_holder
 

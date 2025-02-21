@@ -89,9 +89,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         trees = list()
 
-        if self.outlier_modelling_active:
-            trees.append(self._get_outlier_tree())
-
         if self._empty_tree():
             self.parent_is_empty_tree = True
             tree = self.parent_tree.copy()
@@ -103,6 +100,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
+
+        if self.outlier_modelling_active:
+            trees.append(self._get_outlier_tree())
 
         trees.extend(self._get_existing_node_trees())
 

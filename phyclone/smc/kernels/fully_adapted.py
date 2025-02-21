@@ -1,7 +1,7 @@
 import itertools
 from functools import lru_cache
 # import numpy as np
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm import TreeHolder
 # from phyclone.tree import Tree
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
@@ -55,7 +55,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
 
     def _init_dist(self):
         self._log_p = {}
-        trees = list()
+        trees = []
 
         if self._empty_tree():
             tree = self.parent_tree.copy()
@@ -76,28 +76,6 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
 
         self.parent_tree = None
 
-    def _get_new_node_trees(self):
-        """Enumerate all trees obtained by adding the data point to a new node."""
-        trees = []
-
-        num_roots = self._num_roots
-        tree_roots = self._tree_roots
-
-        for r in range(0, num_roots + 1):
-            for children in itertools.combinations(tree_roots, r):
-                tree_container = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point)
-                trees.append(tree_container.build())
-                # frozen_children = frozenset(children)
-                #
-                # tree_container = get_cached_new_tree_adder(
-                #     self._tree_shell_node_adder,
-                #     self.data_point,
-                #     frozen_children,
-                # )
-                # trees.append(tree_container)
-
-        return trees
-
     # def _get_new_node_trees(self):
     #     """Enumerate all trees obtained by adding the data point to a new node."""
     #     trees = []
@@ -107,16 +85,38 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
     #
     #     for r in range(0, num_roots + 1):
     #         for children in itertools.combinations(tree_roots, r):
-    #             frozen_children = frozenset(children)
-    #
-    #             tree_container = get_cached_new_tree_adder(
-    #                 self._tree_shell_node_adder,
-    #                 self.data_point,
-    #                 frozen_children,
-    #             )
-    #             trees.append(tree_container)
+    #             tree_container = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point)
+    #             trees.append(tree_container.build())
+    #             # frozen_children = frozenset(children)
+    #             #
+    #             # tree_container = get_cached_new_tree_adder(
+    #             #     self._tree_shell_node_adder,
+    #             #     self.data_point,
+    #             #     frozen_children,
+    #             # )
+    #             # trees.append(tree_container)
     #
     #     return trees
+
+    def _get_new_node_trees(self):
+        """Enumerate all trees obtained by adding the data point to a new node."""
+        trees = []
+
+        num_roots = self._num_roots
+        tree_roots = self._tree_roots
+
+        for r in range(0, num_roots + 1):
+            for children in itertools.combinations(tree_roots, r):
+                frozen_children = frozenset(children)
+
+                tree_container = get_cached_new_tree_adder(
+                    self._tree_shell_node_adder,
+                    self.data_point,
+                    frozen_children,
+                )
+                trees.append(tree_container)
+
+        return trees
 
 
 class FullyAdaptedKernel(Kernel):

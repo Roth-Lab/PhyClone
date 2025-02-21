@@ -330,6 +330,40 @@ class TreeShellNodeAdder(object):
     def __eq__(self, other):
         return hash(self) == hash(other)
 
+    def create_tree_holder_with_datapoint_added_to_outliers(self, datapoint: DataPoint):
+
+        num_children = 0
+        node_id = self._outlier_node_name
+        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
+
+        graph = self._tree_info.build_graph_shell()
+        node_idx_dict = self._tree_info.get_node_idx_dict()
+        node_idx_rev_dict = self._tree_info.get_node_idx_rev_dict()
+
+        node_data = self._tree_info.get_node_data()
+        node_data[node_id].append(datapoint)
+        tree_holder_builder.with_node_data(node_data)
+        tree_holder_builder.with_graph(graph)
+        tree_holder_builder.with_node_idx(node_idx_dict)
+        tree_holder_builder.with_node_idx_rev(node_idx_rev_dict)
+
+        root_node_obj = self._dummy_root_obj.copy()
+        tree_holder_builder.with_root_node_object(root_node_obj)
+
+        roots_num_children = self.roots_num_children.copy()
+        roots_num_children[self._root_node_name] = len(graph.successors(self._root_idx))
+        tree_holder_builder.with_roots_num_children(roots_num_children)
+
+        roots_num_desc = self.roots_num_desc.copy()
+        roots_num_desc[self._root_node_name] = len(rx.descendants(graph, self._root_idx))
+        tree_holder_builder.with_roots_num_desc(roots_num_desc)
+
+        tree_holder_builder.with_roots(list(self._root_node_names_set))
+
+        self._compute_new_log_pdf_added_outlier(self._root_node_names_set, tree_holder_builder)
+
+        return tree_holder_builder
+
     def create_tree_holder_with_datapoint_added_to_node(self,
                                                         node_id: int | str,
                                                         datapoint: DataPoint):
@@ -438,6 +472,15 @@ class TreeShellNodeAdder(object):
         tree_holder_builder.with_num_children_on_node_that_matters(num_children)
         tree_holder_builder.with_tree_dist(self.tree_dist)
         return tree_holder_builder
+
+    def _compute_new_log_pdf_added_outlier(self, roots, tree_holder_builder):
+        if self.perm_dist:
+            new_num_datapoints = self._num_datapoints + 1
+            num_outliers = len(tree_holder_builder.outliers)
+            log_pdf = -self.perm_dist.log_count_root(self._perm_dist_dict, roots, new_num_datapoints, num_outliers)
+        else:
+            log_pdf = 0.0
+        tree_holder_builder.with_log_pdf(log_pdf)
 
     def _compute_new_log_pdf_added_datapoint(self, node_id, roots, tree_holder_builder, node_data):
         if self.perm_dist:
