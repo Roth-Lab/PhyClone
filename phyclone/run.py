@@ -428,17 +428,17 @@ def _run_sigma_init_iter(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
-    conc_sampler = samplers.conc_sampler
+    # conc_sampler = samplers.conc_sampler
 
     sigma_init_iters = 100
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = tree
     best_score = -np.inf
-    assoc_alpha = tree_dist.prior.alpha
+    # assoc_alpha = tree_dist.prior.alpha
 
     print("#" * 100)
-    print("Pre-Burn: Single Sigma Better Data Initialization")
+    print("Pre-Burn: Single Sigma Data Initialization")
     print("#" * 100)
 
     for i in range(sigma_init_iters):
@@ -458,14 +458,14 @@ def _run_sigma_init_iter(
 
             tree.relabel_nodes()
 
-            if concentration_update:
-                update_concentration_value(conc_sampler, tree, tree_dist)
+            # if concentration_update:
+            #     update_concentration_value(conc_sampler, tree, tree_dist)
 
             tree_score = tree_dist.log_p_one(tree)
             if tree_score > best_score:
                 best_score = tree_score
                 best_tree = tree
-                assoc_alpha = tree_dist.prior.alpha
+                # assoc_alpha = tree_dist.prior.alpha
 
             if timer.elapsed > max_time:
                 break
@@ -473,7 +473,7 @@ def _run_sigma_init_iter(
 
     clear_proposal_dist_caches()
 
-    tree_dist.prior.alpha = assoc_alpha
+    # tree_dist.prior.alpha = assoc_alpha
     print()
     print("~" * 100)
     print("Post Pre-Burn")

@@ -2,12 +2,11 @@ import unittest
 
 import numpy as np
 
-from phyclone.tree.utils import _np_conv_dims
-from phyclone.utils.math import fft_convolve_two_children
+from phyclone.utils.math import fft_convolve_two_children, np_conv_dims
 
 
 def run_direct_two_child_convolve(child_1, child_2):
-    res_arr = _np_conv_dims(child_1, child_2)
+    res_arr = np_conv_dims(child_1, child_2)
     return res_arr
 
 

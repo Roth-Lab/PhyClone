@@ -305,6 +305,26 @@ def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
     return ans_arr
 
 
+# # @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
+# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
+#     """Direct convolution in numba-time."""
+#
+#     n = log_x_arr.shape[-1]
+#     dims = log_x_arr.shape[0]
+#     m = n + 1
+#     log_y_arr = np.ascontiguousarray(log_y_arr[..., ::-1])
+#     # log_y_arr = np.ascontiguousarray(log_y_arr.T)
+#
+#     for i in range(dims):
+#         # log_x = log_x_arr[l]
+#         # log_y = log_y_arr[l]
+#         # ans = ans_arr[l]
+#         for k in range(1, m):
+#             for j in range(k):
+#                 ans_arr[i, k - 1] += log_x_arr[i, j] * log_y_arr[i, n - (k - j)]
+#
+#     return ans_arr
+
 @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
@@ -421,3 +441,15 @@ def log_pyclone_binomial_pdf(data, f):
         ll[c] = data.log_pi[c] + log_binomial_pdf(data.a + data.b, data.b, e_vaf)
 
     return log_sum_exp(ll)
+
+
+def np_conv_dims(child_1, child_2):
+    num_dims = child_1.shape[0]
+
+    grid_size = child_1.shape[-1]
+
+    arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
+
+    log_D = np.ascontiguousarray(arr_list)
+
+    return log_D

@@ -1,7 +1,7 @@
 import numpy as np
 
 from phyclone.utils import two_np_arr_cache, list_of_np_cache
-from phyclone.utils.math import fft_convolve_two_children, conv_over_dims
+from phyclone.utils.math import fft_convolve_two_children, conv_over_dims, np_conv_dims
 
 
 @list_of_np_cache(maxsize=4096)
@@ -58,22 +58,11 @@ def compute_log_D(child_log_R_values):
 def _convolve_two_children(child_1, child_2):
     grid_size = child_1.shape[-1]
     if grid_size < 1000:
-        res_arr = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
+        # res_arr = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
+        res_arr = np_conv_dims(child_1, child_2)
     else:
-        res_arr = fft_convolve_two_children(child_1, child_2)
+        res_arr = np.ascontiguousarray(fft_convolve_two_children(child_1, child_2))
     return res_arr
-
-
-def _np_conv_dims(child_1, child_2):
-    num_dims = child_1.shape[0]
-
-    grid_size = child_1.shape[-1]
-
-    arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
-
-    log_D = np.ascontiguousarray(arr_list)
-
-    return log_D
 
 
 def get_clades(tree):
