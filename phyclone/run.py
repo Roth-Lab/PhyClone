@@ -371,10 +371,10 @@ def _run_burnin(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
-    best_tree = tree
+    # best_tree = tree
 
     if burnin > 0:
-        best_score = tree_dist.log_p_one(tree)
+        # best_score = tree_dist.log_p_one(tree)
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -396,10 +396,10 @@ def _run_burnin(
 
                 tree.relabel_nodes()
 
-                tree_score = tree_dist.log_p_one(tree)
-                if tree_score > best_score:
-                    best_score = tree_score
-                    best_tree = tree
+                # tree_score = tree_dist.log_p_one(tree)
+                # if tree_score > best_score:
+                #     best_score = tree_score
+                #     best_tree = tree
 
                 if timer.elapsed > max_time:
                     break
@@ -410,7 +410,7 @@ def _run_burnin(
     print("#" * 100)
     print()
 
-    return best_tree
+    return tree
 
 
 def _run_sigma_init_iter(
@@ -472,6 +472,7 @@ def _run_sigma_init_iter(
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
 
     clear_proposal_dist_caches()
+    clear_convolution_caches()
 
     # tree_dist.prior.alpha = assoc_alpha
     print()

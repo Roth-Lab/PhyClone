@@ -23,6 +23,14 @@ def compute_log_S(child_log_R_values):
     return np.ascontiguousarray(log_S)
 
 
+# def _sub_compute_S(log_D):
+#     log_S = np.empty_like(log_D)
+#     num_dims = log_D.shape[0]
+#     for i in range(num_dims):
+#         np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
+#     return log_S
+
+
 # def compute_log_D(child_log_R_values):
 #     num_children = len(child_log_R_values)
 #
@@ -61,6 +69,8 @@ def compute_log_D(child_log_R_values):
 
     if num_children == 1:
         return child_log_R_values[0]
+
+    child_log_R_values = np.ascontiguousarray(child_log_R_values)
 
     conv_res = _convolve_two_children(child_log_R_values[0], child_log_R_values[1])
     for j in range(2, num_children):

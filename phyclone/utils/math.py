@@ -122,7 +122,7 @@ def log_sum_exp(log_X):
     return np.log(total) + max_exp
 
 
-@numba.jit("float64(float64[:, :])", nopython=True, fastmath=True)
+@numba.jit("float64(float64[:, ::1])", nopython=True, fastmath=True)
 def log_sum_exp_over_dims(log_x_arr):
 
     sum_total = 0.0
@@ -480,4 +480,4 @@ def _np_conv_dims(child_1, child_2):
 
     log_D += child_2_maxes
 
-    return log_D
+    return np.ascontiguousarray(log_D)
