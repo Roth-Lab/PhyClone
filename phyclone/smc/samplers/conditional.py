@@ -35,6 +35,13 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         for data_point in self.data_points:
 
+            parent_particle = constrained_path[-1]
+
+            if parent_particle:
+                parent_particle.built_tree = new_tree
+
+            proposal_dist = self.kernel.get_proposal_distribution(data_point, parent_particle)
+
             old_node = data_to_node[data_point.idx]
 
             if old_node == outlier_node_name:
@@ -53,9 +60,12 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
                 new_tree.add_data_point_to_node(data_point, new_node)
 
-            parent_particle = constrained_path[-1]
-
-            proposal_dist = self.kernel.get_proposal_distribution(data_point, parent_particle)
+            # parent_particle = constrained_path[-1]
+            #
+            # if parent_particle:
+            #     parent_particle.built_tree = parent_tree
+            #
+            # proposal_dist = self.kernel.get_proposal_distribution(data_point, parent_particle)
 
             new_tree_holder = TreeHolder(new_tree, tree_dist, perm_dist)
             log_q = proposal_dist.log_p(new_tree_holder)

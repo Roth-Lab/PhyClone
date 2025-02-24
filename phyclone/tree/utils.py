@@ -70,7 +70,7 @@ def compute_log_D(child_log_R_values):
     if num_children == 1:
         return child_log_R_values[0]
 
-    child_log_R_values = np.ascontiguousarray(child_log_R_values)
+    # child_log_R_values = np.ascontiguousarray(child_log_R_values)
 
     conv_res = _convolve_two_children(child_log_R_values[0], child_log_R_values[1])
     for j in range(2, num_children):

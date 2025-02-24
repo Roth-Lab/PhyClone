@@ -46,7 +46,7 @@ class BaseTest(object):
                 simulate.simulate_binomial_data(3, 0, 1.0, self._rng),
             ]
 
-            self._run_exact_posterior_test(node_data, burnin=100, num_iters=2000)
+            self._run_exact_posterior_test(node_data, burnin=100, num_iters=2500)
 
         def test_two_data_point_1d_two_cluster(self):
             node_data = [

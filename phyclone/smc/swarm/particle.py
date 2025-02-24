@@ -5,7 +5,7 @@ from phyclone.smc.swarm import TreeHolder
 
 class Particle(object):
     __slots__ = (
-        # "_built_tree",
+        "_built_tree",
         "log_w",
         "parent_particle",
         "_tree_dist",
@@ -20,7 +20,7 @@ class Particle(object):
     )
 
     def __init__(self, log_w, parent_particle, tree_holder, tree_dist, perm_dist):
-        # self._built_tree = deque(maxlen=1)
+        self._built_tree = deque(maxlen=1)
 
         self.log_w = log_w
 
@@ -68,16 +68,16 @@ class Particle(object):
         self._hash_val = hash(tree)
         self._tree = tree
 
-    # @property
-    # def built_tree(self):
-    #     return self._built_tree
-    #
-    # @built_tree.setter
-    # def built_tree(self, tree):
-    #     self._built_tree.append(tree)
-    #
-    # @built_tree.getter
-    # def built_tree(self):
-    #     if len(self._built_tree) == 0:
-    #         return None
-    #     return self._built_tree.pop()
+    @property
+    def built_tree(self):
+        return self._built_tree
+
+    @built_tree.setter
+    def built_tree(self, tree):
+        self._built_tree.append(tree)
+
+    @built_tree.getter
+    def built_tree(self):
+        if len(self._built_tree) == 0:
+            return None
+        return self._built_tree.pop()
