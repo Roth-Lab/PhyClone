@@ -70,18 +70,18 @@ class Test(unittest.TestCase):
 
     def test_convolve_two_children_cache_order(self):
         grid_size = 101
-        # child_1 = np.full(grid_size, -np.log(grid_size))
-        # child_2 = np.full(grid_size, -np.log(grid_size))
-        child_1 = np.full(grid_size, 5.5)
-        child_2 = np.full(grid_size, 6.5)
+        child_1 = np.full(grid_size, -np.log(grid_size))
+        child_2 = np.full(grid_size, -np.log(grid_size))
+        # child_1 = np.full(grid_size, 5.5)
+        # child_2 = np.full(grid_size, 6.5)
         child_1_two_d = np.atleast_2d(child_1)
         child_2_two_d = np.atleast_2d(child_2)
 
         actual = _convolve_two_children(child_1_two_d, child_2_two_d)
         actual_rev = _convolve_two_children(child_2_two_d, child_1_two_d)
 
-        # expected = np.atleast_2d(non_log_conv(child_1, child_2))
-        expected = np.atleast_2d(np.convolve(child_1, child_2)[: len(child_1)])
+        expected = np.atleast_2d(non_log_conv(child_1, child_2))
+        # expected = np.atleast_2d(np.convolve(child_1, child_2)[: len(child_1)])
 
         num_hits = _convolve_two_children.cache_info().hits
         cache_size = _convolve_two_children.cache_info().currsize
