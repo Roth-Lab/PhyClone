@@ -285,7 +285,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    clear_convolution_caches()
+    # clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
@@ -374,7 +374,7 @@ def _run_burnin(
     best_tree = tree
 
     if burnin > 0:
-        best_score = -np.inf
+        best_score = tree_dist.log_p_one(tree)
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -434,7 +434,7 @@ def _run_sigma_init_iter(
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = tree
-    best_score = -np.inf
+    best_score = tree_dist.log_p_one(tree)
     # assoc_alpha = tree_dist.prior.alpha
 
     print("#" * 100)
@@ -446,7 +446,7 @@ def _run_sigma_init_iter(
             if i % print_freq == 0:
                 print_stats(i, tree, tree_dist, chain_num)
 
-            clear_proposal_dist_caches()
+            # clear_proposal_dist_caches()
 
             tree = burnin_sampler.sample_tree(tree, sigma_init)
 
