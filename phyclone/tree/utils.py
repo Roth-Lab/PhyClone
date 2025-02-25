@@ -39,8 +39,6 @@ def compute_log_D(child_log_R_values):
 
     np.exp(normed_children, order="C", dtype=np.float64, out=normed_children)
 
-    # normed_children = np.ascontiguousarray(normed_children)
-
     conv_res = _convolve_two_children(normed_children[0], normed_children[1])
     for j in range(2, num_children):
         conv_res = _convolve_two_children(normed_children[j], conv_res)
@@ -55,32 +53,10 @@ def compute_log_D(child_log_R_values):
     return log_d
 
 
-
-# def compute_log_D(child_log_R_values):
-#     num_children = len(child_log_R_values)
-#
-#     if num_children == 0:
-#         return 0
-#
-#     if num_children == 1:
-#         return child_log_R_values[0]
-#
-#     # child_log_R_values = np.ascontiguousarray(child_log_R_values)
-#
-#     conv_res = _convolve_two_children(child_log_R_values[0], child_log_R_values[1])
-#     for j in range(2, num_children):
-#         conv_res = _convolve_two_children(child_log_R_values[j], conv_res)
-#
-#     # log_D = conv_res
-#     return conv_res
-
-
 @two_np_arr_cache(maxsize=2048)
 def _convolve_two_children(child_1, child_2):
     grid_size = child_1.shape[-1]
     if grid_size < 1000:
-        # res_arr = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
-        # res_arr = _np_conv_dims(child_1, child_2)
         res_arr = np_conv_dims(child_1, child_2)
     else:
         res_arr = np.ascontiguousarray(fft_convolve_two_children(child_1, child_2))

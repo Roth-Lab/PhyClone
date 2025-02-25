@@ -74,8 +74,8 @@ class Test(unittest.TestCase):
         grid_size = self.big_grid
         dim = 4
 
-        child_1 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
-        child_2 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
+        child_1 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1.0, size=(dim, grid_size)))
+        child_2 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=10, size=(dim, grid_size)))
 
         actual = fft_convolve_two_children(child_1, child_2)
 

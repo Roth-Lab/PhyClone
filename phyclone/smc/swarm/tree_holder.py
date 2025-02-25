@@ -20,12 +20,11 @@ class TreeHolder(object):
         "num_children_on_node_that_matters",
         "outlier_node_name",
         "multiplicity",
-        # "_likelihood_parts_dict",
-        "_partial_log_p",
-        "_partial_log_p_one",
+        # "_partial_log_p",
+        # "_partial_log_p_one",
         "_num_nodes",
-        "_alpha_prior",
-        "_curr_alpha_val"
+        # "_alpha_prior",
+        # "_curr_alpha_val"
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -42,9 +41,9 @@ class TreeHolder(object):
 
         self._hash_val = 0
 
-        self._alpha_prior = 0.0
-
-        self._curr_alpha_val = 0.0
+        # self._alpha_prior = 0.0
+        #
+        # self._curr_alpha_val = 0.0
 
         self.tree = tree
 

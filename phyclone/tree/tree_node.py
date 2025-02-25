@@ -27,7 +27,8 @@ class TreeNode(object):
     def __eq__(self, other):
         log_p_compare = np.array_equal(self.log_p, other.log_p)
         log_r_compare = np.array_equal(self.log_r, other.log_r)
-        return log_p_compare and log_r_compare
+        dp_sets = self.data_points == other.data_points
+        return log_p_compare and log_r_compare and dp_sets
 
     def add_data_point_list(self, data_point_list):
         dp_idx_set = {dp.idx for dp in data_point_list}

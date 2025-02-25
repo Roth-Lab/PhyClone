@@ -144,17 +144,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         return tree_container
 
 
-@lru_cache(maxsize=1024)
-def get_cached_new_tree(parent_particle, data_point, children, tree_dist, perm_dist):
-    tree = parent_particle.tree
-
-    tree.create_root_node(children=children, data=[data_point])
-
-    tree_container = TreeHolder(tree, tree_dist, perm_dist)
-
-    return tree_container
-
-
 class SemiAdaptedKernel(Kernel):
     __slots__ = ("outlier_modelling_active", "log_half")
 

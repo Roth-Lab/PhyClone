@@ -60,58 +60,12 @@ def exp_normalize(log_p):
     return p, log_norm
 
 
-@numba.jit(nopython=True)
-def lse(log_x):
-    inf_check = np.all(np.isinf(log_x))
-    if inf_check:
-        return log_x[0]
-
-    x = log_x[np.isfinite(log_x)]
-    ans = x[0]
-
-    for i in range(1, len(x)):
-        curr = x[i]
-        if ans > curr:
-            max_value = ans
-            min_value = curr
-        else:
-            max_value = curr
-            min_value = ans
-        ans = max_value + np.log1p(np.exp(min_value - max_value))
-
-    return ans
-
-
-@numba.jit(nopython=True)
-def lse_accumulate(log_x, out_arr):
-    len_arr = len(log_x)
-    t = log_x[0]
-    out_arr[0] = t
-    for i in range(1, len_arr):
-        curr = log_x[i]
-        if t > curr:
-            max_value = t
-            min_value = curr
-        else:
-            max_value = curr
-            min_value = t
-        t = max_value + np.log1p(np.exp(min_value - max_value))
-        out_arr[i] = t
-    return out_arr
-
-
 @numba.jit("float64(float64[:])", nopython=True, fastmath=True)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
     This implementation is numerically safer than the naive method.
     """
-    # max_exp = log_X[0]
-    #
-    # for val in log_X:
-    #     if val > max_exp:
-    #         max_exp = val
-
     max_exp = log_X.max()
 
     if np.isinf(max_exp):
@@ -139,15 +93,6 @@ def log_sum_exp_over_dims(log_x_arr):
 def log_sum_exp_over_dims_to_arr(log_x_arr):
     num_dims = log_x_arr.shape[0]
     ret_arr = np.empty(num_dims, np.float64)
-
-    for dim, log_x_dim in enumerate(log_x_arr):
-        ret_arr[dim] = log_sum_exp(log_x_dim)
-
-    return ret_arr
-
-
-@numba.jit(nopython=True, fastmath=False)
-def log_sum_exp_over_dims_to_arr_supplied(log_x_arr, ret_arr):
 
     for dim, log_x_dim in enumerate(log_x_arr):
         ret_arr[dim] = log_sum_exp(log_x_dim)
@@ -245,68 +190,6 @@ def log_beta_binomial_pdf(n, x, a, b):
     return log_binomial_coefficient(n, x) + log_beta_binomial_likelihood(n, x, a, b)
 
 
-@numba.jit(nopython=True, fastmath=True)
-def conv_log(log_x, log_y, ans):
-    """Direct convolution in log space."""
-    n = len(log_x)
-
-    log_y = log_y[::-1]
-
-    for k in range(1, n + 1):
-        v_arr = np.empty(k)
-        max_val = -np.inf
-        for j in range(k):
-            curr = log_x[j] + log_y[n - (k - j)]
-            v_arr[j] = curr
-            if curr > max_val:
-                max_val = curr
-
-        v_arr -= max_val
-
-        np.exp(v_arr, v_arr)
-
-        sub_ans = 0
-        for i in range(k):
-            sub_ans += v_arr[i]
-
-        ans[k - 1] = np.log(sub_ans) + max_val
-
-    return ans
-
-@numba.jit(nopython=True, fastmath=True)
-def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
-    """Direct convolution in log space."""
-
-    n = log_x_arr.shape[-1]
-    dims = log_x_arr.shape[0]
-
-    for l in range(dims):
-        log_x = log_x_arr[l]
-        log_y = log_y_arr[l]
-        log_y = log_y[::-1]
-        ans = ans_arr[l]
-        for k in range(1, n + 1):
-            v_arr = np.empty(k)
-            max_val = -np.inf
-            for j in range(k):
-                curr = log_x[j] + log_y[n - (k - j)]
-                v_arr[j] = curr
-                if curr > max_val:
-                    max_val = curr
-
-            v_arr -= max_val
-
-            np.exp(v_arr, v_arr)
-
-            sub_ans = 0
-            for i in range(k):
-                sub_ans += v_arr[i]
-
-            ans[k - 1] = np.log(sub_ans) + max_val
-
-    return ans_arr
-
-
 @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
@@ -327,7 +210,6 @@ def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     return ans_arr
 
 
-
 def fft_convolve_two_children(child_1, child_2):
     """FFT convolution"""
 
@@ -336,25 +218,6 @@ def fft_convolve_two_children(child_1, child_2):
     result = result[..., : child_1.shape[-1]]
 
     return result
-
-
-def non_log_conv(child_log_R, prev_log_D_n):
-    """Compute the recursion over D using the numpy."""
-    log_R_max = child_log_R.max()
-
-    log_D_max = prev_log_D_n.max()
-
-    R_norm = np.exp(child_log_R - log_R_max)
-
-    D_norm = np.exp(prev_log_D_n - log_D_max)
-
-    result = np.convolve(R_norm, D_norm)
-
-    result = result[: len(child_log_R)]
-
-    result[result <= 0] = 1e-100
-
-    return np.log(result) + log_D_max + log_R_max
 
 
 @numba.jit(nopython=True)
@@ -431,8 +294,6 @@ def np_conv_dims(child_1, child_2):
     grid_size = child_1.shape[-1]
 
     arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
-
-    # log_D = np.ascontiguousarray(arr_list)
 
     return np.ascontiguousarray(arr_list)
 
