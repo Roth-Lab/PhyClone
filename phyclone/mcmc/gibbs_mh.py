@@ -32,6 +32,44 @@ class DataPointSampler(object):
 
         return tree
 
+    # def _sample_tree(self, data_idx, tree, old_node):
+    #     data_point = tree.data[data_idx]
+    #
+    #     assert data_point.idx == data_idx
+    #
+    #     new_trees = []
+    #
+    #     for new_node in tree.nodes:
+    #         new_tree = tree.copy()
+    #
+    #         new_tree.remove_data_point_from_node(data_point, old_node)
+    #
+    #         new_tree.add_data_point_to_node(data_point, new_node)
+    #
+    #         new_trees.append(new_tree)
+    #
+    #     if self.outliers:
+    #         new_tree = tree.copy()
+    #
+    #         new_tree.remove_data_point_from_node(data_point, old_node)
+    #
+    #         new_tree.add_data_point_to_outliers(data_point)
+    #
+    #         new_trees.append(new_tree)
+    #
+    #     log_q = np.array([self.tree_dist.log_p_one(x) for x in new_trees])
+    #
+    #     log_q = log_normalize(log_q)
+    #
+    #     q = np.exp(log_q)
+    #
+    #     q = q / sum(q)
+    #
+    #     tree_idx = self._rng.multinomial(1, q).argmax()
+    #
+    #     return new_trees[tree_idx]
+
+
     def _sample_tree(self, data_idx, tree, old_node):
         data_point = tree.data[data_idx]
 
@@ -39,19 +77,23 @@ class DataPointSampler(object):
 
         new_trees = []
 
-        for new_node in tree.nodes:
-            new_tree = tree.copy()
+        rem_tree = tree.copy()
+        rem_tree.remove_data_point_from_node(data_point, old_node)
 
-            new_tree.remove_data_point_from_node(data_point, old_node)
+        for new_node in tree.nodes:
+            # new_tree = tree.copy()
+            new_tree = rem_tree.copy()
+
+            # new_tree.remove_data_point_from_node(data_point, old_node)
 
             new_tree.add_data_point_to_node(data_point, new_node)
 
             new_trees.append(new_tree)
 
         if self.outliers:
-            new_tree = tree.copy()
+            new_tree = rem_tree.copy()
 
-            new_tree.remove_data_point_from_node(data_point, old_node)
+            # new_tree.remove_data_point_from_node(data_point, old_node)
 
             new_tree.add_data_point_to_outliers(data_point)
 

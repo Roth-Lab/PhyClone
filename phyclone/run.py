@@ -371,10 +371,10 @@ def _run_burnin(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
-    # best_tree = tree
+    best_tree = tree
 
     if burnin > 0:
-        # best_score = tree_dist.log_p_one(tree)
+        best_score = tree_dist.log_p_one(tree)
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -396,10 +396,10 @@ def _run_burnin(
 
                 tree.relabel_nodes()
 
-                # tree_score = tree_dist.log_p_one(tree)
-                # if tree_score > best_score:
-                #     best_score = tree_score
-                #     best_tree = tree
+                tree_score = tree_dist.log_p_one(tree)
+                if tree_score > best_score:
+                    best_score = tree_score
+                    best_tree = tree
 
                 if timer.elapsed > max_time:
                     break
@@ -410,7 +410,7 @@ def _run_burnin(
     print("#" * 100)
     print()
 
-    return tree
+    return best_tree
 
 
 def _run_sigma_init_iter(
@@ -428,14 +428,14 @@ def _run_sigma_init_iter(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
-    # conc_sampler = samplers.conc_sampler
+    conc_sampler = samplers.conc_sampler
 
     sigma_init_iters = 100
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = tree
     best_score = tree_dist.log_p_one(tree)
-    # assoc_alpha = tree_dist.prior.alpha
+    assoc_alpha = tree_dist.prior.alpha
 
     print("#" * 100)
     print("Pre-Burn: Single Sigma Data Initialization")
@@ -458,23 +458,23 @@ def _run_sigma_init_iter(
 
             tree.relabel_nodes()
 
-            # if concentration_update:
-            #     update_concentration_value(conc_sampler, tree, tree_dist)
+            if concentration_update:
+                update_concentration_value(conc_sampler, tree, tree_dist)
 
             tree_score = tree_dist.log_p_one(tree)
             if tree_score > best_score:
                 best_score = tree_score
                 best_tree = tree
-                # assoc_alpha = tree_dist.prior.alpha
+                assoc_alpha = tree_dist.prior.alpha
 
             if timer.elapsed > max_time:
                 break
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
 
     clear_proposal_dist_caches()
-    # clear_convolution_caches()
+    clear_convolution_caches()
 
-    # tree_dist.prior.alpha = assoc_alpha
+    tree_dist.prior.alpha = assoc_alpha
     print()
     print("~" * 100)
     print("Post Pre-Burn")
