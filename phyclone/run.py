@@ -285,7 +285,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    # clear_convolution_caches()
+    clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
@@ -446,7 +446,7 @@ def _run_sigma_init_iter(
             if i % print_freq == 0:
                 print_stats(i, tree, tree_dist, chain_num)
 
-            # clear_proposal_dist_caches()
+            clear_proposal_dist_caches()
 
             tree = burnin_sampler.sample_tree(tree, sigma_init)
 
@@ -472,7 +472,7 @@ def _run_sigma_init_iter(
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
 
     clear_proposal_dist_caches()
-    clear_convolution_caches()
+    # clear_convolution_caches()
 
     # tree_dist.prior.alpha = assoc_alpha
     print()

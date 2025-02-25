@@ -1,5 +1,3 @@
-from collections import deque
-
 from phyclone.smc.swarm import TreeHolder
 
 
@@ -20,7 +18,7 @@ class Particle(object):
     )
 
     def __init__(self, log_w, parent_particle, tree_holder, tree_dist, perm_dist):
-        self._built_tree = deque(maxlen=1)
+        self._built_tree = None
 
         self.log_w = log_w
 
@@ -74,10 +72,10 @@ class Particle(object):
 
     @built_tree.setter
     def built_tree(self, tree):
-        self._built_tree.append(tree)
+        self._built_tree = tree
 
     @built_tree.getter
     def built_tree(self):
-        if len(self._built_tree) == 0:
-            return None
-        return self._built_tree.pop()
+        ret_val = self._built_tree
+        self._built_tree = None
+        return ret_val
