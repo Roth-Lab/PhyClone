@@ -430,7 +430,7 @@ def _run_sigma_init_iter(
     prg_sampler = samplers.prg_sampler
     conc_sampler = samplers.conc_sampler
 
-    sigma_init_iters = 100
+    sigma_init_iters = 10
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = tree
