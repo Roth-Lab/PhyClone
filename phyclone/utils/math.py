@@ -106,11 +106,13 @@ def log_sum_exp(log_X):
 
     This implementation is numerically safer than the naive method.
     """
-    max_exp = log_X[0]
+    # max_exp = log_X[0]
+    #
+    # for val in log_X:
+    #     if val > max_exp:
+    #         max_exp = val
 
-    for val in log_X:
-        if val > max_exp:
-            max_exp = val
+    max_exp = log_X.max()
 
     if np.isinf(max_exp):
         return max_exp
@@ -305,26 +307,6 @@ def conv_log_over_dims(log_x_arr, log_y_arr, ans_arr):
     return ans_arr
 
 
-# # @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
-# def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-#     """Direct convolution in numba-time."""
-#
-#     n = log_x_arr.shape[-1]
-#     dims = log_x_arr.shape[0]
-#     m = n + 1
-#     log_y_arr = np.ascontiguousarray(log_y_arr[..., ::-1])
-#     # log_y_arr = np.ascontiguousarray(log_y_arr.T)
-#
-#     for i in range(dims):
-#         # log_x = log_x_arr[l]
-#         # log_y = log_y_arr[l]
-#         # ans = ans_arr[l]
-#         for k in range(1, m):
-#             for j in range(k):
-#                 ans_arr[i, k - 1] += log_x_arr[i, j] * log_y_arr[i, n - (k - j)]
-#
-#     return ans_arr
-
 @numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
 def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
     """Direct convolution in numba-time."""
@@ -450,9 +432,9 @@ def np_conv_dims(child_1, child_2):
 
     arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
 
-    log_D = np.ascontiguousarray(arr_list)
+    # log_D = np.ascontiguousarray(arr_list)
 
-    return log_D
+    return np.ascontiguousarray(arr_list)
 
 
 def _np_conv_dims(child_1, child_2):

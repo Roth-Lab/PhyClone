@@ -1,7 +1,7 @@
 import numpy as np
 
 from phyclone.utils import two_np_arr_cache, list_of_np_cache
-from phyclone.utils.math import fft_convolve_two_children, conv_over_dims, np_conv_dims, _np_conv_dims
+from phyclone.utils.math import fft_convolve_two_children, np_conv_dims
 
 
 @list_of_np_cache(maxsize=4096)
@@ -21,14 +21,6 @@ def compute_log_S(child_log_R_values):
     log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
 
     return np.ascontiguousarray(log_S)
-
-
-# def _sub_compute_S(log_D):
-#     log_S = np.empty_like(log_D)
-#     num_dims = log_D.shape[0]
-#     for i in range(num_dims):
-#         np.logaddexp.accumulate(log_D[i, :], out=log_S[i, :])
-#     return log_S
 
 
 def compute_log_D(child_log_R_values):
@@ -53,12 +45,8 @@ def compute_log_D(child_log_R_values):
     for j in range(2, num_children):
         conv_res = _convolve_two_children(normed_children[j], conv_res)
 
-    # conv_res[conv_res <= 0] = 1e-100
     log_d = conv_res.copy()
     log_d[log_d <= 0] = 1e-100
-    # log_d = np.clip(conv_res, a_min=1e-100, a_max=None, out=log_d)
-    # conv_res.clip(min=1e-100, max=None, order="C", dtype=np.float64, out=log_d)
-    # np.maximum(1e-100, conv_res, order="C", dtype=np.float64, out=log_d)
 
     np.log(log_d, order="C", dtype=np.float64, out=log_d)
 
@@ -94,8 +82,6 @@ def _convolve_two_children(child_1, child_2):
         # res_arr = conv_over_dims(child_1, child_2, np.zeros_like(child_1, order="C"))
         # res_arr = _np_conv_dims(child_1, child_2)
         res_arr = np_conv_dims(child_1, child_2)
-        # res_arr.clip(min=1e-100, max=None, out=res_arr)
-        # res_arr[res_arr <= 0] = 1e-100
     else:
         res_arr = np.ascontiguousarray(fft_convolve_two_children(child_1, child_2))
     return res_arr
