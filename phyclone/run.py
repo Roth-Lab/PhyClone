@@ -245,6 +245,7 @@ def run_phyclone_chain(
         tree,
         tree_dist,
         chain_num,
+        concentration_update,
     )
     results = _run_main_sampler(
         concentration_update,
@@ -314,14 +315,15 @@ def _run_main_sampler(
 
             tree.relabel_nodes()
 
-            if concentration_update:
-                update_concentration_value(conc_sampler, tree, tree_dist)
-
             if i % thin == 0:
                 append_to_trace(i, timer, trace, tree, tree_dist)
 
             if timer.elapsed >= max_time:
                 break
+
+            if concentration_update:
+                update_concentration_value(conc_sampler, tree, tree_dist)
+
     results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
     return results
 
@@ -367,14 +369,17 @@ def _run_burnin(
     tree,
     tree_dist,
     chain_num,
+    concentration_update,
 ):
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
+    # conc_sampler = samplers.conc_sampler
     best_tree = tree
+    # assoc_alpha = tree_dist.prior.alpha
 
     if burnin > 0:
-        best_score = tree_dist.log_p_one(tree)
+        best_score = -np.inf
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -400,10 +405,15 @@ def _run_burnin(
                 if tree_score > best_score:
                     best_score = tree_score
                     best_tree = tree
+                #     assoc_alpha = tree_dist.prior.alpha
+                #
+                # if concentration_update:
+                #     update_concentration_value(conc_sampler, tree, tree_dist)
 
                 if timer.elapsed > max_time:
                     break
         print_stats(burnin, tree, tree_dist, chain_num)
+        # tree_dist.prior.alpha = assoc_alpha
     print()
     print("#" * 100)
     print("Post-burnin")
@@ -434,7 +444,7 @@ def _run_sigma_init_iter(
     print_freq = round(sigma_init_iters / 2)
 
     best_tree = tree
-    best_score = tree_dist.log_p_one(tree)
+    best_score = -np.inf
     assoc_alpha = tree_dist.prior.alpha
 
     print("#" * 100)
@@ -458,9 +468,6 @@ def _run_sigma_init_iter(
 
             tree.relabel_nodes()
 
-            if concentration_update:
-                update_concentration_value(conc_sampler, tree, tree_dist)
-
             tree_score = tree_dist.log_p_one(tree)
             if tree_score > best_score:
                 best_score = tree_score
@@ -469,6 +476,10 @@ def _run_sigma_init_iter(
 
             if timer.elapsed > max_time:
                 break
+
+            if concentration_update:
+                update_concentration_value(conc_sampler, tree, tree_dist)
+
     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
 
     clear_proposal_dist_caches()
