@@ -128,7 +128,6 @@ class TreeHolderBuilder(object):
 
     def with_node_last_added_to(self, node_last_added_to, datapoint_add=False):
         self._node_last_added_to = node_last_added_to
-        # self.nodes = self._nodes + [node_last_added_to]
         if not datapoint_add:
             self.nodes = self._nodes + [node_last_added_to]
         return self
@@ -214,6 +213,10 @@ class TreeHolderBuilder(object):
     @nodes.setter
     def nodes(self, nodes):
         self._nodes = nodes
+
+    @nodes.getter
+    def nodes(self):
+        return list(self._nodes)
 
     @property
     def roots(self):

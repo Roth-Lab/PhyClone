@@ -107,7 +107,7 @@ class TreeHolder(object):
         self._num_nodes = tree.get_number_of_nodes()
 
         self.tree_roots = np.asarray(tree.roots)
-        self.tree_nodes = list(tree.nodes)
+        self.tree_nodes = tree.nodes
         self._hash_val = hash(tree)
         self._tree = tree.to_dict()
         self.labels = tree.labels
