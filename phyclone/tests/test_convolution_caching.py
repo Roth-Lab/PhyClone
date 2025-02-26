@@ -5,7 +5,6 @@ from phyclone.utils.math import np_conv_dims
 from phyclone.utils.dev import clear_convolution_caches
 
 
-
 class TestConvolutionCaching(unittest.TestCase):
 
     def __init__(self, method_name: str = ...):

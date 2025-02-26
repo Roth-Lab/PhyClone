@@ -69,7 +69,6 @@ class DataPointSampler(object):
         return new_trees[tree_idx]
 
 
-
 class PruneRegraphSampler(object):
     """Prune a subtree and regraph by Gibbs sampling possible attachment points"""
 
@@ -100,7 +99,11 @@ class PruneRegraphSampler(object):
         return trees[idx][1]
 
     @staticmethod
-    def _create_sampled_trees_array(remaining_nodes: list[int | str | None], pruned_tree: Tree, subtree: Tree) -> list[tuple[int, Tree]]:
+    def _create_sampled_trees_array(
+        remaining_nodes: list[int | str | None],
+        pruned_tree: Tree,
+        subtree: Tree,
+    ) -> list[tuple[int, Tree]]:
         trees = []
         # Descendant from dummy normal node
         remaining_nodes.append(None)

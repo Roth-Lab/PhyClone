@@ -13,18 +13,17 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
     __slots__ = "_sample_idx"
 
     def __init__(
-            self,
-            data_point,
-            kernel,
-            parent_particle,
-            outlier_modelling_active=False,
+        self,
+        data_point,
+        kernel,
+        parent_particle,
+        outlier_modelling_active=False,
     ):
         super().__init__(data_point, kernel, parent_particle, outlier_modelling_active)
 
         self._sample_idx = 0
 
         self._init_dist()
-
 
     def log_p(self, tree):
         """Get the log probability of the tree."""

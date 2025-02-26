@@ -33,7 +33,6 @@ class DataPoint(object):
         sub_comp = np.ascontiguousarray(sub_comp)
         self.outlier_marginal_prob = log_sum_exp_over_dims_to_arr(sub_comp).sum()
 
-
     def __hash__(self):
         return hash(self.name)
 

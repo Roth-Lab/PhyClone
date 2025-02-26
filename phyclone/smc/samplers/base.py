@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class AbstractSMCSampler(object):
     """Abstract class for an SMC sampler."""
 

@@ -23,8 +23,8 @@ class Test(unittest.TestCase):
     def test_default_grid_size_prior_1_dim(self):
         grid_size = self.default_grid_size
         dim = 1
-        child_1 = np.full((dim, grid_size), grid_size, order='C')
-        child_2 = np.full((dim, grid_size), grid_size, order='C')
+        child_1 = np.full((dim, grid_size), grid_size, order="C")
+        child_2 = np.full((dim, grid_size), grid_size, order="C")
 
         actual = fft_convolve_two_children(child_1, child_2)
 
@@ -35,8 +35,8 @@ class Test(unittest.TestCase):
     def test_default_grid_size_prior_4_dim(self):
         grid_size = self.default_grid_size
         dim = 4
-        child_1 = np.full((dim, grid_size), grid_size, order='C')
-        child_2 = np.full((dim, grid_size), grid_size, order='C')
+        child_1 = np.full((dim, grid_size), grid_size, order="C")
+        child_2 = np.full((dim, grid_size), grid_size, order="C")
 
         actual = fft_convolve_two_children(child_1, child_2)
 

@@ -210,7 +210,7 @@ class Tree(object):
 
     def get_root_tree_node_dict(self):
         root_idx = self._node_indices[self._root_node_name]
-        return {child.node_id:child.copy() for child in self._graph.successors(root_idx)}
+        return {child.node_id: child.copy() for child in self._graph.successors(root_idx)}
 
     @classmethod
     def from_dict(cls, tree_dict) -> Tree:

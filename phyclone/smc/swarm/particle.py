@@ -45,7 +45,6 @@ class Particle(object):
         hash_check = hash(self) == hash(other)
         return hash_check
 
-
     @property
     def tree(self):
         return self._tree

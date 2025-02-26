@@ -27,8 +27,9 @@ class SMCSampler(AbstractSMCSampler):
 
             for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
                 # assert not np.isneginf(particle.log_w)
-                new_swarm.add_particles_from_iterators(repeat(log_uniform_weight, multiplicity),
-                                                       repeat(particle, multiplicity))
+                new_swarm.add_particles_from_iterators(
+                    repeat(log_uniform_weight, multiplicity), repeat(particle, multiplicity)
+                )
 
             self.swarm = new_swarm
 

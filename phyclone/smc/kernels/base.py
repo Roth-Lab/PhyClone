@@ -96,7 +96,7 @@ class ProposalDistribution(object):
         "_log_p",
         "_curr_trees",
         "_tree_roots",
-        "_num_roots"
+        "_num_roots",
     )
 
     def __init__(
@@ -171,7 +171,9 @@ class ProposalDistribution(object):
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
 
-        tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(self.data_point)
+        tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
+            self.data_point
+        )
         tree_holder = tree_holder_builder.build()
         return tree_holder
 
@@ -196,4 +198,3 @@ def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_po
     tree_container = tree_holder_builder.build()
 
     return tree_container
-

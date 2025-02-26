@@ -179,7 +179,7 @@ def _build_cluster_info_dict(df):
             cluster_id=cluster,
             num_mutations=len(group["mutation_id"].unique()),
             num_unique_chromosomes=len(group["chrom"].unique()),
-            cell_prev_mean=group["cellular_prevalence"].mean()
+            cell_prev_mean=group["cellular_prevalence"].mean(),
         )
         cluster_info_dict[cluster] = clust_info_obj
     return cluster_info_dict
@@ -199,7 +199,7 @@ def _build_cluster_prev_dict(df):
     for cluster, group in grouped:
         clust_info_obj = ClusterPrev(
             cluster_id=cluster,
-            cell_prev_mean=group["cellular_prevalence"].mean()
+            cell_prev_mean=group["cellular_prevalence"].mean(),
         )
         cluster_info_dict[cluster] = clust_info_obj
     return cluster_info_dict

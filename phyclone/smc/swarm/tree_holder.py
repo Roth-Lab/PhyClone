@@ -74,7 +74,6 @@ class TreeHolder(object):
         else:
             self.num_children_on_node_that_matters = 0
 
-
     @tree.getter
     def tree(self) -> Tree:
         return Tree.from_dict(self._tree)

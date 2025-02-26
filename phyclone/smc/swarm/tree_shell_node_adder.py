@@ -69,7 +69,7 @@ class TreeHolderBuilder(object):
         "_hash_val",
         "_tree_dist",
         "_number_of_nodes",
-        "_log_pdf"
+        "_log_pdf",
     )
 
     def __init__(
@@ -283,7 +283,7 @@ class TreeShellNodeAdder(object):
         "tree_dist",
         "perm_dist",
         "_perm_dist_dict",
-        "_num_datapoints"
+        "_num_datapoints",
     )
 
     def __init__(self, tree: Tree, tree_dist: TreeJointDistribution, perm_dist: RootPermutationDistribution = None):
@@ -316,7 +316,10 @@ class TreeShellNodeAdder(object):
         }
 
     def _precompute_subroot_log_counts(self, tree):
-        perm_dist_dict = {sub_root: (self.perm_dist.log_count(tree, sub_root), tree.get_subtree_data_len(sub_root)) for sub_root in self._root_node_names_set}
+        perm_dist_dict = {
+            sub_root: (self.perm_dist.log_count(tree, sub_root), tree.get_subtree_data_len(sub_root))
+            for sub_root in self._root_node_names_set
+        }
         return perm_dist_dict
 
     def __hash__(self):
@@ -359,10 +362,7 @@ class TreeShellNodeAdder(object):
 
         return tree_holder_builder
 
-    def create_tree_holder_with_datapoint_added_to_node(self,
-                                                        node_id: int | str,
-                                                        datapoint: DataPoint):
-
+    def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
 
         num_children = self.roots_num_children[node_id]
         tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
@@ -373,9 +373,15 @@ class TreeShellNodeAdder(object):
         node_idx_dict = self._tree_info.get_node_idx_dict()
         node_idx_rev_dict = self._tree_info.get_node_idx_rev_dict()
 
-        node_data = self._add_node_data_graph_and_index_dicts(datapoint, graph, node_id, node_idx_dict,
-                                                              node_idx_rev_dict, node_obj,
-                                                              tree_holder_builder)
+        node_data = self._add_node_data_graph_and_index_dicts(
+            datapoint,
+            graph,
+            node_id,
+            node_idx_dict,
+            node_idx_rev_dict,
+            node_obj,
+            tree_holder_builder,
+        )
 
         self._update_likelihood_computations_added_datapoint(node_id, node_obj, tree_holder_builder)
 
@@ -401,8 +407,16 @@ class TreeShellNodeAdder(object):
         root_node_obj.update_node_from_child_r_vals(sub_root_log_r_values)
         tree_holder_builder.with_root_node_object(root_node_obj)
 
-    def _add_node_data_graph_and_index_dicts(self, datapoint, graph, node_id, node_idx_dict,
-                                             node_idx_rev_dict, node_obj, tree_holder_builder):
+    def _add_node_data_graph_and_index_dicts(
+        self,
+        datapoint,
+        graph,
+        node_id,
+        node_idx_dict,
+        node_idx_rev_dict,
+        node_obj,
+        tree_holder_builder,
+    ):
         node_obj.add_data_point(datapoint)
         node_data = self._tree_info.get_node_data()
         node_data[node_id].append(datapoint)
@@ -415,7 +429,7 @@ class TreeShellNodeAdder(object):
     def create_tree_holder_with_new_node(
         self,
         children: frozenset[int | str] | list[int | str] | None,
-        datapoint: DataPoint
+        datapoint: DataPoint,
     ):
         if children is None:
             children = set()
@@ -431,12 +445,19 @@ class TreeShellNodeAdder(object):
         node_idx_dict = self._tree_info.get_node_idx_dict()
         node_idx_rev_dict = self._tree_info.get_node_idx_rev_dict()
 
-        new_node_obj, node_idx = self._attach_new_node_to_graph(children, graph, node_id, node_idx_dict,
-                                                                node_idx_rev_dict)
+        new_node_obj, node_idx = self._attach_new_node_to_graph(
+            children, graph, node_id, node_idx_dict, node_idx_rev_dict
+        )
 
-        _ = self._add_node_data_graph_and_index_dicts(datapoint, graph, node_id, node_idx_dict,
-                                                      node_idx_rev_dict, new_node_obj,
-                                                      tree_holder_builder)
+        _ = self._add_node_data_graph_and_index_dicts(
+            datapoint,
+            graph,
+            node_id,
+            node_idx_dict,
+            node_idx_rev_dict,
+            new_node_obj,
+            tree_holder_builder,
+        )
 
         sub_roots = self._root_node_names_set - children
 
@@ -481,11 +502,11 @@ class TreeShellNodeAdder(object):
         if self.perm_dist:
             orig_tuple = self._perm_dist_dict[node_id]
             node_data_len = len(node_data[node_id])
-            old_node_data_len = node_data_len-1
+            old_node_data_len = node_data_len - 1
             old_log_factorial = cached_log_factorial(old_node_data_len)
             new_log_factorial = cached_log_factorial(node_data_len)
             new_log_count = orig_tuple[0] - old_log_factorial + new_log_factorial
-            self._perm_dist_dict[node_id] = (new_log_count, orig_tuple[1]+1)
+            self._perm_dist_dict[node_id] = (new_log_count, orig_tuple[1] + 1)
             new_num_datapoints = self._num_datapoints + 1
             num_outliers = len(tree_holder_builder.outliers)
             log_pdf = -self.perm_dist.log_count_root(self._perm_dist_dict, roots, new_num_datapoints, num_outliers)

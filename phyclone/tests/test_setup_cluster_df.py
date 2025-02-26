@@ -406,14 +406,14 @@ class TestComputeOutlierProb(unittest.TestCase):
     def test_compute_outlier_prob__prior_0_1_mutation(self):
         prob = 0
         cluster_size = 1
-        expected = (np.log(EPS)*cluster_size, np.log(1.0))
+        expected = (np.log(EPS) * cluster_size, np.log(1.0))
         actual = compute_outlier_prob(prob, cluster_size)
         self.assertTupleEqual(expected, actual)
 
     def test_compute_outlier_prob__prior_0_100_mutations(self):
         prob = 0
         cluster_size = 100
-        expected = (np.log(EPS)*cluster_size, np.log(1.0))
+        expected = (np.log(EPS) * cluster_size, np.log(1.0))
         actual = compute_outlier_prob(prob, cluster_size)
         self.assertTupleEqual(expected, actual)
 

@@ -34,7 +34,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         self._init_dist()
 
-
     def log_p(self, tree):
         """Get the log probability of proposing the tree."""
 
@@ -62,11 +61,12 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
                     num_children = tree.num_children_on_node_that_matters
 
-                    log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(old_num_roots, num_children)
+                    log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(
+                        old_num_roots, num_children
+                    )
                     self._computed_prob[tree] = log_p
 
         return log_p
-
 
     def sample(self):
         """Sample a new tree from the proposal distribution."""
