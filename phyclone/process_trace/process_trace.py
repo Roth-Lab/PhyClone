@@ -281,32 +281,6 @@ def build_phyclone_tree_from_nx(nx_tree, data_list, root_name):
     return phyclone_tree
 
 
-# def from_dict_nx(data, tree_dict):
-#     new = Tree(data[0].grid_size)
-#
-#     data = dict(zip([x.idx for x in data], data))
-#
-#     root_node_name = new.root_node_name
-#
-#     for node in tree_dict["graph"].keys():
-#         if node == root_node_name:
-#             continue
-#         new._add_node(node)
-#
-#     for parent, children in tree_dict["graph"].items():
-#         parent_idx = new._node_indices[parent]
-#         for child in children.keys():
-#             child_idx = new._node_indices[child]
-#             new._graph.add_edge(parent_idx, child_idx, None)
-#
-#     for idx, node in tree_dict["labels"].items():
-#         new._internal_add_data_point_to_node(True, data[idx], node)
-#
-#     new.update()
-#
-#     return new
-
-
 def get_clone_table(data, samples, tree, clusters=None):
     labels = get_labels_table(data, tree, clusters=clusters)
 

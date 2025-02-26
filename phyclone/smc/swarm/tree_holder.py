@@ -20,11 +20,7 @@ class TreeHolder(object):
         "num_children_on_node_that_matters",
         "outlier_node_name",
         "multiplicity",
-        # "_partial_log_p",
-        # "_partial_log_p_one",
         "_num_nodes",
-        # "_alpha_prior",
-        # "_curr_alpha_val"
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -40,10 +36,6 @@ class TreeHolder(object):
         self.log_p_one = 0
 
         self._hash_val = 0
-
-        # self._alpha_prior = 0.0
-        #
-        # self._curr_alpha_val = 0.0
 
         self.tree = tree
 
@@ -61,33 +53,6 @@ class TreeHolder(object):
     def tree(self):
         return self._tree
 
-    # @property
-    # def alpha_prior(self):
-    #     return self._alpha_prior
-    #
-    #
-    # @alpha_prior.getter
-    # def alpha_prior(self):
-    #     curr_alpha = self._tree_dist.prior.alpha
-    #     if curr_alpha != self._curr_alpha_val:
-    #         self._curr_alpha_val = curr_alpha
-    #         self._alpha_prior = self._compute_alpha_prior()
-    #     return self._alpha_prior
-    #
-    # @property
-    # def log_p(self):
-    #     return self.alpha_prior + self._partial_log_p
-    #
-    # def _compute_alpha_prior(self):
-    #     log_alpha = self._tree_dist.prior.log_alpha
-    #     alpha_prior = 0.0
-    #     alpha_prior += self._num_nodes * log_alpha
-    #     return alpha_prior
-    #
-    # @property
-    # def log_p_one(self):
-    #     return self.alpha_prior + self._partial_log_p_one
-
     @tree.setter
     def tree(self, tree):
 
@@ -102,8 +67,6 @@ class TreeHolder(object):
 
         self.log_p, self.log_p_one = self._tree_dist.compute_both_log_p_and_log_p_one(tree)
 
-        # self._partial_log_p, self._partial_log_p_one = self._tree_dist.compute_likelihood_parts_for_tree_holder(tree)
-
         self._num_nodes = tree.get_number_of_nodes()
 
         self.tree_roots = np.asarray(tree.roots)
@@ -116,9 +79,6 @@ class TreeHolder(object):
             self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
         else:
             self.num_children_on_node_that_matters = 0
-
-        # self._curr_alpha_val = self._tree_dist.prior.alpha
-        # self._alpha_prior = self._compute_alpha_prior()
 
 
     @tree.getter

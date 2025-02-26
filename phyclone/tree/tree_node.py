@@ -43,9 +43,6 @@ class TreeNode(object):
             log_r += data_point.value
 
     def add_data_point(self, data_point):
-        # dp_idx = data_point.idx
-        # assert dp_idx not in self.data_points
-
         self.data_points.add(data_point.idx)
         self.log_p += data_point.value
         self.log_r += data_point.value

@@ -3,7 +3,7 @@ from functools import lru_cache
 import numpy as np
 
 from phyclone.data.base import DataPoint
-from phyclone.smc.swarm import Particle, TreeHolder
+from phyclone.smc.swarm import Particle
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
 from phyclone.utils.math import log_normalize
@@ -170,20 +170,9 @@ class ProposalDistribution(object):
 
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
-        # if self.parent_particle is None:
-        #     tree = Tree(self.data_point.grid_size)
-        #
-        # else:
-        # if self._empty_tree():
-        #     tree = self.parent_tree.copy()
-        #
-        #     tree.add_data_point_to_outliers(self.data_point)
-        #
-        #     tree_holder = TreeHolder(tree, self.tree_dist, self.perm_dist)
-        # else:
+
         tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(self.data_point)
         tree_holder = tree_holder_builder.build()
-
         return tree_holder
 
     def _set_log_p_dist(self, trees):
@@ -208,10 +197,3 @@ def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_po
 
     return tree_container
 
-
-# @lru_cache(maxsize=2048)
-# def get_cached_new_tree_adder_datapoint(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node_id):
-#     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node_id, data_point)
-#     tree_container = tree_holder_builder.build()
-#
-#     return tree_container

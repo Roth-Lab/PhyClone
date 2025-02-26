@@ -2,8 +2,6 @@ from _operator import itemgetter
 from collections import Counter
 from dataclasses import dataclass
 import numpy as np
-import json
-
 
 
 def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):

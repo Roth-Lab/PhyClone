@@ -77,7 +77,7 @@ class ParticleSwarm(object):
         self._log_norm_const = None
 
     def add_particles_from_iterators(self, log_weights, particles):
-        """Add a particle to the swarm.
+        """Add many particles to the swarm.
 
         Parameters
         ----------

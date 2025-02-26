@@ -2,9 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
-from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
-# from phyclone.tree import Tree
 from phyclone.utils.math import cached_log_binomial_coefficient
 
 
@@ -45,9 +43,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            # node = tree.labels[self.data_point.idx]
-            # assert node == tree.node_last_added_to
-            node = tree.node_last_added_to #TODO: maybe just write a dp -> node mapping somewhere, save a bit of trouble here
+            node = tree.labels[self.data_point.idx]
+            assert node == tree.node_last_added_to
+            # node = tree.node_last_added_to
 
             # Existing node
             if node in self._tree_nodes or node == tree.outlier_node_name:

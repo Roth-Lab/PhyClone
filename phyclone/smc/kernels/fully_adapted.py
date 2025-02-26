@@ -1,9 +1,6 @@
 import itertools
 from functools import lru_cache
-# import numpy as np
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
-# from phyclone.smc.swarm import TreeHolder
-# from phyclone.tree import Tree
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 
 

@@ -174,16 +174,6 @@ def _get_raw_cluster_df(cluster_file, data_df):
     return cluster_df
 
 
-# def compute_outlier_prob(outlier_prob, cluster_size):
-#     if outlier_prob == 0:
-#         return outlier_prob, np.log(1.0)
-#     else:
-#         res = np.log(outlier_prob) * cluster_size
-#         if outlier_prob == 1:
-#             res_not = -np.inf
-#         else:
-#             res_not = np.log1p(-outlier_prob) * cluster_size
-#         return res, res_not
 def compute_outlier_prob(outlier_prob, cluster_size):
     eps = ulp(0.0)
     if outlier_prob == 0:

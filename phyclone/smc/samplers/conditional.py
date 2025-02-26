@@ -18,7 +18,7 @@ class ConditionalSMCSampler(AbstractSMCSampler):
         self.uniform_weight = -np.log(self.num_particles)
         self.constrained_path = self._get_constrained_path(current_tree)
 
-    def _get_constrained_path(self, tree):
+    def _get_constrained_path(self, tree: Tree):
         constrained_path = [
             None,
         ]
@@ -59,13 +59,6 @@ class ConditionalSMCSampler(AbstractSMCSampler):
                 node_map[old_node] = new_node
 
                 new_tree.add_data_point_to_node(data_point, new_node)
-
-            # parent_particle = constrained_path[-1]
-            #
-            # if parent_particle:
-            #     parent_particle.built_tree = parent_tree
-            #
-            # proposal_dist = self.kernel.get_proposal_distribution(data_point, parent_particle)
 
             new_tree_holder = TreeHolder(new_tree, tree_dist, perm_dist)
             log_q = proposal_dist.log_p(new_tree_holder)
