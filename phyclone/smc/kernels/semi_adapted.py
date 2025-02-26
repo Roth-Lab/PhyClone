@@ -43,9 +43,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            node = tree.labels[self.data_point.idx]
-            assert node == tree.node_last_added_to
-            # node = tree.node_last_added_to
+            # node = tree.labels[self.data_point.idx]
+            # assert node == tree.node_last_added_to
+            node = tree.node_last_added_to
 
             # Existing node
             if node in self._tree_nodes or node == tree.outlier_node_name:

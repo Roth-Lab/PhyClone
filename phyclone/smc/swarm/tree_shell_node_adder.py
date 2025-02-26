@@ -90,7 +90,7 @@ class TreeHolderBuilder(object):
         self._roots = None
         self._outlier_node_name = outlier_node_name
         self._root_node_name = root_node_name
-        self._nodes = nodes
+        self._nodes = nodes.copy()
         self._num_children_on_node_that_matters = 0
         self._data = None
         self._node_idx = None
@@ -129,7 +129,7 @@ class TreeHolderBuilder(object):
     def with_node_last_added_to(self, node_last_added_to, datapoint_add=False):
         self._node_last_added_to = node_last_added_to
         if not datapoint_add:
-            self.nodes = self._nodes + [node_last_added_to]
+            self._nodes.append(node_last_added_to)
         return self
 
     def with_num_children_on_node_that_matters(self, num_children_on_node_that_matters):
@@ -209,14 +209,6 @@ class TreeHolderBuilder(object):
     @property
     def nodes(self):
         return self._nodes
-
-    @nodes.setter
-    def nodes(self, nodes):
-        self._nodes = nodes
-
-    @nodes.getter
-    def nodes(self):
-        return list(self._nodes)
 
     @property
     def roots(self):

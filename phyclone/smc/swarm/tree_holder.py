@@ -19,8 +19,6 @@ class TreeHolder(object):
         "node_last_added_to",
         "num_children_on_node_that_matters",
         "outlier_node_name",
-        "multiplicity",
-        "_num_nodes",
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -63,11 +61,7 @@ class TreeHolder(object):
         else:
             self.log_pdf = self._perm_dist.log_pdf(tree)
 
-        self.multiplicity = tree.multiplicity
-
         self.log_p, self.log_p_one = self._tree_dist.compute_both_log_p_and_log_p_one(tree)
-
-        self._num_nodes = tree.get_number_of_nodes()
 
         self.tree_roots = np.asarray(tree.roots)
         self.tree_nodes = tree.nodes
