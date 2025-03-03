@@ -643,7 +643,7 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
             "alt_counts": [-8, -16, -45],
             "major_cn": [-2, -2, -4],
             "minor_cn": [-1, -2, -3],
-            "normal_cn": [-2, -2, -2],
+            "normal_cn": [2, 2, -2],
             "tumour_content": [1, 2, 3],
             "error_rate": ["0.001", "0.002", "0.001"],
         }
