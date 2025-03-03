@@ -8,7 +8,7 @@ import networkx as nx
 from scipy.stats import dirichlet
 from phyclone.utils.math import log_factorial
 from importance_sampler import run_importance_sampler
-from scipy.stats import ttest_ind
+from scipy.stats import ttest_ind, PermutationMethod
 
 
 @dataclass
@@ -88,6 +88,7 @@ class Test(unittest.TestCase):
 
         self.grid_size = 101
         self.rng = np.random.default_rng(242643578967193853558243570818064774262)
+        self.perm_method = PermutationMethod(rng=self.rng)
         self.num_iters = 1000000
         self.pval_threshold = 0.01
 
@@ -165,7 +166,7 @@ class Test(unittest.TestCase):
             phyclone_llh_arr[i] = phyclone_llh
             importance_sampler_llh_arr[i] = importance_sampler_likelihood
 
-        ttest_ind_result = ttest_ind(phyclone_llh_arr, importance_sampler_llh_arr, random_state=self.rng)
+        ttest_ind_result = ttest_ind(phyclone_llh_arr, importance_sampler_llh_arr, method=self.perm_method)
 
         print("IS likelihoods: \n{}".format(importance_sampler_llh_arr))
         print("PhyClone likelihoods: \n{}".format(phyclone_llh_arr))
