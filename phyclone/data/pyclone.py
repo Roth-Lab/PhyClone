@@ -4,7 +4,7 @@ import numba
 import numpy as np
 import pandas as pd
 import phyclone.data.base
-from phyclone.data.cluster_outlier_probabilities import _assign_out_prob, define_initial_data_order_on_df
+from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
@@ -27,7 +27,7 @@ def load_data(
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
-    init_sigma = None
+    # init_sigma = None
 
     if cluster_file is None:
         data = []
@@ -74,12 +74,13 @@ def load_data(
             pyclone_data,
         )
 
-        if "order_rank" in cluster_df.columns:
-            datapoint_name_dict = {d.name: d for d in data}
-            cluster_order = cluster_df.set_index("order_rank")["cluster_id"].to_dict()
-            init_sigma = [datapoint_name_dict[str(cluster_order[i])] for i in range(len(datapoint_name_dict))]
+        # if "order_rank" in cluster_df.columns:
+        #     datapoint_name_dict = {d.name: d for d in data}
+        #     cluster_order = cluster_df.set_index("order_rank")["cluster_id"].to_dict()
+        #     init_sigma = [datapoint_name_dict[str(cluster_order[i])] for i in range(len(datapoint_name_dict))]
 
-    return data, samples, init_sigma
+    # return data, samples, init_sigma
+    return data, samples
 
 
 def _create_clustered_data_arr(
@@ -152,13 +153,14 @@ def _setup_cluster_df(
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
 
-    if "order_rank" not in cluster_df.columns:
-        define_initial_data_order_on_df(cluster_df)
+    # if "order_rank" not in cluster_df.columns:
+    #     define_initial_data_order_on_df(cluster_df)
 
-    if "order_rank" in cluster_df.columns:
-        cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob", "order_rank"]].drop_duplicates()
-    else:
-        cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
+    # if "order_rank" in cluster_df.columns:
+    #     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob", "order_rank"]].drop_duplicates()
+    # else:
+    #     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
+    cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     return cluster_df
 
 

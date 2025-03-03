@@ -15,9 +15,10 @@ class UnconditionalSMCSampler(object):
 
         self._rng = kernel.rng
 
-    def sample_tree(self, tree, data_sigma=None):
-        if data_sigma is None:
-            data_sigma = RootPermutationDistribution.sample(tree, self._rng)
+    def sample_tree(self, tree):
+        # if data_sigma is None:
+        #     data_sigma = RootPermutationDistribution.sample(tree, self._rng)
+        data_sigma = RootPermutationDistribution.sample(tree, self._rng)
 
         smc_sampler = SMCSampler(
             data_sigma,
