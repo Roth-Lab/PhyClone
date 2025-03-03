@@ -128,7 +128,7 @@ def create_topologies_archive(topology_df, results, top_trees, topologies_dict, 
                     & (topology_df["chain_num"] == values["chain_num"])
                 ]
                 assert len(row) == 1
-                topology_id = row["topology_id"].values[0]
+                topology_id = row["topology_id"].iloc[0]
                 topology_rank = int(topology_id[2:])
                 if topology_rank >= top_trees:
                     continue
