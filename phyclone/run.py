@@ -52,7 +52,6 @@ def run(
     high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
-    # run_pre_burn=False,
 ):
 
     rng_main = instantiate_and_seed_RNG(seed)
@@ -87,9 +86,6 @@ def run(
         precision=precision,
     )
 
-    # if not run_pre_burn:
-    #     init_sigma = None
-
     results = {}
 
     if num_chains == 1:
@@ -112,7 +108,6 @@ def run(
             thin,
             0,
             subtree_update_prob,
-            # init_sigma,
         )
 
         print("Finished chain", 0)
@@ -143,7 +138,6 @@ def run(
                     thin,
                     chain_num,
                     subtree_update_prob,
-                    # init_sigma,
                 )
                 for chain_num, rng in enumerate(rng_list)
             ]
@@ -214,26 +208,12 @@ def run_phyclone_chain(
     thin,
     chain_num,
     subtree_update_prob,
-    # init_sigma,
 ):
     tree_dist = TreeJointDistribution(FSCRPDistribution(concentration_value), outlier_modelling_active)
     kernel = setup_kernel(outlier_modelling_active, proposal, rng, tree_dist)
     samplers = setup_samplers(kernel, num_particles, outlier_modelling_active, resample_threshold, rng, tree_dist)
     tree = Tree.get_single_node_tree(data)
     timer = Timer()
-    # if init_sigma:
-    #     tree = _run_sigma_init_iter(
-    #         max_time,
-    #         num_samples_data_point,
-    #         num_samples_prune_regraph,
-    #         samplers,
-    #         timer,
-    #         tree,
-    #         tree_dist,
-    #         chain_num,
-    #         init_sigma,
-    #         concentration_update,
-    #     )
     tree = _run_burnin(
         burnin,
         max_time,
@@ -412,78 +392,6 @@ def _run_burnin(
     print()
 
     return best_tree
-
-
-# def _run_sigma_init_iter(
-#     max_time,
-#     num_samples_data_point,
-#     num_samples_prune_regraph,
-#     samplers,
-#     timer,
-#     tree,
-#     tree_dist,
-#     chain_num,
-#     sigma_init,
-#     concentration_update,
-# ):
-#     burnin_sampler = samplers.burnin_sampler
-#     dp_sampler = samplers.dp_sampler
-#     prg_sampler = samplers.prg_sampler
-#     conc_sampler = samplers.conc_sampler
-#
-#     sigma_init_iters = 10
-#     print_freq = round(sigma_init_iters / 2)
-#
-#     best_tree = tree
-#     best_score = -np.inf
-#     assoc_alpha = tree_dist.prior.alpha
-#
-#     print("#" * 100)
-#     print("Pre-Burn: Single Sigma Data Initialization")
-#     print("#" * 100)
-#
-#     for i in range(sigma_init_iters):
-#         with timer:
-#             if i % print_freq == 0:
-#                 print_stats(i, tree, tree_dist, chain_num)
-#
-#             clear_proposal_dist_caches()
-#
-#             tree = burnin_sampler.sample_tree(tree, sigma_init)
-#
-#             for _ in range(num_samples_data_point):
-#                 tree = dp_sampler.sample_tree(tree)
-#
-#             for _ in range(num_samples_prune_regraph):
-#                 tree = prg_sampler.sample_tree(tree)
-#
-#             tree.relabel_nodes()
-#
-#             tree_score = tree_dist.log_p_one(tree)
-#             if tree_score > best_score:
-#                 best_score = tree_score
-#                 best_tree = tree
-#                 assoc_alpha = tree_dist.prior.alpha
-#
-#             if timer.elapsed > max_time:
-#                 break
-#
-#             if concentration_update:
-#                 update_concentration_value(conc_sampler, tree, tree_dist)
-#
-#     print_stats(sigma_init_iters, tree, tree_dist, chain_num)
-#
-#     clear_proposal_dist_caches()
-#     clear_convolution_caches()
-#
-#     tree_dist.prior.alpha = assoc_alpha
-#     print()
-#     print("~" * 100)
-#     print("Post Pre-Burn")
-#     print("~" * 100)
-#     print()
-#
-#     return best_tree
 
 
 @dataclass

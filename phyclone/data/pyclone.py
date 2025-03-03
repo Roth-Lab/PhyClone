@@ -27,8 +27,6 @@ def load_data(
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
-    # init_sigma = None
-
     if cluster_file is None:
         data = []
 
@@ -74,12 +72,6 @@ def load_data(
             pyclone_data,
         )
 
-        # if "order_rank" in cluster_df.columns:
-        #     datapoint_name_dict = {d.name: d for d in data}
-        #     cluster_order = cluster_df.set_index("order_rank")["cluster_id"].to_dict()
-        #     init_sigma = [datapoint_name_dict[str(cluster_order[i])] for i in range(len(datapoint_name_dict))]
-
-    # return data, samples, init_sigma
     return data, samples
 
 
@@ -147,19 +139,13 @@ def _setup_cluster_df(
         cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
         cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
         print(cluster_prob_status_msg)
+
     if not assign_loss_prob:
         if outlier_prob == 0:
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
 
-    # if "order_rank" not in cluster_df.columns:
-    #     define_initial_data_order_on_df(cluster_df)
-
-    # if "order_rank" in cluster_df.columns:
-    #     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob", "order_rank"]].drop_duplicates()
-    # else:
-    #     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     return cluster_df
 

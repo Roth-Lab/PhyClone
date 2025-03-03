@@ -23,31 +23,6 @@ def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
 
     _finalize_loss_prob_on_cluster_df(df, high_loss_prob, lost_clusters, low_loss_prob)
 
-    # define_initial_data_order_on_df_with_truncal(cluster_info_dict, df, truncal_cluster)
-
-
-# def define_initial_data_order_on_df_with_truncal(cluster_info_dict, df, truncal_cluster):
-#     truncal_cluster_obj = cluster_info_dict.pop(truncal_cluster)
-#     cell_prev_sorted_list = [truncal_cluster_obj]
-#     cell_prev_sorted_list.extend(sorted(cluster_info_dict.values(), key=lambda x: x.cell_prev_mean, reverse=True))
-#     add_rank_order_col_to_cluster_df(cell_prev_sorted_list, df)
-#
-#
-# def define_initial_data_order_on_df(df):
-#     if "cellular_prevalence" in df.columns:
-#         cluster_info_dict = _build_cluster_prev_dict(df)
-#         cell_prev_sorted_list = sorted(cluster_info_dict.values(), key=lambda x: x.cell_prev_mean, reverse=True)
-#         add_rank_order_col_to_cluster_df(cell_prev_sorted_list, df)
-#
-#
-# def add_rank_order_col_to_cluster_df(cell_prev_sorted_list, df):
-#     cluster_sort_ranks = {v.cluster_id: k for k, v in enumerate(cell_prev_sorted_list)}
-#     # print("\nThe following initial data order has been defined:")
-#     # print(json.dumps(cluster_sort_ranks, indent=4, sort_keys=False))
-#     df["order_rank"] = -1
-#     for cluster_id, order_rank in cluster_sort_ranks.items():
-#         df.loc[df["cluster_id"] == cluster_id, "order_rank"] = order_rank
-
 
 def _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists, min_clust_size):
     truncal_dist_len = len(truncal_dists)
@@ -190,22 +165,4 @@ class ClusterInfo:
     cluster_id: str | int
     num_mutations: int
     num_unique_chromosomes: int
-    cell_prev_mean: float
-
-
-def _build_cluster_prev_dict(df):
-    grouped = df.groupby("cluster_id", sort=False)
-    cluster_info_dict = dict()
-    for cluster, group in grouped:
-        clust_info_obj = ClusterPrev(
-            cluster_id=cluster,
-            cell_prev_mean=group["cellular_prevalence"].mean(),
-        )
-        cluster_info_dict[cluster] = clust_info_obj
-    return cluster_info_dict
-
-
-@dataclass(slots=True)
-class ClusterPrev:
-    cluster_id: str | int
     cell_prev_mean: float
