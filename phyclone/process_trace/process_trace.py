@@ -128,7 +128,7 @@ def create_topologies_archive(topology_df, results, top_trees, topologies_dict, 
                     & (topology_df["chain_num"] == values["chain_num"])
                 ]
                 assert len(row) == 1
-                topology_id = row["topology_id"].values[0]
+                topology_id = row["topology_id"].iloc[0]
                 topology_rank = int(topology_id[2:])
                 if topology_rank >= top_trees:
                     continue
@@ -234,61 +234,51 @@ def write_consensus_results(
 
 
 def get_tree_from_consensus_graph(data, graph):
-    labels = {}
 
-    tmp_tree = Tree(data[0].grid_size)
+    graph2 = graph.copy()
 
-    outlier_node_name = tmp_tree.outlier_node_name
+    nodes = list(graph2.nodes)
 
-    for node in graph.nodes:
-        for idx in graph.nodes[node]["idxs"]:
-            labels[idx] = node
-
-    for x in data:
-        if x.idx not in labels:
-            labels[x.idx] = outlier_node_name
-
-    graph = graph.copy()
-
-    nodes = list(graph.nodes)
-
-    root_node_name = tmp_tree.root_node_name
+    root_node_name = "root"
 
     for node in nodes:
-        if len(list(graph.predecessors(node))) == 0:
-            graph.add_edge(root_node_name, node)
+        if len(list(graph2.predecessors(node))) == 0:
+            graph2.add_edge(root_node_name, node)
 
-    tree = from_dict_nx(data, {"graph": nx.to_dict_of_dicts(graph), "labels": labels})
-
-    tree.update()
+    tree = build_phyclone_tree_from_nx(graph2, data, root_node_name)
 
     return tree
 
 
-def from_dict_nx(data, tree_dict):
-    new = Tree(data[0].grid_size)
+def build_phyclone_tree_from_nx(nx_tree, data_list, root_name):
 
-    data = dict(zip([x.idx for x in data], data))
+    phyclone_tree = Tree(data_list[0].grid_size)
 
-    root_node_name = new.root_node_name
+    post_order_nodes = nx.dfs_postorder_nodes(nx_tree, root_name)
 
-    for node in tree_dict["graph"].keys():
-        if node == root_node_name:
+    dp_dict = dict(zip([x.idx for x in data_list], data_list))
+
+    node_map = {}
+
+    included_datapoints = set()
+
+    for node in post_order_nodes:
+        if node == root_name:
             continue
-        new._add_node(node)
 
-    for parent, children in tree_dict["graph"].items():
-        parent_idx = new._node_indices[parent]
-        for child in children.keys():
-            child_idx = new._node_indices[child]
-            new._graph.add_edge(parent_idx, child_idx, None)
+        translated_children = [node_map[child] for child in nx_tree.successors(node)]
 
-    for idx, node in tree_dict["labels"].items():
-        new._internal_add_data_point_to_node(True, data[idx], node)
+        data = [dp_dict[idx] for idx in nx_tree.nodes[node]["idxs"]]
+        included_datapoints.update(data)
+        new_node = phyclone_tree.create_root_node(translated_children, data)
+        node_map[node] = new_node
 
-    new.update()
+    outlier_datapoints = set(data_list) - included_datapoints
 
-    return new
+    for dp in outlier_datapoints:
+        phyclone_tree.add_data_point_to_outliers(dp)
+
+    return phyclone_tree
 
 
 def get_clone_table(data, samples, tree, clusters=None):

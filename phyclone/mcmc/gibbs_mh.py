@@ -1,5 +1,5 @@
 import numpy as np
-
+from phyclone.tree import Tree, TreeJointDistribution
 from phyclone.utils.math import exp_normalize, log_normalize
 
 
@@ -11,14 +11,14 @@ class DataPointSampler(object):
 
     __slots__ = ("tree_dist", "outliers", "_rng")
 
-    def __init__(self, tree_dist, rng: np.random.Generator, outliers=False):
+    def __init__(self, tree_dist: TreeJointDistribution, rng: np.random.Generator, outliers: bool = False):
         self.tree_dist = tree_dist
 
         self.outliers = outliers
 
         self._rng = rng
 
-    def sample_tree(self, tree):
+    def sample_tree(self, tree: Tree):
         tree_labels = tree.labels
         data_idxs = list(tree_labels.keys())
 
@@ -39,19 +39,18 @@ class DataPointSampler(object):
 
         new_trees = []
 
-        for new_node in tree.nodes:
-            new_tree = tree.copy()
+        rem_tree = tree.copy()
+        rem_tree.remove_data_point_from_node(data_point, old_node)
 
-            new_tree.remove_data_point_from_node(data_point, old_node)
+        for new_node in tree.nodes:
+            new_tree = rem_tree.copy()
 
             new_tree.add_data_point_to_node(data_point, new_node)
 
             new_trees.append(new_tree)
 
         if self.outliers:
-            new_tree = tree.copy()
-
-            new_tree.remove_data_point_from_node(data_point, old_node)
+            new_tree = rem_tree.copy()
 
             new_tree.add_data_point_to_outliers(data_point)
 
@@ -75,12 +74,12 @@ class PruneRegraphSampler(object):
 
     __slots__ = ("tree_dist", "_rng")
 
-    def __init__(self, tree_dist, rng: np.random.Generator):
+    def __init__(self, tree_dist: TreeJointDistribution, rng: np.random.Generator):
         self.tree_dist = tree_dist
 
         self._rng = rng
 
-    def sample_tree(self, tree):
+    def sample_tree(self, tree: Tree):
         if tree.get_number_of_nodes() <= 1:
             return tree
 
@@ -100,7 +99,11 @@ class PruneRegraphSampler(object):
         return trees[idx][1]
 
     @staticmethod
-    def _create_sampled_trees_array(remaining_nodes, pruned_tree, subtree):
+    def _create_sampled_trees_array(
+        remaining_nodes: list[int | str | None],
+        pruned_tree: Tree,
+        subtree: Tree,
+    ) -> list[tuple[int, Tree]]:
         trees = []
         # Descendant from dummy normal node
         remaining_nodes.append(None)
@@ -117,10 +120,10 @@ class PruneRegraphSampler(object):
 
             new_tree.update()
 
-            trees.append([nc, new_tree])
+            trees.append((nc, new_tree))
         return trees
 
-    def _get_subtree_and_pruned_tree(self, tree):
+    def _get_subtree_and_pruned_tree(self, tree: Tree) -> tuple[list[int | str | None], Tree, Tree]:
         pruned_tree = tree.copy()
         subtree_root = self._rng.choice(pruned_tree.nodes)
         subtree = pruned_tree.get_subtree(subtree_root)

@@ -1,5 +1,6 @@
-import numpy as np
+from __future__ import annotations
 
+import numpy as np
 from phyclone.tree import Tree
 
 
@@ -40,13 +41,9 @@ class TreeHolder(object):
         return self._hash_val
 
     def __eq__(self, other):
-        self_key = self._tree
+        return hash(self) == hash(other)
 
-        other_key = other._tree
-
-        return self_key == other_key
-
-    def copy(self):
+    def copy(self) -> TreeHolder:
         return TreeHolder(self.tree, self._tree_dist, self._perm_dist)
         # TODO: re-write this? building tree unnecessarily here
 
@@ -78,5 +75,5 @@ class TreeHolder(object):
             self.num_children_on_node_that_matters = 0
 
     @tree.getter
-    def tree(self):
+    def tree(self) -> Tree:
         return Tree.from_dict(self._tree)

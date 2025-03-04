@@ -2,12 +2,11 @@ import unittest
 
 import numpy as np
 
-from phyclone.tree.utils import _np_conv_dims
-from phyclone.utils.math import fft_convolve_two_children
+from phyclone.utils.math import fft_convolve_two_children, np_conv_dims
 
 
 def run_direct_two_child_convolve(child_1, child_2):
-    res_arr = _np_conv_dims(child_1, child_2)
+    res_arr = np_conv_dims(child_1, child_2)
     return res_arr
 
 
@@ -24,8 +23,8 @@ class Test(unittest.TestCase):
     def test_default_grid_size_prior_1_dim(self):
         grid_size = self.default_grid_size
         dim = 1
-        child_1 = np.full((dim, grid_size), -np.log(grid_size))
-        child_2 = np.full((dim, grid_size), -np.log(grid_size))
+        child_1 = np.full((dim, grid_size), grid_size, order="C")
+        child_2 = np.full((dim, grid_size), grid_size, order="C")
 
         actual = fft_convolve_two_children(child_1, child_2)
 
@@ -36,8 +35,8 @@ class Test(unittest.TestCase):
     def test_default_grid_size_prior_4_dim(self):
         grid_size = self.default_grid_size
         dim = 4
-        child_1 = np.full((dim, grid_size), -np.log(grid_size))
-        child_2 = np.full((dim, grid_size), -np.log(grid_size))
+        child_1 = np.full((dim, grid_size), grid_size, order="C")
+        child_2 = np.full((dim, grid_size), grid_size, order="C")
 
         actual = fft_convolve_two_children(child_1, child_2)
 
@@ -49,8 +48,8 @@ class Test(unittest.TestCase):
         grid_size = self.default_grid_size
         dim = 1
 
-        child_1 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
-        child_2 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
+        child_1 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
+        child_2 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
 
         actual = fft_convolve_two_children(child_1, child_2)
 
@@ -62,8 +61,8 @@ class Test(unittest.TestCase):
         grid_size = self.big_grid
         dim = 1
 
-        child_1 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
-        child_2 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
+        child_1 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
+        child_2 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)))
 
         actual = fft_convolve_two_children(child_1, child_2)
 
@@ -75,11 +74,15 @@ class Test(unittest.TestCase):
         grid_size = self.big_grid
         dim = 4
 
-        child_1 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
-        child_2 = np.log(self.rng.uniform(low=0.1, high=1000, size=(dim, grid_size)), order="C")
+        child_1 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=1.0, size=(dim, grid_size)))
+        child_2 = np.ascontiguousarray(self.rng.uniform(low=0.1, high=10, size=(dim, grid_size)))
 
         actual = fft_convolve_two_children(child_1, child_2)
 
         expected = run_direct_two_child_convolve(child_1, child_2)
 
         np.testing.assert_allclose(actual, expected)
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -45,6 +45,7 @@ class SchemaErrors(object):
         self._invalid_column_error = SchemaErrorBuilder().with_error_type("Invalid column(s)")
 
     def add_invalid_column_error(self, column_name, error_reason):
+        error_reason = error_reason.replace("number", "float")
         self._invalid_column_error.with_column_error(column_name, error_reason)
         self.errors.add(self._invalid_column_error)
 

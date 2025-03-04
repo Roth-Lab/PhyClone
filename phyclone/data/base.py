@@ -1,7 +1,5 @@
 import numpy as np
-from scipy.special import logsumexp as log_sum_exp
-
-from phyclone.tree.utils import _sub_compute_S
+from phyclone.utils.math import log_sum_exp_over_dims_to_arr
 
 
 class DataPoint(object):
@@ -17,7 +15,7 @@ class DataPoint(object):
     def __init__(self, idx, value, name=None, outlier_prob=0, outlier_prob_not=1):
         self.idx = idx
 
-        self.value = value
+        self.value = np.ascontiguousarray(value)
 
         if name is None:
             name = idx
@@ -29,12 +27,11 @@ class DataPoint(object):
         self.outlier_prob_not = outlier_prob_not
 
         log_prior = -np.log(value.shape[1])
-
-        tmp = self.value + log_prior
-
-        sub_comp = _sub_compute_S(tmp)
-
-        self.outlier_marginal_prob = np.sum(log_sum_exp(sub_comp + log_prior, axis=1))
+        sub_comp = self.value + log_prior
+        sub_comp = np.logaddexp.accumulate(sub_comp, out=sub_comp, axis=-1)
+        sub_comp += log_prior
+        sub_comp = np.ascontiguousarray(sub_comp)
+        self.outlier_marginal_prob = log_sum_exp_over_dims_to_arr(sub_comp).sum()
 
     def __hash__(self):
         return hash(self.name)

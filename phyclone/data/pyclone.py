@@ -8,6 +8,7 @@ from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
+from math import ulp
 
 
 def load_data(
@@ -138,11 +139,13 @@ def _setup_cluster_df(
         cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
         cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
         print(cluster_prob_status_msg)
+
     if not assign_loss_prob:
         if outlier_prob == 0:
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     return cluster_df
 
@@ -160,12 +163,13 @@ def _get_raw_cluster_df(cluster_file, data_df):
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
+    eps = ulp(0.0)
     if outlier_prob == 0:
-        return outlier_prob, np.log(1.0)
+        return np.log(eps) * cluster_size, np.log(1.0)
     else:
         res = np.log(outlier_prob) * cluster_size
         if outlier_prob == 1:
-            res_not = -np.inf
+            res_not = np.log(eps) * cluster_size
         else:
             res_not = np.log1p(-outlier_prob) * cluster_size
         return res, res_not

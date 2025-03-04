@@ -1,7 +1,7 @@
 import unittest
 from collections import defaultdict, Counter
 
-from numpy import random
+import numpy as np
 
 import phyclone.tests.simulate as simulate
 from phyclone.mcmc import ParticleGibbsSubtreeSampler
@@ -10,6 +10,7 @@ from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tests.exact_posterior import get_exact_posterior
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
+from phyclone.utils.dev import clear_proposal_dist_caches
 
 
 class BaseTest(object):
@@ -21,7 +22,7 @@ class BaseTest(object):
 
             self.run_scale = None
             self.sampler = None
-            self._rng = random.default_rng(12345)
+            self._rng = None
 
         def test_single_data_point_1d(self):
             node_data = [
@@ -45,7 +46,7 @@ class BaseTest(object):
                 simulate.simulate_binomial_data(3, 0, 1.0, self._rng),
             ]
 
-            self._run_exact_posterior_test(node_data, burnin=100, num_iters=2000)
+            self._run_exact_posterior_test(node_data, burnin=100, num_iters=2500)
 
         def test_two_data_point_1d_two_cluster(self):
             node_data = [
@@ -123,24 +124,27 @@ class BaseTest(object):
 class BootstrapAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
+        clear_proposal_dist_caches()
         self.sampler = self._get_sampler(BootstrapKernel)
-
         self.run_scale = 1
 
 
 class FullyAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
+        clear_proposal_dist_caches()
         self.sampler = self._get_sampler(FullyAdaptedKernel)
-
         self.run_scale = 1
 
 
 class SemiAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
+        self._rng = np.random.default_rng(242643578967193853558243570818064774262)
+        clear_proposal_dist_caches()
         self.sampler = self._get_sampler(SemiAdaptedKernel)
-
         self.run_scale = 1
 
 

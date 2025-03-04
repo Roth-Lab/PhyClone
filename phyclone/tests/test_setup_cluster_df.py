@@ -12,6 +12,10 @@ from phyclone.data.pyclone import (
 )
 import pandas as pd
 import phyclone
+from math import ulp
+
+EPS = ulp(0.0)
+LOG_EPS = np.log(EPS)
 
 
 def build_standard_cluster_df():
@@ -102,12 +106,12 @@ class BaseLoadDataTest(object):
                 cluster_size = cluster_sizes[cluster_id]
                 cluster_outlier_prob = cluster_outlier_probs[cluster_id]
                 if cluster_outlier_prob == 0:
-                    outlier_prob = 0
+                    outlier_prob = np.log(EPS) * cluster_size
                     outlier_prob_not = 0
                 else:
                     outlier_prob = np.log(cluster_outlier_prob) * cluster_size
                     if cluster_outlier_prob == 1:
-                        outlier_prob_not = -np.inf
+                        outlier_prob_not = np.log(EPS) * cluster_size
                     else:
                         outlier_prob_not = np.log1p(-cluster_outlier_prob) * cluster_size
                 self.assertEqual(outlier_prob, dp.outlier_prob)
@@ -168,12 +172,12 @@ class BaseLoadDataTest(object):
             self.assertListEqual(expected_samples, actual_samples)
             for dp in data:
                 if prob == 0:
-                    outlier_prob = 0
+                    outlier_prob = np.log(EPS)
                     outlier_prob_not = 0
                 else:
                     outlier_prob = np.log(prob)
                     if prob == 1:
-                        outlier_prob_not = -np.inf
+                        outlier_prob_not = np.log(EPS)
                     else:
                         outlier_prob_not = np.log1p(-prob)
                 self.assertEqual(outlier_prob, dp.outlier_prob)
@@ -367,12 +371,12 @@ class BaseClusteredDataArrTest(object):
                 cluster_size = cluster_sizes[cluster_id]
                 cluster_outlier_prob = cluster_outlier_probs[cluster_id]
                 if cluster_outlier_prob == 0:
-                    outlier_prob = 0
+                    outlier_prob = np.log(EPS) * cluster_size
                     outlier_prob_not = 0
                 else:
                     outlier_prob = np.log(cluster_outlier_prob) * cluster_size
                     if cluster_outlier_prob == 1:
-                        outlier_prob_not = -np.inf
+                        outlier_prob_not = np.log(EPS) * cluster_size
                     else:
                         outlier_prob_not = np.log1p(-cluster_outlier_prob) * cluster_size
                 self.assertEqual(dp.outlier_prob, outlier_prob)
@@ -402,14 +406,14 @@ class TestComputeOutlierProb(unittest.TestCase):
     def test_compute_outlier_prob__prior_0_1_mutation(self):
         prob = 0
         cluster_size = 1
-        expected = (0, np.log(1.0))
+        expected = (np.log(EPS) * cluster_size, np.log(1.0))
         actual = compute_outlier_prob(prob, cluster_size)
         self.assertTupleEqual(expected, actual)
 
     def test_compute_outlier_prob__prior_0_100_mutations(self):
         prob = 0
         cluster_size = 100
-        expected = (0, np.log(1.0))
+        expected = (np.log(EPS) * cluster_size, np.log(1.0))
         actual = compute_outlier_prob(prob, cluster_size)
         self.assertTupleEqual(expected, actual)
 
@@ -444,7 +448,7 @@ class TestComputeOutlierProb(unittest.TestCase):
     @staticmethod
     def compute_expected(cluster_size, prob):
         if prob == 1:
-            res_not = -np.inf
+            res_not = np.log(EPS) * cluster_size
         else:
             res_not = np.log1p(-prob) * cluster_size
         expected = (np.log(prob) * cluster_size, res_not)

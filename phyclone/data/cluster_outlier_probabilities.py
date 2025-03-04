@@ -154,13 +154,15 @@ def _build_cluster_info_dict(df):
             cluster_id=cluster,
             num_mutations=len(group["mutation_id"].unique()),
             num_unique_chromosomes=len(group["chrom"].unique()),
+            cell_prev_mean=group["cellular_prevalence"].mean(),
         )
         cluster_info_dict[cluster] = clust_info_obj
     return cluster_info_dict
 
 
-@dataclass
+@dataclass(slots=True)
 class ClusterInfo:
     cluster_id: str | int
     num_mutations: int
     num_unique_chromosomes: int
+    cell_prev_mean: float

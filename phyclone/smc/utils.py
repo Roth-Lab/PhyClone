@@ -61,6 +61,36 @@ class RootPermutationDistribution(object):
         return count
 
     @staticmethod
+    def log_count_subroot_from_precomp(precomp_dict, children, node_data_len):
+        count = 0
+
+        subtree_sizes = []
+
+        for child in children:
+            count += precomp_dict[child][0]
+            subtree_sizes.append(precomp_dict[child][1])
+
+        count += log_multinomial_coefficient(subtree_sizes)
+        count += log_factorial(node_data_len)
+
+        return count
+
+    @staticmethod
+    def log_count_root(precomp_dict, roots, num_data_points, num_outlier_data_points):
+        count = 0
+
+        subtree_sizes = []
+
+        for sub_root in roots:
+            count += precomp_dict[sub_root][0]
+            subtree_sizes.append(precomp_dict[sub_root][1])
+
+        count += log_multinomial_coefficient(subtree_sizes)
+        count += log_binomial_coefficient(num_data_points, num_outlier_data_points)
+
+        return count
+
+    @staticmethod
     def log_pdf(tree):
         return -RootPermutationDistribution.log_count(tree)
 

@@ -55,13 +55,13 @@ class GraphToCladesVisitor(DFSVisitor):
         "root_node_name",
     )
 
-    def __init__(self, tree):
+    def __init__(self, node_indices_rev, data, root_node_name):
         self.dict_of_sets = defaultdict(set)
         self.child_parent_mapping = dict()
         self.clades = set()
-        self.node_indices_rev = tree._node_indices_rev
-        self.data = tree._data
-        self.root_node_name = tree.root_node_name
+        self.node_indices_rev = node_indices_rev
+        self.data = data
+        self.root_node_name = root_node_name
 
     def discover_vertex(self, v, t):
         node_idx = self.node_indices_rev[v]

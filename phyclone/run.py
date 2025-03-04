@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.dev import clear_proposal_dist_caches
+from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
 
 
 def run(
@@ -36,7 +36,7 @@ def run(
     grid_size=101,
     max_time=float("inf"),
     num_iters=5000,
-    num_particles=80,
+    num_particles=100,
     num_samples_data_point=1,
     num_samples_prune_regraph=1,
     outlier_prob=0,
@@ -49,7 +49,7 @@ def run(
     num_chains=1,
     subtree_update_prob=0.0,
     low_loss_prob=0.0001,
-    high_loss_prob=0.45,
+    high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
 ):
@@ -70,14 +70,7 @@ def run(
     outlier_modelling_active = outlier_prob > 0
 
     print_welcome_message(
-        burnin,
-        density,
-        num_chains,
-        num_iters,
-        num_particles,
-        seed,
-        outlier_modelling_active,
-        rng_main,
+        burnin, density, num_chains, num_iters, num_particles, seed, outlier_modelling_active, rng_main, proposal
     )
 
     data, samples = load_data(
@@ -171,6 +164,7 @@ def print_welcome_message(
     seed,
     outlier_modelling_active,
     rng_main,
+    proposal_kernel,
 ):
     print()
     print("#" * 100)
@@ -181,6 +175,7 @@ def print_welcome_message(
     print("Number of independent chains: {}".format(num_chains))
     print("Number of PG particles: {}".format(num_particles))
     print("Density: {}".format(density))
+    print("Proposal distribution: {}".format(proposal_kernel))
     print("Number of burn-in iterations: {}".format(burnin))
     print("Number of MCMC iterations: {}".format(num_iters))
     if seed is not None:
@@ -270,6 +265,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
+    clear_convolution_caches()
     trace = setup_trace(timer, tree, tree_dist)
 
     dp_sampler = samplers.dp_sampler
@@ -298,14 +294,15 @@ def _run_main_sampler(
 
             tree.relabel_nodes()
 
-            if concentration_update:
-                update_concentration_value(conc_sampler, tree, tree_dist)
-
             if i % thin == 0:
                 append_to_trace(i, timer, trace, tree, tree_dist)
 
             if timer.elapsed >= max_time:
                 break
+
+            if concentration_update:
+                update_concentration_value(conc_sampler, tree, tree_dist)
+
     results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
     return results
 
@@ -355,7 +352,10 @@ def _run_burnin(
     burnin_sampler = samplers.burnin_sampler
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
+    best_tree = tree
+
     if burnin > 0:
+        best_score = -np.inf
         print("#" * 100)
         print("Burnin")
         print("#" * 100)
@@ -377,16 +377,21 @@ def _run_burnin(
 
                 tree.relabel_nodes()
 
+                tree_score = tree_dist.log_p_one(tree)
+                if tree_score > best_score:
+                    best_score = tree_score
+                    best_tree = tree
+
                 if timer.elapsed > max_time:
                     break
-
+        print_stats(burnin, tree, tree_dist, chain_num)
     print()
     print("#" * 100)
     print("Post-burnin")
     print("#" * 100)
     print()
 
-    return tree
+    return best_tree
 
 
 @dataclass
@@ -429,7 +434,7 @@ def setup_kernel(outlier_modelling_active, proposal, rng, tree_dist):
     elif proposal == "semi-adapted":
         kernel_cls = SemiAdaptedKernel
 
-    kernel = kernel_cls(tree_dist, rng, outlier_modelling_active=outlier_modelling_active)
+    kernel = kernel_cls(tree_dist, rng, outlier_modelling_active=outlier_modelling_active, perm_dist=None)
     return kernel
 
 

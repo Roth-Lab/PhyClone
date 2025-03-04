@@ -102,7 +102,7 @@ class InputValidator(object):
             is_min_valid = self._check_column_minimum(col_rule, col_type, column)
         else:
             is_min_valid = False
-            invalid_type_msg = "Column is of invalid type {}, valid type(s): {}".format(col_type, required_type)
+            invalid_type_msg = "Column is of invalid type '{}', valid type(s): {}".format(col_type, required_type)
             self.error_helper.add_invalid_column_error(column, invalid_type_msg)
 
         return is_type_valid and is_min_valid

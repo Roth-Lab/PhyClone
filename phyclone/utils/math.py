@@ -54,68 +54,50 @@ def exp_normalize(log_p):
 
     p = np.exp(log_p - log_norm)
 
-    p = p / p.sum()
+    # p = p / p.sum()
+    p /= p.sum()
 
     return p, log_norm
 
 
-@numba.jit(nopython=True)
-def lse(log_x):
-    inf_check = np.all(np.isinf(log_x))
-    if inf_check:
-        return log_x[0]
-
-    x = log_x[np.isfinite(log_x)]
-    ans = x[0]
-
-    for i in range(1, len(x)):
-        curr = x[i]
-        if ans > curr:
-            max_value = ans
-            min_value = curr
-        else:
-            max_value = curr
-            min_value = ans
-        ans = max_value + np.log1p(np.exp(min_value - max_value))
-
-    return ans
-
-
-@numba.jit(nopython=True)
-def lse_accumulate(log_x, out_arr):
-    len_arr = len(log_x)
-    t = log_x[0]
-    out_arr[0] = t
-    for i in range(1, len_arr):
-        curr = log_x[i]
-        if t > curr:
-            max_value = t
-            min_value = curr
-        else:
-            max_value = curr
-            min_value = t
-        t = max_value + np.log1p(np.exp(min_value - max_value))
-        out_arr[i] = t
-    return out_arr
-
-
-@numba.jit(nopython=True)
+@numba.jit("float64(float64[:])", nopython=True, fastmath=True)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
     This implementation is numerically safer than the naive method.
     """
-    max_exp = np.max(log_X)
+    max_exp = log_X.max()
 
     if np.isinf(max_exp):
         return max_exp
 
-    total = 0
-
+    total = 0.0
     for x in log_X:
         total += np.exp(x - max_exp)
 
     return np.log(total) + max_exp
+
+
+@numba.jit("float64(float64[:, ::1])", nopython=True, fastmath=True)
+def log_sum_exp_over_dims(log_x_arr):
+
+    sum_total = 0.0
+
+    for dim in log_x_arr:
+        sum_total += log_sum_exp(dim)
+
+    return sum_total
+
+
+@numba.jit(nopython=True, fastmath=False)
+def log_sum_exp_over_dims_to_arr(log_x_arr):
+    num_dims = log_x_arr.shape[0]
+    ret_arr = np.empty(num_dims, np.float64)
+
+    for dim, log_x_dim in enumerate(log_x_arr):
+        ret_arr[dim] = log_sum_exp(log_x_dim)
+
+    return ret_arr
 
 
 @numba.jit(nopython=True)
@@ -169,10 +151,9 @@ def log_multinomial_coefficient(x):
 
     n = sum(x)
 
-    result = log_factorial(n)
+    result = cached_log_factorial(n)
 
-    for x_i in x:
-        result -= log_factorial(x_i)
+    result -= sum(map(cached_log_factorial, x))
 
     return result
 
@@ -209,77 +190,34 @@ def log_beta_binomial_pdf(n, x, a, b):
     return log_binomial_coefficient(n, x) + log_beta_binomial_likelihood(n, x, a, b)
 
 
-@numba.jit(nopython=True, fastmath=True)
-def conv_log(log_x, log_y, ans):
-    """Direct convolution in log space."""
-    n = len(log_x)
+@numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
+def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
+    """Direct convolution in numba-time."""
 
-    log_y = log_y[::-1]
+    n = log_x_arr.shape[-1]
+    dims = log_x_arr.shape[0]
+    m = n + 1
+    log_y_arr = np.ascontiguousarray(log_y_arr[..., ::-1])
 
-    for k in range(1, n + 1):
-        v_arr = np.empty(k)
-        max_val = -np.inf
-        for j in range(k):
-            curr = log_x[j] + log_y[n - (k - j)]
-            v_arr[j] = curr
-            if curr > max_val:
-                max_val = curr
+    for l in range(dims):
+        log_x = log_x_arr[l]
+        log_y = log_y_arr[l]
+        ans = ans_arr[l]
+        for k in range(1, m):
+            for j in range(k):
+                ans[k - 1] += log_x[j] * log_y[n - (k - j)]
 
-        v_arr -= max_val
-
-        np.exp(v_arr, v_arr)
-
-        sub_ans = 0
-        for i in range(k):
-            sub_ans += v_arr[i]
-
-        ans[k - 1] = np.log(sub_ans) + max_val
-
-    return ans
+    return ans_arr
 
 
 def fft_convolve_two_children(child_1, child_2):
     """FFT convolution"""
-    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
 
-    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+    result = fftconvolve(child_1, child_2, axes=[-1])
 
-    child_1_norm = np.exp(child_1 - child_1_maxes)
-
-    child_2_norm = np.exp(child_2 - child_2_maxes)
-
-    result = fftconvolve(child_1_norm, child_2_norm, axes=[-1])
-
-    result = result[..., : child_1_norm.shape[-1]]
-
-    result[result <= 0] = 1e-100
-
-    result = np.log(result, order="C", dtype=np.float64)
-
-    result += child_2_maxes
-
-    result += child_1_maxes
+    result = result[..., : child_1.shape[-1]]
 
     return result
-
-
-def non_log_conv(child_log_R, prev_log_D_n):
-    """Compute the recursion over D using the numpy."""
-    log_R_max = child_log_R.max()
-
-    log_D_max = prev_log_D_n.max()
-
-    R_norm = np.exp(child_log_R - log_R_max)
-
-    D_norm = np.exp(prev_log_D_n - log_D_max)
-
-    result = np.convolve(R_norm, D_norm)
-
-    result = result[: len(child_log_R)]
-
-    result[result <= 0] = 1e-100
-
-    return np.log(result) + log_D_max + log_R_max
 
 
 @numba.jit(nopython=True)
@@ -348,3 +286,41 @@ def log_pyclone_binomial_pdf(data, f):
         ll[c] = data.log_pi[c] + log_binomial_pdf(data.a + data.b, data.b, e_vaf)
 
     return log_sum_exp(ll)
+
+
+def np_conv_dims(child_1, child_2):
+    num_dims = child_1.shape[0]
+
+    grid_size = child_1.shape[-1]
+
+    arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
+
+    return np.ascontiguousarray(arr_list)
+
+
+def _np_conv_dims(child_1, child_2):
+    num_dims = child_1.shape[0]
+
+    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
+
+    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
+
+    child_1_norm = np.exp(child_1 - child_1_maxes)
+
+    child_2_norm = np.exp(child_2 - child_2_maxes)
+
+    grid_size = child_1.shape[-1]
+
+    arr_list = [np.convolve(child_2_norm[i, :], child_1_norm[i, :])[:grid_size] for i in range(num_dims)]
+
+    log_D = np.ascontiguousarray(arr_list)
+
+    log_D[log_D <= 0] = 1e-100
+
+    log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
+
+    log_D += child_1_maxes
+
+    log_D += child_2_maxes
+
+    return np.ascontiguousarray(log_D)

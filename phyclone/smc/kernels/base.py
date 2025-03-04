@@ -1,4 +1,12 @@
+from functools import lru_cache
+
+import numpy as np
+
+from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import Particle
+from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree import Tree
+from phyclone.utils.math import log_normalize
 
 
 class Kernel(object):
@@ -13,7 +21,7 @@ class Kernel(object):
     def rng(self):
         return self._rng
 
-    def get_proposal_distribution(self, data_point, parent_particle, parent_tree=None):
+    def get_proposal_distribution(self, data_point, parent_particle):
         """Get proposal distribution given the current data point and parent particle."""
         raise NotImplementedError
 
@@ -83,6 +91,12 @@ class ProposalDistribution(object):
         "_rng",
         "parent_tree",
         "outlier_modelling_active",
+        "_q_dist",
+        "_tree_shell_node_adder",
+        "_log_p",
+        "_curr_trees",
+        "_tree_roots",
+        "_num_roots",
     )
 
     def __init__(
@@ -91,8 +105,11 @@ class ProposalDistribution(object):
         kernel,
         parent_particle,
         outlier_modelling_active=False,
-        parent_tree=None,
     ):
+        self._q_dist = None
+        self._tree_shell_node_adder = None
+        self._log_p = {}
+        self._curr_trees = None
         self.data_point = data_point
 
         self.tree_dist = kernel.tree_dist
@@ -110,20 +127,25 @@ class ProposalDistribution(object):
 
         self._rng = kernel.rng
 
-        self._set_parent_tree(parent_tree)
+        self._set_parent_tree()
 
     def _empty_tree(self):
         """Tree has no nodes"""
-        return (self.parent_particle is None) or (len(self.parent_particle.tree_roots) == 0)
+        return (self.parent_particle is None) or (self._num_roots == 0)
 
-    def _set_parent_tree(self, parent_tree):
+    def _set_parent_tree(self):
         if self.parent_particle is not None:
-            if parent_tree is not None:
-                self.parent_tree = parent_tree
-            else:
+            parent_tree = self.parent_particle.built_tree
+            if parent_tree is None:
                 self.parent_tree = self.parent_particle.tree
+            else:
+                self.parent_tree = parent_tree
+            self._tree_roots = self.parent_particle.tree_roots.copy()
+            self._num_roots = len(self._tree_roots)
         else:
-            self.parent_tree = None
+            self.parent_tree = Tree(self.data_point.grid_size)
+            self._tree_roots = []
+            self._num_roots = 0
 
     def log_p(self, state):
         """Get the log probability of proposing a tree."""
@@ -132,3 +154,47 @@ class ProposalDistribution(object):
     def sample(self):
         """Sample a new tree from the proposal distribution."""
         raise NotImplementedError
+
+    def _get_existing_node_trees(self):
+        """Enumerate all trees obtained by adding the data point to an existing node."""
+
+        if self.parent_particle is None:
+            return []
+
+        nodes = self._tree_roots
+        tree_adder = self._tree_shell_node_adder
+        dp = self.data_point
+        trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp).build() for node in nodes]
+
+        return trees
+
+    def _get_outlier_tree(self):
+        """Get the tree obtained by adding data point as outlier"""
+
+        tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
+            self.data_point
+        )
+        tree_holder = tree_holder_builder.build()
+        return tree_holder
+
+    def _set_log_p_dist(self, trees):
+        log_q = np.array([x.log_p for x in trees])
+        log_q = log_normalize(log_q)
+        self._curr_trees = np.array(trees)
+        self._set_q_dist(log_q)
+        self._log_p = dict(zip(trees, log_q))
+
+    def _set_q_dist(self, log_q):
+        q = np.exp(log_q)
+        q_sum = q.sum()
+        assert abs(1 - q_sum) < 1e-6
+        q /= q_sum
+        self._q_dist = q
+
+
+@lru_cache(maxsize=4096)
+def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
+    tree_container = tree_holder_builder.build()
+
+    return tree_container

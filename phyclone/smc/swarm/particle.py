@@ -1,5 +1,3 @@
-from collections import deque
-
 from phyclone.smc.swarm import TreeHolder
 
 
@@ -20,7 +18,7 @@ class Particle(object):
     )
 
     def __init__(self, log_w, parent_particle, tree_holder, tree_dist, perm_dist):
-        self._built_tree = deque(maxlen=1)
+        self._built_tree = None
 
         self.log_w = log_w
 
@@ -44,30 +42,8 @@ class Particle(object):
         return self._hash_val
 
     def __eq__(self, other):
-        self_key = self._tree
-
-        other_key = other._tree
-
-        return self_key == other_key
-
-    # def copy(self):
-    #     cls = self.__class__
-    #
-    #     new = cls.__new__(cls)
-    #
-    #     new._built_tree = deque(maxlen=1)
-    #     new.log_w = self.log_w
-    #     new.parent_particle = self.parent_particle
-    #     # new._data = self._data.copy()
-    #     new._tree_dist = self._tree_dist
-    #     new._perm_dist = self._perm_dist
-    #     new.log_p = self.log_p
-    #     new.log_pdf = self.log_pdf
-    #     new.log_p_one = self.log_p_one
-    #     new._hash_val = self._hash_val
-    #     new.tree_roots = self.tree_roots.copy()
-    #     new._tree = self._tree.copy()
-    #     return new
+        hash_check = hash(self) == hash(other)
+        return hash_check
 
     @property
     def tree(self):
@@ -95,8 +71,10 @@ class Particle(object):
 
     @built_tree.setter
     def built_tree(self, tree):
-        self._built_tree.append(tree)
+        self._built_tree = tree
 
     @built_tree.getter
     def built_tree(self):
-        return self._built_tree.pop()
+        ret_val = self._built_tree
+        self._built_tree = None
+        return ret_val
