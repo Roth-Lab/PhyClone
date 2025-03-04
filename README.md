@@ -47,6 +47,8 @@ The recommended way to install PhyClone is through [conda](https://docs.conda.io
 > [!NOTE]
 > If either install command fails due to conda/mamba being unable to find the PhyClone package, you may need to specify the channel, e.g.:
 > ```mamba create --name phyclone bioconda::phyclone```
+> or
+> ```mamba create --name phyclone -c bioconda phyclone```
 ---------
 
 ## Input File Formats
