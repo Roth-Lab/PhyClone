@@ -1,0 +1,39 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%post -c /bin/bash
+
+    apt-get update && apt-get install -y wget
+
+    wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
+    bash Miniforge3.sh -b -p /opt/miniforge
+    rm Miniforge3.sh
+    
+    source /opt/miniforge/etc/profile.d/conda.sh
+    source /opt/miniforge/etc/profile.d/mamba.sh
+    
+    conda init
+
+    conda update -n base -y conda mamba
+
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda config --set channel_priority strict
+    
+    conda config --set auto_activate_base false
+    
+    conda create --name phyclone phyclone
+    
+    echo ". /opt/miniforge/etc/profile.d/conda.sh" >> $APPTAINER_ENVIRONMENT
+    echo "conda activate phyclone" >> $APPTAINER_ENVIRONMENT
+
+
+%environment
+    export PATH="/opt/miniforge/bin:$PATH"
+
+
+%test
+    mamba --version
+    conda --version
+    phyclone --help
+    
