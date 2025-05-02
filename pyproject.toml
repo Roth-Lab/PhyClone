@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 64.0", "setuptools-rust"]
+requires = ["setuptools >= 77.0.3", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -14,9 +14,11 @@ maintainers = [
   {name = "Emilia Hurtado", email = "ehurtado@bccrc.ca"}
 ]
 readme = "README.md"
-requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+license-files = ["LICEN[CS]E.*"]
+requires-python = ">=3.12"
 dependencies = [
-    "numba",
+    "numba>=0.61.2",
     "numpy>=1.26.4",
     "scipy",
     "click>=8.0",
@@ -28,8 +30,7 @@ dependencies = [
 classifiers = [
     "Private :: Do Not Upload",
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"
+    "Programming Language :: Python :: 3.12"
 ]
 
 [project.urls]

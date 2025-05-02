@@ -1,13 +1,13 @@
 name: phyclone
 channels:
   - conda-forge
-  - defaults
+  - bioconda
 dependencies:
-  - python>=3.10
+  - python>=3.12
   - click>=8.0
   - networkx
   - rustworkx>=0.15.1
-  - numba
+  - numba>=0.61.2
   - numpy>=1.26.4
   - pandas>=2.2.2
   - scipy
