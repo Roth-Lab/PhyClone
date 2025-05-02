@@ -22,9 +22,9 @@ An implementation of the forest structured Chinese restaurant process with a Dir
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/phyclone/README.html)
 
-The recommended way to install PhyClone is through [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html)/[mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) and the [Bioconda](https://bioconda.github.io/index.html) package channel.
+The recommended way to install PhyClone is through [conda](https://github.com/conda-forge/miniforge) and the [Bioconda](https://bioconda.github.io/index.html) package channel.
 
-1. Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html).
+1. Install [conda](https://github.com/conda-forge/miniforge#install).
 2. Configure the [Bioconda channel](https://bioconda.github.io/#usage):
    ```
    conda config --add channels bioconda
@@ -36,19 +36,19 @@ The recommended way to install PhyClone is through [conda](https://docs.conda.io
     * To install into a newly created environment **(Recommended)**:
     
     ```
-    mamba create --name phyclone phyclone
+    conda create --name phyclone phyclone
     ```
     
     * Or if installing into a pre-existing environment:
     
     ```
-    mamba install phyclone
+    conda install phyclone
     ```
 > [!NOTE]
-> If either install command fails due to conda/mamba being unable to find the PhyClone package, you may need to specify the channel, e.g.:
-> ```mamba create --name phyclone bioconda::phyclone```
+> If either install command (step 3) fails due to conda being unable to find the PhyClone package, you may need to specify the channel, e.g.:
+> ```conda create --name phyclone bioconda::phyclone```
 > or
-> ```mamba create --name phyclone -c bioconda phyclone```
+> ```conda create --name phyclone -c bioconda phyclone```
 ---------
 
 ## Input File Formats
@@ -180,7 +180,7 @@ As explored in the PhyClone paper, PhyClone is equipped with the ability to mode
    * This feature requires that the clustered data include mutational chromosome assignments, the `chrom` column (which can be supplied in either the [data.tsv](#main-input-format) or [cluster.tsv](#cluster-file-format) files), and cluster cellular prevalence (CCF) measures, the `cellular_prevalence` column (which should be included in the [cluster.tsv](#cluster-file-format) file).
    * To activate this feature, ensure the input files are populated with the appropriate columns and include the `--assign-loss-prob` flag in the PhyClone `run` command.
 > [!TIP]
-> If using PyClone-VI for clustering, the CCF column will come as a part of its results. And you need only append the chromosomal positioning column `chrom` to either input files.
+> If using PyClone-VI for clustering, the `cellular_prevalence` column will come as a part of its results. And you need only append the chromosomal assignment column `chrom` to either input file.
    
 > [!IMPORTANT]
 > With outlier modelling active, the end result table will assign all mutations inferred to be lost or outliers to a clone with the id of `-1`.
