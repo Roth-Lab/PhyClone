@@ -24,6 +24,7 @@ def load_data(
     precision=400,
     min_clust_size=4,
 ):
+    print("Parsing Input Data...\n")
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
@@ -71,6 +72,9 @@ def load_data(
             precision,
             pyclone_data,
         )
+
+    print("#" * 100)
+    print()
 
     return data, samples
 
@@ -184,15 +188,25 @@ def load_pyclone_data(file_name):
 
     df = _remove_duplicated_and_partially_absent_mutations(df, samples)
 
-    mutations = df["mutation_id"].unique()
+    _process_required_cols_on_df(df)
 
-    print("Num mutations: {}".format(len(mutations)))
-
-    _process_required_cols_on_df(df, samples)
+    _print_num_mutations_samples_message(df, samples)
 
     data = _create_loaded_pyclone_data_dict(df, samples)
 
+    get_major_cn_prior.cache_clear()
+
     return data, samples, df
+
+
+def _print_num_mutations_samples_message(df, samples):
+    mutations = df["mutation_id"].unique()
+    print("Num mutations: {}".format(len(mutations)))
+    print("Num Samples: {}".format(len(samples)))
+    if len(samples) > 10:
+        print("Samples: {}...".format(" ".join(samples[:4])))
+    else:
+        print("Samples: {}".format(" ".join(samples)))
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
@@ -234,12 +248,7 @@ def _remove_cn_zero_mutations(df):
     return df
 
 
-def _process_required_cols_on_df(df, samples):
-    print("Num Samples: {}".format(len(samples)))
-    if len(samples) > 10:
-        print("Samples: {}...".format(" ".join(samples[:4])))
-    else:
-        print("Samples: {}".format(" ".join(samples)))
+def _process_required_cols_on_df(df):
     if "error_rate" not in df.columns:
         df.loc[:, "error_rate"] = 1e-3
     if "tumour_content" not in df.columns:

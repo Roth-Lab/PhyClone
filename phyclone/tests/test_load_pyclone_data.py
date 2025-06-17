@@ -329,7 +329,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        _process_required_cols_on_df(actual_df)
         pd.testing.assert_frame_equal(df, actual_df)
 
     def test_process_required_cols_on_df__tumour_content_missing(self):
@@ -346,7 +346,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        _process_required_cols_on_df(actual_df)
         self.assertLess(len(df.columns), len(actual_df.columns))
         self.assertIn("tumour_content", actual_df.columns)
 
@@ -364,7 +364,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        _process_required_cols_on_df(actual_df)
         self.assertLess(len(df.columns), len(actual_df.columns))
         self.assertIn("error_rate", actual_df.columns)
 
