@@ -168,7 +168,6 @@ def topology_report(**kwargs):
     help="""Number of iterations of the MCMC sampler to perform. Default is 5,000.""",
 )
 @click.option(
-    "-t",
     "--thin",
     default=1,
     type=click.IntRange(1, clamp=True),
@@ -217,7 +216,6 @@ def topology_report(**kwargs):
     """,
 )
 @click.option(
-    "-t",
     "--max-time",
     default=float("inf"),
     type=float,
