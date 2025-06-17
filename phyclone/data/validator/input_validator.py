@@ -14,7 +14,7 @@ class InputValidator(object):
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
-        self.error_helper = SchemaErrors()
+        self.error_helper = SchemaErrors(file_path)
 
     @staticmethod
     def load_json_schema(schema_file):

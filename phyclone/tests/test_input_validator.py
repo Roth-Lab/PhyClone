@@ -17,7 +17,7 @@ class TesterInputValidator(InputValidator):
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
-        self.error_helper = SchemaErrors()
+        self.error_helper = SchemaErrors("Dummy_file_path.tsv")
 
 
 class TestInputValidatorLoaders(unittest.TestCase):
