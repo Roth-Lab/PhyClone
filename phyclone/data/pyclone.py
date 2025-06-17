@@ -159,7 +159,7 @@ def _get_raw_cluster_df(cluster_file, data_df):
             data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
             cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
             cluster_df = cluster_df.drop_duplicates()
-    return cluster_df
+    return cluster_df.drop_duplicates()
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
@@ -252,7 +252,7 @@ def _create_raw_data_df(file_name):
     data_input_validator.validate()
     df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
-    return df
+    return df.drop_duplicates()
 
 
 def _create_loaded_pyclone_data_dict(df, samples):
