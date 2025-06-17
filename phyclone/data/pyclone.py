@@ -250,10 +250,10 @@ def _remove_cn_zero_mutations(df):
 
 def _process_required_cols_on_df(df):
     if "error_rate" not in df.columns:
-        df.loc[:, "error_rate"] = 1e-3
+        df["error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
         print("Tumour content column not found. Setting values to 1.0.")
-        df.loc[:, "tumour_content"] = 1.0
+        df["tumour_content"] = 1.0
 
 
 def _create_raw_data_df(file_name):
