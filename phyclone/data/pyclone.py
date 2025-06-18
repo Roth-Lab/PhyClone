@@ -1,15 +1,16 @@
-import itertools
 from collections import OrderedDict, defaultdict
+from functools import lru_cache
+from math import ulp
+
 import numba
 import numpy as np
 import pandas as pd
+
 import phyclone.data.base
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
+from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 from phyclone.utils.exceptions import MajorCopyNumberError
 from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
-from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
-from math import ulp
-from functools import lru_cache
 
 
 def load_data(
