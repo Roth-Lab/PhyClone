@@ -2,8 +2,8 @@ import unittest
 
 import numpy as np
 
-from phyclone.tests.old_implementations import OldTree
-from phyclone.tests.simulate import simulate_binomial_data
+from phyclone.tests.utilities.old_implementations import OldTree
+from phyclone.tests.utilities.simulate import simulate_binomial_data
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
 

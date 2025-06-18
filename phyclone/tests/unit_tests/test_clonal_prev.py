@@ -2,7 +2,7 @@ import unittest
 from phyclone.process_trace.map import get_map_node_clonal_prevs_dict
 import networkx as nx
 import numpy as np
-from fscrp import add_clonal_prev, add_cellular_prev
+from phyclone.tests.utilities.fscrp import add_clonal_prev, add_cellular_prev
 import pandas as pd
 
 

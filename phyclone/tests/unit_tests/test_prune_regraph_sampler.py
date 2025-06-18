@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from phyclone.mcmc import PruneRegraphSampler
-from phyclone.tests.simulate import simulate_binomial_data
+from phyclone.tests.utilities.simulate import simulate_binomial_data
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 
 
