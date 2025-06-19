@@ -4,6 +4,10 @@ import warnings
 import json
 from phyclone.data.validator.schema_error_builder import SchemaErrors
 import gzip
+import bz2
+import lzma
+import tarfile
+import zipfile
 
 
 class InputValidator(object):
@@ -30,9 +34,30 @@ class InputValidator(object):
                 dialect = csv.Sniffer().sniff(csv_file.readline())
                 csv_delim = str(dialect.delimiter)
         except UnicodeDecodeError:
-            with gzip.open(file_path, "rt") as csv_file:
-                dialect = csv.Sniffer().sniff(csv_file.readline())
-                csv_delim = str(dialect.delimiter)
+            if zipfile.is_zipfile(file_path):
+                warnings.warn(
+                    "Zip file input detected, allowing pandas to infer parser dialect via python engine - "
+                    "could be slow for larger files.\n",
+                    stacklevel=2,
+                    category=UserWarning,
+                )
+                return pd.read_csv(file_path, sep=None, engine='python')
+            else:
+
+                decompression_func = InputValidator._get_compression_type_function(file_path)
+
+                if decompression_func is None:
+                    warnings.warn(
+                        "Unknown input file compression type, "
+                        "allowing pandas to infer parser dialect via python engine - could be slow for larger files.\n",
+                        stacklevel=2,
+                        category=UserWarning,
+                    )
+                    return pd.read_csv(file_path, sep=None, engine='python')
+
+                with decompression_func(file_path, "rt") as csv_file:
+                    dialect = csv.Sniffer().sniff(csv_file.readline())
+                    csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
             warnings.warn(
@@ -42,6 +67,22 @@ class InputValidator(object):
                 category=UserWarning,
             )
         return pd.read_csv(file_path, sep=csv_delim)
+
+    @staticmethod
+    def _get_compression_type_function(file_path):
+        magic_bytes = {
+            b"\x1f\x8b\x08": gzip.open,
+            b"\x42\x5a\x68": bz2.open,
+            b"\xfd\x37\x7a\x58\x5a\x00": lzma.open,
+        }
+        with open(file_path, "rb") as f:
+            file_head_bytes = f.read(6)
+        format_type = None
+        for byte_signature, compression_func in magic_bytes.items():
+            if file_head_bytes.startswith(byte_signature):
+                format_type = compression_func
+                break
+        return format_type
 
     def validate(self):
         are_required_columns_present = self._validate_required_column_presence()
