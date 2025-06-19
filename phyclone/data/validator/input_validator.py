@@ -55,7 +55,7 @@ class InputValidator(object):
                 return pd.read_csv(file_path, sep=None, engine="python")
             else:
 
-                decompression_func = InputValidator._get_compression_type_function(file_path)
+                decompression_func = InputValidator._get_decompression_function(file_path)
 
                 if decompression_func is None:
                     warnings.warn(
@@ -80,7 +80,7 @@ class InputValidator(object):
         return pd.read_csv(file_path, sep=csv_delim)
 
     @staticmethod
-    def _get_compression_type_function(file_path):
+    def _get_decompression_function(file_path):
         magic_bytes = {
             b"\x1f\x8b\x08": gzip.open,
             b"\x42\x5a\x68": bz2.open,
@@ -88,12 +88,12 @@ class InputValidator(object):
         }
         with open(file_path, "rb") as f:
             file_head_bytes = f.read(6)
-        format_type = None
-        for byte_signature, compression_func in magic_bytes.items():
+        file_decompression_func = None
+        for byte_signature, decompression_func in magic_bytes.items():
             if file_head_bytes.startswith(byte_signature):
-                format_type = compression_func
+                file_decompression_func = decompression_func
                 break
-        return format_type
+        return file_decompression_func
 
     def validate(self):
         are_required_columns_present = self._validate_required_column_presence()
