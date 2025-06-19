@@ -7,17 +7,6 @@ import numpy as np
 from xxhash import xxh3_64_hexdigest
 
 
-# def read_pickle(file):
-#     with open(file, "rb") as f:
-#         loaded = pickle.load(f)
-#     return loaded
-#
-#
-# def write_pickle(obj, filename):
-#     with open(filename, "wb") as f:
-#         pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-
 def get_iterator_length(iterable):
     counter = count()
     deque(zip(iterable, counter), maxlen=0)
