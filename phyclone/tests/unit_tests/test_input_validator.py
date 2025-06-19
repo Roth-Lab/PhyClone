@@ -1,15 +1,17 @@
 import os
-import tempfile
-import unittest
-import numpy as np
-from phyclone.data.validator.input_validator import InputValidator
-from phyclone.data.validator.schema_error_builder import SchemaErrors
-from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
-import pandas as pd
-from unittest.mock import MagicMock
-from phyclone.utils.exceptions import InputFormatError
 import secrets
 import tarfile
+import tempfile
+import unittest
+from unittest.mock import MagicMock
+
+import numpy as np
+import pandas as pd
+
+from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
+from phyclone.data.validator.input_validator import InputValidator
+from phyclone.data.validator.schema_error_builder import SchemaErrors
+from phyclone.utils.exceptions import InputFormatError
 
 
 class TesterInputValidator(InputValidator):
@@ -107,7 +109,6 @@ class TestInputValidatorLoaders(unittest.TestCase):
         print(w.warning)
         self.assertTrue(input_validator.validate())
 
-
     def test_data_validator_loads__bz2_trigger_delim_warning(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             df_dict = {
@@ -129,7 +130,6 @@ class TestInputValidatorLoaders(unittest.TestCase):
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
         self.assertTrue(input_validator.validate())
-
 
     def test_data_validator_loads__lzma_trigger_delim_warning(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -197,7 +197,6 @@ class TestInputValidatorLoaders(unittest.TestCase):
         print(w.warning)
         self.assertTrue(input_validator.validate())
 
-
     def test_data_validator_loads__tar_bz2_trigger_delim_warning(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             df_dict = {
@@ -220,7 +219,6 @@ class TestInputValidatorLoaders(unittest.TestCase):
         print(w.warning)
         self.assertTrue(input_validator.validate())
 
-
     def test_data_validator_loads__tar_lzma_trigger_delim_warning(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             df_dict = {
@@ -242,7 +240,6 @@ class TestInputValidatorLoaders(unittest.TestCase):
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
         self.assertTrue(input_validator.validate())
-
 
     def test_data_validator_loads__tar_gz_trigger_tarchive_error(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -269,7 +266,9 @@ class TestInputValidatorLoaders(unittest.TestCase):
                 tar.add(file_path2)
             with self.assertRaises(ValueError) as e:
                 _ = create_data_input_validator_instance(tar_path)
-                self.assertTrue(str(e.exception).startswith("Multiple files found in TAR archive. Only one file per TAR archive:"))
+                self.assertTrue(
+                    str(e.exception).startswith("Multiple files found in TAR archive. Only one file per TAR archive:")
+                )
         print(e.exception)
 
     def test_data_validator_loads__tar_uncompressed_trigger_tarchive_error(self):
@@ -297,7 +296,9 @@ class TestInputValidatorLoaders(unittest.TestCase):
                 tar.add(file_path2)
             with self.assertRaises(ValueError) as e:
                 _ = create_data_input_validator_instance(tar_path)
-                self.assertTrue(str(e.exception).startswith("Multiple files found in TAR archive. Only one file per TAR archive:"))
+                self.assertTrue(
+                    str(e.exception).startswith("Multiple files found in TAR archive. Only one file per TAR archive:")
+                )
         print(e.exception)
 
     def test_data_validator_loads__zip_trigger_zip_warning(self):
@@ -319,11 +320,13 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df.to_csv(file_path)
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
-        self.assertTrue(str(w.warning).startswith(
-            "Zip file input detected, allowing pandas to infer parser dialect via python engine - "))
+        self.assertTrue(
+            str(w.warning).startswith(
+                "Zip file input detected, allowing pandas to infer parser dialect via python engine - "
+            )
+        )
         print(w.warning)
         self.assertTrue(input_validator.validate())
-
 
     # def test_data_validator_loads__zstd_trigger_delim_warning(self):
     #     with tempfile.TemporaryDirectory() as tmp_dir:

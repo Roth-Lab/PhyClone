@@ -1,8 +1,10 @@
 import unittest
+
 import numpy as np
+
 from phyclone.tree.utils import _convolve_two_children
-from phyclone.utils.math import np_conv_dims
 from phyclone.utils.dev import clear_convolution_caches
+from phyclone.utils.math import np_conv_dims
 
 
 class TestConvolutionCaching(unittest.TestCase):

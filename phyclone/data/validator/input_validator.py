@@ -1,14 +1,16 @@
-import pandas as pd
-import csv
-import warnings
-import json
-from phyclone.data.validator.schema_error_builder import SchemaErrors
-import gzip
 import bz2
+import csv
+import gzip
+import json
 import lzma
 import tarfile
+import warnings
 import zipfile
 from io import TextIOWrapper
+
+import pandas as pd
+
+from phyclone.data.validator.schema_error_builder import SchemaErrors
 
 
 class InputValidator(object):
@@ -50,14 +52,7 @@ class InputValidator(object):
                     stacklevel=2,
                     category=UserWarning,
                 )
-                return pd.read_csv(file_path, sep=None, engine='python')
-            # elif tarfile.is_tarfile(file_path):
-            #     with tarfile.open(file_path, "r") as tar:
-            #         next_file = tar.next()
-            #         with tar.extractfile(next_file) as csv_file:
-            #             text_wrapper = TextIOWrapper(csv_file)
-            #             dialect = csv.Sniffer().sniff(text_wrapper.readline())
-            #             csv_delim = str(dialect.delimiter)
+                return pd.read_csv(file_path, sep=None, engine="python")
             else:
 
                 decompression_func = InputValidator._get_compression_type_function(file_path)
@@ -69,7 +64,7 @@ class InputValidator(object):
                         stacklevel=2,
                         category=UserWarning,
                     )
-                    return pd.read_csv(file_path, sep=None, engine='python')
+                    return pd.read_csv(file_path, sep=None, engine="python")
 
                 with decompression_func(file_path, "rt") as csv_file:
                     dialect = csv.Sniffer().sniff(csv_file.readline())

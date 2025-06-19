@@ -1,6 +1,7 @@
 import unittest
-from phyclone.utils.exceptions import MajorCopyNumberError
+
 from phyclone.data.pyclone import get_major_cn_prior
+from phyclone.utils.exceptions import MajorCopyNumberError
 
 
 class TestMajorCopyNumberError(unittest.TestCase):

@@ -1,5 +1,6 @@
-from .input_validator import InputValidator
 from importlib.resources import files, as_file
+
+from .input_validator import InputValidator
 
 
 def create_cluster_input_validator_instance(file_path):

@@ -1,8 +1,10 @@
+import os
 import tempfile
 import unittest
+
 import numpy as np
-from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import log_normalize
+import pandas as pd
+
 from phyclone.data.pyclone import (
     _create_raw_data_df,
     _remove_cn_zero_mutations,
@@ -12,8 +14,8 @@ from phyclone.data.pyclone import (
     get_major_cn_prior,
     load_pyclone_data,
 )
-import pandas as pd
-import os
+from phyclone.utils.exceptions import MajorCopyNumberError
+from phyclone.utils.math import log_normalize
 
 
 def tester_get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):

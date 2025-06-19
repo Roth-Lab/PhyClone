@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from phyclone.utils.exceptions import InputFormatError
 
 
