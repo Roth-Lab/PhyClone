@@ -10,7 +10,7 @@ from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tree import Tree, TreeJointDistribution
 from phyclone.tree.tree_node import TreeNode
 from phyclone.tree.visitors import GraphToCladesVisitor
-from phyclone.utils.math import cached_log_factorial
+from phyclone.utils.math_utils import cached_log_factorial
 
 
 @dataclass(slots=True)

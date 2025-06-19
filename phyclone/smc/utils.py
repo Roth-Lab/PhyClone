@@ -6,7 +6,7 @@ Created on 9 Aug 2017
 
 from itertools import repeat
 
-from phyclone.utils.math import (
+from phyclone.utils.math_utils import (
     log_factorial,
     log_binomial_coefficient,
     log_multinomial_coefficient,

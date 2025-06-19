@@ -7,7 +7,7 @@ from numba.typed import Dict
 from scipy.special import logsumexp
 
 from phyclone.data.pyclone import SampleDataPoint
-from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
+from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
 @jitclass

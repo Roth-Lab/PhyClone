@@ -2,7 +2,7 @@ from math import ulp
 
 import numpy as np
 
-from phyclone.utils.math import cached_log_factorial, log_sum_exp_over_dims
+from phyclone.utils.math_utils import cached_log_factorial, log_sum_exp_over_dims
 
 
 class FSCRPDistribution(object):

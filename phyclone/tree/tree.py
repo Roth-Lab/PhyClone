@@ -14,7 +14,7 @@ from phyclone.tree.visitors import (
     GraphToCladesVisitor,
     GraphToNewickVisitor,
 )
-from phyclone.utils.math import cached_log_factorial
+from phyclone.utils.math_utils import cached_log_factorial
 
 
 class Tree(object):

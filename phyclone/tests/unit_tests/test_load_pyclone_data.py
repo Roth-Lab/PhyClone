@@ -15,7 +15,7 @@ from phyclone.data.pyclone import (
     load_pyclone_data,
 )
 from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import log_normalize
+from phyclone.utils.math_utils import log_normalize
 
 
 def tester_get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):

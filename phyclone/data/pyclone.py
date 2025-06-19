@@ -10,7 +10,7 @@ from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
+from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
 def load_data(

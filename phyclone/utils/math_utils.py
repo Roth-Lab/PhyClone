@@ -4,7 +4,7 @@ Created on 8 Dec 2016
 @author: Andrew Roth
 """
 
-import math
+from math import lgamma
 from functools import lru_cache
 
 import numba
@@ -94,7 +94,7 @@ def log_normalize(log_p):
 
 @numba.vectorize()
 def log_gamma(x):
-    return math.lgamma(x)
+    return lgamma(x)
 
 
 @numba.jit(nopython=True)

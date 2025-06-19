@@ -6,7 +6,7 @@ import numpy as np
 
 from phyclone.tree.utils import get_clades, compute_log_S
 from phyclone.utils import get_iterator_length
-from phyclone.utils.math import log_factorial
+from phyclone.utils.math_utils import log_factorial
 
 
 class OldTree(object):
