@@ -1,8 +1,9 @@
 import numpy as np
-from scipy.stats import binom
-from phyclone.data.pyclone import SampleDataPoint, get_major_cn_prior, DataPoint
-from phyclone.data.base import DataPoint as DataPointFinal
 import pandas as pd
+from scipy.stats import binom
+
+from phyclone.data.base import DataPoint as DataPointFinal
+from phyclone.data.pyclone import SampleDataPoint, get_major_cn_prior, PyCloneDataPoint
 
 
 def simulate_data(
@@ -67,7 +68,9 @@ def simulate_data(
                 tree.nodes[node]["converted_sample_dp"][dim_idx][snv] = sample_data_point
                 snv_datapoints.append(sample_data_point)
             tmp_df = pd.Series(snv_datapoints, index=samples_as_index)
-            node_sample_dp.append(DataPoint(samples_as_index, tmp_df).to_likelihood_grid(dist, grid_size, precision))
+            node_sample_dp.append(
+                PyCloneDataPoint(samples_as_index, tmp_df).to_likelihood_grid(dist, grid_size, precision)
+            )
         node_vals = np.array(node_sample_dp)
         node_val = node_vals.sum(axis=0)
         tree.nodes[node]["datapoint"] = [

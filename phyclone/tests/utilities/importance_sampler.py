@@ -1,11 +1,13 @@
-import numpy as np
-from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
-from scipy.special import logsumexp
-from numba import types, njit
-from numba.typed import Dict
-from numba.experimental import jitclass
-from phyclone.data.pyclone import SampleDataPoint
 from math import floor
+
+import numpy as np
+from numba import types, njit
+from numba.experimental import jitclass
+from numba.typed import Dict
+from scipy.special import logsumexp
+
+from phyclone.data.pyclone import SampleDataPoint
+from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
 @jitclass

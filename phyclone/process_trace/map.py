@@ -1,4 +1,5 @@
 import numpy as np
+
 from phyclone.process_trace.utils import convert_rustworkx_to_networkx
 
 

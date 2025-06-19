@@ -1,6 +1,6 @@
+from phyclone.smc.kernels.base import get_cached_new_tree_adder
 from phyclone.smc.kernels.fully_adapted import _get_cached_full_proposal_dist
 from phyclone.smc.kernels.semi_adapted import _get_cached_semi_proposal_dist
-from phyclone.smc.kernels.base import get_cached_new_tree_adder
 from phyclone.tree.utils import compute_log_S, _convolve_two_children
 
 

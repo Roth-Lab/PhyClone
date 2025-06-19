@@ -5,8 +5,9 @@ from itertools import chain
 
 import numpy as np
 import rustworkx as rx
-from phyclone.tree.tree_node import TreeNode
+
 from phyclone.data.base import DataPoint
+from phyclone.tree.tree_node import TreeNode
 from phyclone.tree.visitors import (
     PostOrderNodeUpdater,
     PreOrderNodeRelabeller,

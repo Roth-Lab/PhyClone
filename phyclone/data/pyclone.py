@@ -6,7 +6,7 @@ import numba
 import numpy as np
 import pandas as pd
 
-import phyclone.data.base
+from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 from phyclone.utils.exceptions import MajorCopyNumberError
@@ -35,7 +35,7 @@ def load_data(
 
         for idx, (mut, val) in enumerate(pyclone_data.items()):
             out_probs = compute_outlier_prob(outlier_prob, 1)
-            data_point = phyclone.data.base.DataPoint(
+            data_point = DataPoint(
                 idx,
                 val.to_likelihood_grid(density, grid_size, precision=precision),
                 name=mut,
@@ -99,7 +99,7 @@ def _create_clustered_data_arr(
         cluster_outlier_prob = cluster_outlier_probs[cluster_id]
         out_probs = compute_outlier_prob(cluster_outlier_prob, cluster_sizes[cluster_id])
 
-        data_point = phyclone.data.base.DataPoint(
+        data_point = DataPoint(
             idx,
             val,
             name="{}".format(cluster_id),
@@ -267,7 +267,7 @@ def _create_raw_data_df(file_name):
 
 
 def _create_loaded_pyclone_data_dict(df, samples):
-    samples = pd.Index(samples, name="sample_id", dtype=df['sample_id'].dtype)
+    samples = pd.Index(samples, name="sample_id", dtype=df["sample_id"].dtype)
     df.set_index("sample_id", inplace=True)
     df.sort_index(inplace=True)
     grouped = df.groupby("mutation_id", sort=True)
@@ -281,7 +281,7 @@ def _create_loaded_pyclone_data_dict(df, samples):
 
 def make_datapoint_from_group(group, samples):
     sample_dp_df = group.agg(create_sample_data_point, axis=1)
-    return DataPoint(samples, sample_dp_df)
+    return PyCloneDataPoint(samples, sample_dp_df)
 
 
 def create_sample_data_point(row_series):
@@ -332,7 +332,7 @@ def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
     return cn, mu, log_pi
 
 
-class DataPoint(object):
+class PyCloneDataPoint(object):
 
     def __init__(self, samples, sample_data_points):
         self.samples = samples

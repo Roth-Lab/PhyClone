@@ -1,5 +1,7 @@
-import numpy as np
 from math import ulp
+
+import numpy as np
+
 from phyclone.utils.math import cached_log_factorial, log_sum_exp_over_dims
 
 

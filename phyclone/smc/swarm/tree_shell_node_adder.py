@@ -1,14 +1,16 @@
-from phyclone.smc.swarm import TreeHolder
-from phyclone.tree import Tree, TreeJointDistribution
-from phyclone.data.base import DataPoint
-from phyclone.tree.tree_node import TreeNode
-from dataclasses import dataclass
-import rustworkx as rx
 from collections import defaultdict
+from dataclasses import dataclass
+
 import numpy as np
+import rustworkx as rx
+
+from phyclone.data.base import DataPoint
+from phyclone.smc.swarm import TreeHolder
+from phyclone.smc.utils import RootPermutationDistribution
+from phyclone.tree import Tree, TreeJointDistribution
+from phyclone.tree.tree_node import TreeNode
 from phyclone.tree.visitors import GraphToCladesVisitor
 from phyclone.utils.math import cached_log_factorial
-from phyclone.smc.utils import RootPermutationDistribution
 
 
 @dataclass(slots=True)

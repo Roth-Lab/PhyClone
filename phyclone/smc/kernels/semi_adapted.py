@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 import numpy as np
+
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.utils.math import cached_log_binomial_coefficient
