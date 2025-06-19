@@ -8,6 +8,7 @@ import bz2
 import lzma
 import tarfile
 import zipfile
+from io import TextIOWrapper
 
 
 class InputValidator(object):
@@ -30,9 +31,17 @@ class InputValidator(object):
     def load_df(file_path):
 
         try:
-            with open(file_path, "r") as csv_file:
-                dialect = csv.Sniffer().sniff(csv_file.readline())
-                csv_delim = str(dialect.delimiter)
+            if tarfile.is_tarfile(file_path):
+                with tarfile.open(file_path, "r") as tar:
+                    next_file = tar.next()
+                    with tar.extractfile(next_file) as csv_file:
+                        text_wrapper = TextIOWrapper(csv_file)
+                        dialect = csv.Sniffer().sniff(text_wrapper.readline())
+                        csv_delim = str(dialect.delimiter)
+            else:
+                with open(file_path, "r") as csv_file:
+                    dialect = csv.Sniffer().sniff(csv_file.readline())
+                    csv_delim = str(dialect.delimiter)
         except UnicodeDecodeError:
             if zipfile.is_zipfile(file_path):
                 warnings.warn(
@@ -42,6 +51,13 @@ class InputValidator(object):
                     category=UserWarning,
                 )
                 return pd.read_csv(file_path, sep=None, engine='python')
+            # elif tarfile.is_tarfile(file_path):
+            #     with tarfile.open(file_path, "r") as tar:
+            #         next_file = tar.next()
+            #         with tar.extractfile(next_file) as csv_file:
+            #             text_wrapper = TextIOWrapper(csv_file)
+            #             dialect = csv.Sniffer().sniff(text_wrapper.readline())
+            #             csv_delim = str(dialect.delimiter)
             else:
 
                 decompression_func = InputValidator._get_compression_type_function(file_path)
