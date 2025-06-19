@@ -10,7 +10,7 @@ from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tests.utilities.exact_posterior import get_exact_posterior
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
-from phyclone.utils.dev import clear_proposal_dist_caches
+from phyclone.utils.cache import clear_proposal_dist_caches
 
 
 class BaseTest(object):

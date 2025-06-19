@@ -1,5 +1,5 @@
-from itertools import combinations
 from functools import lru_cache
+from itertools import combinations
 
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder

@@ -4,8 +4,8 @@ Created on 8 Dec 2016
 @author: Andrew Roth
 """
 
-from math import lgamma
 from functools import lru_cache
+from math import lgamma
 
 import numba
 import numpy as np

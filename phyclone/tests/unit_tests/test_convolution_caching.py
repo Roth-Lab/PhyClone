@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from phyclone.tree.utils import _convolve_two_children
-from phyclone.utils.dev import clear_convolution_caches
+from phyclone.utils.cache import clear_convolution_caches
 from phyclone.utils.math_utils import np_conv_dims
 
 

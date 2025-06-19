@@ -4,9 +4,6 @@ from phyclone.smc.kernels.semi_adapted import _get_cached_semi_proposal_dist
 from phyclone.tree.utils import compute_log_S, _convolve_two_children
 
 
-# Utils for dev debugging and performance checking
-
-
 def clear_proposal_dist_caches():
     get_cached_new_tree_adder.cache_clear()
     _get_cached_semi_proposal_dist.cache_clear()

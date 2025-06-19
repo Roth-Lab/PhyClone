@@ -1,6 +1,6 @@
 import time
 from collections import deque
-from functools import lru_cache, wraps
+from functools import wraps, lru_cache
 from itertools import count
 
 import numpy as np
