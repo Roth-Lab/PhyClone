@@ -25,6 +25,11 @@ class TesterInputValidator(InputValidator):
 
 class TestInputValidatorLoaders(unittest.TestCase):
 
+    def delim_warning_message_checker(self, w, delim=","):
+        delim = repr(delim)
+        expected_warning = "Input should be tab-delimited, supplied file is delimited by {delim}".format(delim=delim)
+        self.assertTrue(str(w.warning).startswith(expected_warning))
+
     def test_data_validator_loads(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             df_dict = {
@@ -65,6 +70,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__gzip(self):
@@ -107,6 +113,31 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads__gzip_trigger_delim_warning_different_delim(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": ["m1", "m2", "m3"],
+                "sample_id": ["s1", "s2", "s3"],
+                "ref_counts": [20, 4, 104],
+                "alt_counts": [8, 16, 45],
+                "major_cn": [2, 2, 4],
+                "minor_cn": [1, 2, 3],
+                "normal_cn": [2, 2, 2],
+                "tumour_content": [1.0, 0.2, 0.3],
+                "error_rate": [0.001, 0.002, 0.001],
+                "chrom": ["chr1", "chr2", "chr3"],
+            }
+            df = pd.DataFrame(df_dict)
+            file_path = os.path.join(tmp_dir, "data.tsv.gz")
+            delim = "|"
+            df.to_csv(file_path, sep=delim)
+            with self.assertWarns(UserWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
+        print(w.warning)
+        self.delim_warning_message_checker(w, delim)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__bz2_trigger_delim_warning(self):
@@ -129,6 +160,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__lzma_trigger_delim_warning(self):
@@ -151,6 +183,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__tar_trigger_delim_warning(self):
@@ -173,6 +206,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__tar_gz_trigger_delim_warning(self):
@@ -195,6 +229,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__tar_bz2_trigger_delim_warning(self):
@@ -217,6 +252,7 @@ class TestInputValidatorLoaders(unittest.TestCase):
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__tar_lzma_trigger_delim_warning(self):
@@ -238,7 +274,9 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df.to_csv(file_path)
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
+
         print(w.warning)
+        self.delim_warning_message_checker(w)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__tar_gz_trigger_tarchive_error(self):
