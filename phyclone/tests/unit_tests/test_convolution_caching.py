@@ -12,13 +12,55 @@ class TestConvolutionCaching(unittest.TestCase):
     def __init__(self, method_name: str = ...):
         super().__init__(method_name)
 
-        self.big_grid = 1001
+        self.big_grid = 501
         self.default_grid_size = 101
 
         self.rng = np.random.default_rng(242643578967193853558243570818064774262)
 
     def setUp(self) -> None:
         clear_convolution_caches()
+
+    def test_convolve_two_children_1_dim_no_hits(self):
+        child_1 = self.rng.random(self.big_grid)
+        child_2 = self.rng.random(self.big_grid)
+        child_1_two_d = np.atleast_2d(child_1)
+        child_2_two_d = np.atleast_2d(child_2)
+
+        actual = _convolve_two_children(child_1_two_d, child_2_two_d)
+
+        expected = np.atleast_2d(np.convolve(child_1, child_2)[: len(child_1)])
+
+        num_hits = _convolve_two_children.cache_info().hits
+        cache_size = _convolve_two_children.cache_info().currsize
+
+        self.assertEqual(num_hits, 0)
+        self.assertEqual(cache_size, 1)
+
+        np.testing.assert_allclose(actual, expected)
+
+    def test_convolve_two_children_1_dim_multiple_hits(self):
+        child_1 = self.rng.random(self.big_grid)
+        child_2 = self.rng.random(self.big_grid)
+        child_1_two_d = np.atleast_2d(child_1)
+        child_2_two_d = np.atleast_2d(child_2)
+
+        num_cache_hits = 10
+
+        for i in range(num_cache_hits):
+            with self.subTest(msg="Num cache hits: {}".format(i), num_cache_hits=i):
+
+                actual = _convolve_two_children(child_1_two_d.copy(), child_2_two_d.copy())
+
+                expected = np.atleast_2d(np.convolve(child_1, child_2)[: len(child_1)])
+
+                num_hits = _convolve_two_children.cache_info().hits
+                cache_size = _convolve_two_children.cache_info().currsize
+
+                self.assertEqual(num_hits, i)
+                self.assertEqual(cache_size, 1)
+
+                np.testing.assert_allclose(actual, expected)
+
 
     def test_convolve_two_children_cache_order_1_dim(self):
         child_1 = self.rng.random(self.big_grid)
@@ -57,6 +99,51 @@ class TestConvolutionCaching(unittest.TestCase):
 
         np.testing.assert_allclose(actual, expected)
         np.testing.assert_allclose(actual_rev, actual)
+
+
+    def test_convolve_two_children_cache_order_1000_dims(self):
+        num_dims = 1000
+        child_1 = self.rng.random((num_dims, self.big_grid))
+        child_2 = self.rng.random((num_dims, self.big_grid))
+
+        actual = _convolve_two_children(child_1, child_2)
+        actual_rev = _convolve_two_children(child_2, child_1)
+
+        expected = np_conv_dims(child_1, child_2)
+
+        num_hits = _convolve_two_children.cache_info().hits
+        cache_size = _convolve_two_children.cache_info().currsize
+
+        self.assertEqual(num_hits, 1)
+        self.assertEqual(cache_size, 1)
+
+        np.testing.assert_allclose(actual, expected)
+        np.testing.assert_allclose(actual_rev, actual)
+
+
+    def test_convolve_two_children_multiple_items_in_cache_1000_dims(self):
+        num_dims = 1000
+        num_items_in_cache = 10
+
+        for i in range(num_items_in_cache):
+            with self.subTest(msg="Num items in cache: {}".format(i+1), items_in_cache=i+1):
+
+                child_1 = self.rng.random((num_dims, self.big_grid))
+                child_2 = self.rng.random((num_dims, self.big_grid))
+
+                actual = _convolve_two_children(child_1, child_2)
+                actual_rev = _convolve_two_children(child_2, child_1)
+
+                expected = np_conv_dims(child_1, child_2)
+
+                num_hits = _convolve_two_children.cache_info().hits
+                cache_size = _convolve_two_children.cache_info().currsize
+
+                self.assertEqual(num_hits, i+1)
+                self.assertEqual(cache_size, i+1)
+
+                np.testing.assert_allclose(actual, expected)
+                np.testing.assert_allclose(actual_rev, actual)
 
 
 if __name__ == "__main__":
