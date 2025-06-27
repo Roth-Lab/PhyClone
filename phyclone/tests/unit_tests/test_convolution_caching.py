@@ -2,9 +2,27 @@ import unittest
 
 import numpy as np
 
-from phyclone.tree.utils import _convolve_two_children
+from phyclone.tree.utils import _convolve_two_children, compute_log_S, compute_log_D
 from phyclone.utils.cache import clear_convolution_caches
 from phyclone.utils.math_utils import np_conv_dims
+
+
+def non_cached_compute_log_S(child_log_R_values):
+    """Compute log(S) recursion.
+
+    Parameters
+    ----------
+    child_log_R_values: ndarray
+        log_R values from child nodes.
+    """
+    if len(child_log_R_values) == 0:
+        return 0.0
+
+    log_D = compute_log_D(child_log_R_values)
+    log_S = np.empty_like(log_D)
+    log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
+
+    return np.ascontiguousarray(log_S)
 
 
 class TestConvolutionCaching(unittest.TestCase):
@@ -19,6 +37,119 @@ class TestConvolutionCaching(unittest.TestCase):
 
     def setUp(self) -> None:
         clear_convolution_caches()
+
+    def test_compute_log_S_no_children_no_hits(self):
+        child_list = []
+
+        expected = np.ascontiguousarray([0.0])
+        actual = compute_log_S(child_list)
+
+        num_hits = compute_log_S.cache_info().hits
+        cache_size = compute_log_S.cache_info().currsize
+
+        self.assertEqual(num_hits, 0)
+        self.assertEqual(cache_size, 1)
+
+        np.testing.assert_allclose(actual, expected)
+        self.assertIsNot(actual, expected)
+
+    def test_compute_log_S_no_children_multiple_hits(self):
+        child_list = []
+
+        num_cache_hits = 10
+
+        for i in range(num_cache_hits):
+            with self.subTest(msg="Num cache hits: {}".format(i), num_cache_hits=i):
+
+                expected = np.ascontiguousarray([0.0])
+                actual = compute_log_S(child_list)
+
+                num_hits = compute_log_S.cache_info().hits
+                cache_size = compute_log_S.cache_info().currsize
+
+                self.assertEqual(num_hits, i)
+                self.assertEqual(cache_size, 1)
+
+                np.testing.assert_allclose(actual, expected)
+                self.assertIsNot(actual, expected)
+
+    def test_compute_log_S_1_child_no_hits(self):
+        num_dims = 1000
+        num_children = 1
+        child_list = [np.log(self.rng.uniform(1e-6, 1.0, (num_dims, self.big_grid))) for _ in range(num_children)]
+
+        expected = non_cached_compute_log_S(child_list)
+        actual = compute_log_S(child_list)
+
+        num_hits = compute_log_S.cache_info().hits
+        cache_size = compute_log_S.cache_info().currsize
+
+        self.assertEqual(num_hits, 0)
+        self.assertEqual(cache_size, 1)
+
+        np.testing.assert_allclose(actual, expected)
+        self.assertIsNot(actual, expected)
+
+    def test_compute_log_S_1_child_multiple_hits(self):
+        num_dims = 1000
+        num_children = 1
+        child_list = [np.log(self.rng.uniform(1e-6, 1.0, (num_dims, self.big_grid))) for _ in range(num_children)]
+
+        num_cache_hits = 10
+
+        for i in range(num_cache_hits):
+            with self.subTest(msg="Num cache hits: {}".format(i), num_cache_hits=i):
+
+                expected = non_cached_compute_log_S(child_list)
+                actual = compute_log_S(child_list)
+
+                num_hits = compute_log_S.cache_info().hits
+                cache_size = compute_log_S.cache_info().currsize
+
+                self.assertEqual(num_hits, i)
+                self.assertEqual(cache_size, 1)
+
+                np.testing.assert_allclose(actual, expected)
+                self.assertIsNot(actual, expected)
+
+    def test_compute_log_S_10_children_no_hits(self):
+        num_dims = 1000
+        num_children = 10
+        child_list = [np.log(self.rng.uniform(1e-6, 1.0, (num_dims, self.big_grid))) for _ in range(num_children)]
+
+        expected = non_cached_compute_log_S(child_list)
+        actual = compute_log_S(child_list)
+
+        num_hits = compute_log_S.cache_info().hits
+        cache_size = compute_log_S.cache_info().currsize
+
+        self.assertEqual(num_hits, 0)
+        self.assertEqual(cache_size, 1)
+
+        np.testing.assert_allclose(actual, expected)
+        self.assertIsNot(actual, expected)
+
+    def test_compute_log_S_10_children_multiple_hits(self):
+        num_dims = 1000
+        num_children = 10
+        child_list = [np.log(self.rng.uniform(1e-6, 1.0, (num_dims, self.big_grid))) for _ in range(num_children)]
+
+        num_cache_hits = 10
+
+        for i in range(num_cache_hits):
+            with self.subTest(msg="Num cache hits: {}".format(i), num_cache_hits=i):
+
+                expected = non_cached_compute_log_S(child_list)
+                actual = compute_log_S(child_list)
+
+                num_hits = compute_log_S.cache_info().hits
+                cache_size = compute_log_S.cache_info().currsize
+
+                self.assertEqual(num_hits, i)
+                self.assertEqual(cache_size, 1)
+
+                np.testing.assert_allclose(actual, expected)
+                self.assertIsNot(actual, expected)
 
     def test_convolve_two_children_1_dim_no_hits(self):
         child_1 = self.rng.random(self.big_grid)
@@ -60,7 +191,7 @@ class TestConvolutionCaching(unittest.TestCase):
                 self.assertEqual(cache_size, 1)
 
                 np.testing.assert_allclose(actual, expected)
-
+                self.assertIsNot(actual, expected)
 
     def test_convolve_two_children_cache_order_1_dim(self):
         child_1 = self.rng.random(self.big_grid)
@@ -81,6 +212,9 @@ class TestConvolutionCaching(unittest.TestCase):
 
         np.testing.assert_allclose(actual, expected)
         np.testing.assert_allclose(actual_rev, actual)
+        self.assertIsNot(actual, expected)
+        self.assertIsNot(actual_rev, expected)
+        self.assertIs(actual, actual_rev)
 
     def test_convolve_two_children_cache_order_3_dims(self):
         child_1 = self.rng.random((3, self.big_grid))
@@ -99,7 +233,9 @@ class TestConvolutionCaching(unittest.TestCase):
 
         np.testing.assert_allclose(actual, expected)
         np.testing.assert_allclose(actual_rev, actual)
-
+        self.assertIsNot(actual, expected)
+        self.assertIsNot(actual_rev, expected)
+        self.assertIs(actual, actual_rev)
 
     def test_convolve_two_children_cache_order_1000_dims(self):
         num_dims = 1000
@@ -119,14 +255,16 @@ class TestConvolutionCaching(unittest.TestCase):
 
         np.testing.assert_allclose(actual, expected)
         np.testing.assert_allclose(actual_rev, actual)
-
+        self.assertIsNot(actual, expected)
+        self.assertIsNot(actual_rev, expected)
+        self.assertIs(actual, actual_rev)
 
     def test_convolve_two_children_multiple_items_in_cache_1000_dims(self):
         num_dims = 1000
         num_items_in_cache = 10
 
         for i in range(num_items_in_cache):
-            with self.subTest(msg="Num items in cache: {}".format(i+1), items_in_cache=i+1):
+            with self.subTest(msg="Num items in cache: {}".format(i + 1), items_in_cache=i + 1):
 
                 child_1 = self.rng.random((num_dims, self.big_grid))
                 child_2 = self.rng.random((num_dims, self.big_grid))
@@ -139,11 +277,14 @@ class TestConvolutionCaching(unittest.TestCase):
                 num_hits = _convolve_two_children.cache_info().hits
                 cache_size = _convolve_two_children.cache_info().currsize
 
-                self.assertEqual(num_hits, i+1)
-                self.assertEqual(cache_size, i+1)
+                self.assertEqual(num_hits, i + 1)
+                self.assertEqual(cache_size, i + 1)
 
                 np.testing.assert_allclose(actual, expected)
                 np.testing.assert_allclose(actual_rev, actual)
+                self.assertIsNot(actual, expected)
+                self.assertIsNot(actual_rev, expected)
+                self.assertIs(actual, actual_rev)
 
 
 if __name__ == "__main__":
