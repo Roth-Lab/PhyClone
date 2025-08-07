@@ -43,7 +43,7 @@ def compute_log_D(child_log_R_values):
     for j in range(2, num_children):
         conv_res = _convolve_two_children(normed_children[j], conv_res)
 
-    log_d = conv_res.copy()
+    log_d = conv_res.copy() # conv_res is a cached result, so it must be copied to avoid corrupting the cache
     log_d[log_d <= 0] = 1e-100
 
     np.log(log_d, order="C", dtype=np.float64, out=log_d)

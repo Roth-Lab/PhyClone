@@ -18,6 +18,7 @@ license = "GPL-3.0-or-later"
 license-files = ["LICEN[CS]E.*"]
 requires-python = ">=3.12"
 dependencies = [
+    "llvmlite",
     "numba>=0.61.2",
     "numpy>=1.26.4",
     "scipy",
