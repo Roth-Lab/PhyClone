@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PhyClone"
-version = "0.7.0"
+version = "0.7.1"
 description="Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing."
 authors = [
     {name = "Andrew Roth", email = "aroth@bccrc.ca"},
@@ -18,6 +18,7 @@ license = "GPL-3.0-or-later"
 license-files = ["LICEN[CS]E.*"]
 requires-python = ">=3.12"
 dependencies = [
+    "llvmlite",
     "numba>=0.61.2",
     "numpy>=1.26.4",
     "scipy",
@@ -35,6 +36,7 @@ classifiers = [
 
 [project.urls]
 Repository = "https://github.com/Roth-Lab/PhyClone.git"
+DOI = "https://doi.org/10.1093/bioinformatics/btaf344"
 
 [project.scripts]
 phyclone = "phyclone.cli:main"

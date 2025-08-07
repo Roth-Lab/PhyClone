@@ -3,6 +3,8 @@ PhyClone
 Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing.
 An implementation of the forest structured Chinese restaurant process with a Dirichlet prior on the node parameters.
 
+Paper: [PhyClone: Accurate Bayesian Reconstruction of Cancer Phylogenies from Bulk Sequencing](https://doi.org/10.1093/bioinformatics/btaf344)
+
 --------
 
 ## Overview
@@ -91,7 +93,7 @@ This is free form but should match across all samples.
 6. `minor_cn` - Minor copy number of segment overlapping mutation.
 
 7. `normal_cn` - Total copy number of segment in healthy tissue.
-For autosome this will be two and male sex chromosome one.
+For autosomes this will be two and male sex chromosome one.
 
 You can include the following optional columns:
 

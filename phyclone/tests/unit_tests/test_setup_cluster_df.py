@@ -1,8 +1,13 @@
 import os
 import tempfile
 import unittest
-import numpy as np
+from math import ulp
 from unittest.mock import MagicMock
+
+import numpy as np
+import pandas as pd
+
+import phyclone
 from phyclone.data.pyclone import (
     _setup_cluster_df,
     compute_outlier_prob,
@@ -10,9 +15,6 @@ from phyclone.data.pyclone import (
     _create_loaded_pyclone_data_dict,
     load_data,
 )
-import pandas as pd
-import phyclone
-from math import ulp
 
 EPS = ulp(0.0)
 LOG_EPS = np.log(EPS)

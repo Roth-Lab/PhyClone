@@ -157,7 +157,7 @@ def topology_report(**kwargs):
     default=100,
     type=click.IntRange(1, clamp=True),
     show_default=True,
-    help="""Number of burnin iterations using unconditional SMC sampler. Default is 100.""",
+    help="""Number of burnin iterations using unconditional SMC sampler.""",
 )
 @click.option(
     "-n",
@@ -165,21 +165,21 @@ def topology_report(**kwargs):
     default=5000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
-    help="""Number of iterations of the MCMC sampler to perform. Default is 5,000.""",
+    help="""Number of iterations of the MCMC sampler to perform.""",
 )
 @click.option(
-    "-t",
     "--thin",
     default=1,
     type=click.IntRange(1, clamp=True),
     show_default=True,
-    help="""Thinning parameter for storing entries in trace. Default is 1.""",
+    help="""Thinning parameter for storing entries in trace.""",
 )
 @click.option(
     "--num-chains",
     default=1,
     type=click.IntRange(1, clamp=True),
-    help="""Number of parallel chains for sampling. Recommended to use 4. Default is 1.""",
+    show_default=True,
+    help="""Number of parallel chains for sampling. Recommended to use at least 4.""",
 )
 @click.option(
     "-c",
@@ -194,7 +194,7 @@ def topology_report(**kwargs):
     default="beta-binomial",
     type=click.Choice(["binomial", "beta-binomial"]),
     show_default=True,
-    help="""Allele count density in the PyClone model. Use beta-binomial for most cases. Default beta-binomial.""",
+    help="""Allele count density in the PyClone model. Use beta-binomial for most cases.""",
 )
 @click.option(
     "-l",
@@ -202,7 +202,7 @@ def topology_report(**kwargs):
     default=0,
     type=click.FloatRange(0.0, 1.0, clamp=True),
     show_default=True,
-    help="""Global prior probability that data points are outliers and don't fit tree. Default is 0.0""",
+    help="""Global prior probability that data points are outliers and don't fit tree.""",
 )
 @click.option(
     "-p",
@@ -236,7 +236,7 @@ def topology_report(**kwargs):
     type=float,
     show_default=True,
     help="""The (initial) concentration of the Dirichlet process. Higher values will encourage more clusters, 
-    lower values have the opposite effect. Default is 1.0.""",
+    lower values have the opposite effect.""",
 )
 @click.option(
     "--grid-size",
@@ -258,14 +258,14 @@ def topology_report(**kwargs):
     default=1,
     type=int,
     show_default=True,
-    help="""Number of Gibbs updates to reassign data points per SMC iteration. Default is 1.""",
+    help="""Number of Gibbs updates to reassign data points per SMC iteration.""",
 )
 @click.option(
     "--num-samples-prune-regraph",
     default=1,
     type=int,
     show_default=True,
-    help="""Number of prune-regraph updates per SMC iteration. Default is 1.""",
+    help="""Number of prune-regraph updates per SMC iteration.""",
 )
 @click.option(
     "-s",
@@ -273,7 +273,7 @@ def topology_report(**kwargs):
     default=0.0,
     type=click.FloatRange(0.0, 1.0, clamp=True),
     show_default=True,
-    help="""Probability of updating a subtree (instead of whole tree) using PG sampler. Default is 0.0""",
+    help="""Probability of updating a subtree (instead of whole tree) using PG sampler.""",
 )
 @click.option(
     "--precision",
@@ -281,27 +281,27 @@ def topology_report(**kwargs):
     type=float,
     show_default=True,
     help="""The (initial) precision parameter of the Beta-Binomial density. 
-    The higher the value the more similar the Beta-Binomial is to a Binomial. Default is 400.""",
+    The higher the value the more similar the Beta-Binomial is to a Binomial.""",
 )
 @click.option(
     "--print-freq",
     default=100,
     type=int,
     show_default=True,
-    help="""How frequently to print information about fitting. Default every 10 iterations.""",
+    help="""How frequently to print information about fitting.""",
 )
 @click.option(
     "--resample-threshold",
     default=0.5,
     type=click.FloatRange(0.0, 1.0, clamp=True),
     show_default=True,
-    help="""ESS threshold to trigger resampling. Default is 0.5.""",
+    help="""ESS threshold to trigger resampling.""",
 )
 @click.option(
     "--seed",
     default=None,
     type=int,
-    help="""Set random seed so results can be reproduced. By default a random seed is chosen.""",
+    help="""Set random seed so results can be reproduced. By default, a random seed is chosen.""",
 )
 @click.option(
     "--assign-loss-prob/--no-assign-loss-prob",

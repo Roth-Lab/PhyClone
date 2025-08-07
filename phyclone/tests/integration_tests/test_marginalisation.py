@@ -1,14 +1,16 @@
 import unittest
-import numpy as np
 from dataclasses import dataclass
-from fscrp import simulate_fscrp_tree
-from phyclone.tests.sim_data_on_tree import simulate_data
-from phyclone.tree import Tree
+
 import networkx as nx
+import numpy as np
 from scipy.stats import dirichlet
-from phyclone.utils.math import log_factorial
-from importance_sampler import run_importance_sampler
 from scipy.stats import ttest_ind, PermutationMethod
+
+from phyclone.tests.utilities.fscrp import simulate_fscrp_tree
+from phyclone.tests.utilities.importance_sampler import run_importance_sampler
+from phyclone.tests.utilities.sim_data_on_tree import simulate_data
+from phyclone.tree import Tree
+from phyclone.utils.math_utils import log_factorial
 
 
 @dataclass

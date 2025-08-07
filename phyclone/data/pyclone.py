@@ -1,14 +1,16 @@
-import itertools
 from collections import OrderedDict, defaultdict
+from functools import lru_cache
+from math import ulp
+
 import numba
 import numpy as np
 import pandas as pd
-import phyclone.data.base
+
+from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
-from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
-from math import ulp
+from phyclone.utils.exceptions import MajorCopyNumberError
+from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
 def load_data(
@@ -24,6 +26,7 @@ def load_data(
     precision=400,
     min_clust_size=4,
 ):
+    print("Parsing Input Data...\n")
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
@@ -32,7 +35,7 @@ def load_data(
 
         for idx, (mut, val) in enumerate(pyclone_data.items()):
             out_probs = compute_outlier_prob(outlier_prob, 1)
-            data_point = phyclone.data.base.DataPoint(
+            data_point = DataPoint(
                 idx,
                 val.to_likelihood_grid(density, grid_size, precision=precision),
                 name=mut,
@@ -72,6 +75,9 @@ def load_data(
             pyclone_data,
         )
 
+    print("#" * 100)
+    print()
+
     return data, samples
 
 
@@ -93,7 +99,7 @@ def _create_clustered_data_arr(
         cluster_outlier_prob = cluster_outlier_probs[cluster_id]
         out_probs = compute_outlier_prob(cluster_outlier_prob, cluster_sizes[cluster_id])
 
-        data_point = phyclone.data.base.DataPoint(
+        data_point = DataPoint(
             idx,
             val,
             name="{}".format(cluster_id),
@@ -159,7 +165,7 @@ def _get_raw_cluster_df(cluster_file, data_df):
             data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
             cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
             cluster_df = cluster_df.drop_duplicates()
-    return cluster_df
+    return cluster_df.drop_duplicates()
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
@@ -184,15 +190,25 @@ def load_pyclone_data(file_name):
 
     df = _remove_duplicated_and_partially_absent_mutations(df, samples)
 
-    mutations = df["mutation_id"].unique()
+    _process_required_cols_on_df(df)
 
-    print("Num mutations: {}".format(len(mutations)))
-
-    _process_required_cols_on_df(df, samples)
+    _print_num_mutations_samples_message(df, samples)
 
     data = _create_loaded_pyclone_data_dict(df, samples)
 
+    get_major_cn_prior.cache_clear()
+
     return data, samples, df
+
+
+def _print_num_mutations_samples_message(df, samples):
+    mutations = df["mutation_id"].unique()
+    print("Num mutations: {}".format(len(mutations)))
+    print("Num Samples: {}".format(len(samples)))
+    if len(samples) > 10:
+        print("Samples: {}...".format(" ".join(samples[:4])))
+    else:
+        print("Samples: {}".format(" ".join(samples)))
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
@@ -234,17 +250,12 @@ def _remove_cn_zero_mutations(df):
     return df
 
 
-def _process_required_cols_on_df(df, samples):
-    print("Num Samples: {}".format(len(samples)))
-    if len(samples) > 10:
-        print("Samples: {}...".format(" ".join(samples[:4])))
-    else:
-        print("Samples: {}".format(" ".join(samples)))
+def _process_required_cols_on_df(df):
     if "error_rate" not in df.columns:
-        df.loc[:, "error_rate"] = 1e-3
+        df["error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
         print("Tumour content column not found. Setting values to 1.0.")
-        df.loc[:, "tumour_content"] = 1.0
+        df["tumour_content"] = 1.0
 
 
 def _create_raw_data_df(file_name):
@@ -252,39 +263,49 @@ def _create_raw_data_df(file_name):
     data_input_validator.validate()
     df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
-    return df
+    return df.drop_duplicates()
 
 
 def _create_loaded_pyclone_data_dict(df, samples):
-    data = OrderedDict()
-    df = df.sort_values(by="mutation_id", ascending=True)
-    grouped = df.groupby("mutation_id", sort=False)
+    samples = pd.Index(samples, name="sample_id", dtype=df["sample_id"].dtype)
+    df.set_index("sample_id", inplace=True)
+    df.sort_index(inplace=True)
+    grouped = df.groupby("mutation_id", sort=True)
 
-    for mutation, group in grouped:
-        sample_data_points = []
+    data_df = grouped.apply(make_datapoint_from_group, samples=samples, include_groups=False)
 
-        group.set_index("sample_id", inplace=True)
-
-        for sample in samples:
-
-            a = group.at[sample, "ref_counts"]
-
-            b = group.at[sample, "alt_counts"]
-
-            cn, mu, log_pi = get_major_cn_prior(
-                group.at[sample, "major_cn"],
-                group.at[sample, "minor_cn"],
-                group.at[sample, "normal_cn"],
-                error_rate=group.at[sample, "error_rate"],
-            )
-
-            sample_data_points.append(SampleDataPoint(a, b, cn, mu, log_pi, group.at[sample, "tumour_content"]))
-
-        data[mutation] = DataPoint(samples, sample_data_points)
+    data = data_df.to_dict(into=OrderedDict)
 
     return data
 
 
+def make_datapoint_from_group(group, samples):
+    sample_dp_df = group.agg(create_sample_data_point, axis=1)
+    return PyCloneDataPoint(samples, sample_dp_df)
+
+
+def create_sample_data_point(row_series):
+    major_cn = int(row_series["major_cn"])
+    minor_cn = row_series["minor_cn"]
+    normal_cn = row_series["normal_cn"]
+    error_rate = row_series["error_rate"]
+    ref_count = row_series["ref_counts"]
+    alt_count = row_series["alt_counts"]
+    tumour_content = row_series["tumour_content"]
+
+    cn, mu, log_pi = get_major_cn_prior(
+        major_cn,
+        minor_cn,
+        normal_cn,
+        error_rate,
+    )
+
+    sample_dp = SampleDataPoint(ref_count, alt_count, cn, mu, log_pi, tumour_content)
+
+    return sample_dp
+
+
+@lru_cache(maxsize=4096)
 def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
     total_cn = major_cn + minor_cn
 
@@ -311,18 +332,21 @@ def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
     return cn, mu, log_pi
 
 
-class DataPoint(object):
+class PyCloneDataPoint(object):
 
     def __init__(self, samples, sample_data_points):
         self.samples = samples
-
         self.sample_data_points = sample_data_points
+
+        if not samples.equals(sample_data_points.index):
+            self.sample_data_points.sort_index(inplace=True)
+            assert samples.equals(sample_data_points.index)
 
     def get_ccf_grid(self, grid_size):
         return np.linspace(0, 1, grid_size)
 
     def to_dict(self):
-        return OrderedDict(zip(self.samples, self.sample_data_points))
+        return self.sample_data_points.to_dict(into=OrderedDict)
 
     def to_likelihood_grid(self, density, grid_size, precision=None):
         if (density == "beta-binomial") and (precision is None):
@@ -335,20 +359,28 @@ class DataPoint(object):
         sample_data_points = self.sample_data_points
         ccf_grid = self.get_ccf_grid(grid_size)
 
-        _compute_liklihood_grid(ccf_grid, density, log_ll, precision, numba.typed.List(sample_data_points))
+        if density == "beta-binomial":
+            _compute_beta_binomial_likelihood_grid(ccf_grid, log_ll, precision, numba.typed.List(sample_data_points))
+        elif density == "binomial":
+            _compute_binomial_likelihood_grid(ccf_grid, log_ll, numba.typed.List(sample_data_points))
+        else:
+            raise NotImplemented("Unknown density: {}".format(density))
 
         return log_ll
 
 
 @numba.jit(nopython=True)
-def _compute_liklihood_grid(ccf_grid, density, log_ll, precision, sample_data_points):
+def _compute_binomial_likelihood_grid(ccf_grid, log_ll, sample_data_points):
     for s_idx, data_point in enumerate(sample_data_points):
         for i, ccf in enumerate(ccf_grid):
-            if density == "beta-binomial":
-                log_ll[s_idx, i] = log_pyclone_beta_binomial_pdf(data_point, ccf, precision)
+            log_ll[s_idx, i] = log_pyclone_binomial_pdf(data_point, ccf)
 
-            elif density == "binomial":
-                log_ll[s_idx, i] = log_pyclone_binomial_pdf(data_point, ccf)
+
+@numba.jit(nopython=True)
+def _compute_beta_binomial_likelihood_grid(ccf_grid, log_ll, precision, sample_data_points):
+    for s_idx, data_point in enumerate(sample_data_points):
+        for i, ccf in enumerate(ccf_grid):
+            log_ll[s_idx, i] = log_pyclone_beta_binomial_pdf(data_point, ccf, precision)
 
 
 @numba.experimental.jitclass(

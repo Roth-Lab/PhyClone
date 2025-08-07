@@ -4,8 +4,8 @@ Created on 8 Dec 2016
 @author: Andrew Roth
 """
 
-import math
 from functools import lru_cache
+from math import lgamma
 
 import numba
 import numpy as np
@@ -19,19 +19,6 @@ def bernoulli_rvs(rng: np.random.Generator, p=0.5):
 def discrete_rvs(p, rng):
     p = p / np.sum(p)
     return rng.multinomial(1, p).argmax()
-
-
-@numba.jit(nopython=True)
-def simple_log_factorial(n, arr):
-    idxs = np.nonzero(arr == -math.inf)[0]
-
-    for i in idxs:
-        if i > n:
-            break
-        if i == 0:
-            arr[i] = np.log(1)
-        else:
-            arr[i] = np.log(i) + arr[i - 1]
 
 
 @numba.jit(nopython=True)
@@ -107,7 +94,7 @@ def log_normalize(log_p):
 
 @numba.vectorize()
 def log_gamma(x):
-    return math.lgamma(x)
+    return lgamma(x)
 
 
 @numba.jit(nopython=True)
@@ -188,26 +175,6 @@ def log_binomial_pdf(n, x, p):
 @numba.jit(nopython=True)
 def log_beta_binomial_pdf(n, x, a, b):
     return log_binomial_coefficient(n, x) + log_beta_binomial_likelihood(n, x, a, b)
-
-
-@numba.jit("float64[:, ::1](float64[:, ::1], float64[:, ::1], float64[:, ::1])", nopython=True, fastmath=True)
-def conv_over_dims(log_x_arr, log_y_arr, ans_arr):
-    """Direct convolution in numba-time."""
-
-    n = log_x_arr.shape[-1]
-    dims = log_x_arr.shape[0]
-    m = n + 1
-    log_y_arr = np.ascontiguousarray(log_y_arr[..., ::-1])
-
-    for l in range(dims):
-        log_x = log_x_arr[l]
-        log_y = log_y_arr[l]
-        ans = ans_arr[l]
-        for k in range(1, m):
-            for j in range(k):
-                ans[k - 1] += log_x[j] * log_y[n - (k - j)]
-
-    return ans_arr
 
 
 def fft_convolve_two_children(child_1, child_2):
@@ -296,31 +263,3 @@ def np_conv_dims(child_1, child_2):
     arr_list = [np.convolve(child_2[i, :], child_1[i, :])[:grid_size] for i in range(num_dims)]
 
     return np.ascontiguousarray(arr_list)
-
-
-def _np_conv_dims(child_1, child_2):
-    num_dims = child_1.shape[0]
-
-    child_1_maxes = np.max(child_1, axis=-1, keepdims=True)
-
-    child_2_maxes = np.max(child_2, axis=-1, keepdims=True)
-
-    child_1_norm = np.exp(child_1 - child_1_maxes)
-
-    child_2_norm = np.exp(child_2 - child_2_maxes)
-
-    grid_size = child_1.shape[-1]
-
-    arr_list = [np.convolve(child_2_norm[i, :], child_1_norm[i, :])[:grid_size] for i in range(num_dims)]
-
-    log_D = np.ascontiguousarray(arr_list)
-
-    log_D[log_D <= 0] = 1e-100
-
-    log_D = np.log(log_D, order="C", dtype=np.float64, out=log_D)
-
-    log_D += child_1_maxes
-
-    log_D += child_2_maxes
-
-    return np.ascontiguousarray(log_D)

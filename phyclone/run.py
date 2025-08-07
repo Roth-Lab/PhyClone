@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.dev import clear_proposal_dist_caches, clear_convolution_caches
+from phyclone.utils.cache import clear_proposal_dist_caches, clear_convolution_caches
 
 
 def run(

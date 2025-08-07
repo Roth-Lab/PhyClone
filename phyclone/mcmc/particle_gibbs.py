@@ -1,7 +1,7 @@
 from phyclone.smc.samplers import ConditionalSMCSampler
 from phyclone.smc.swarm import ParticleSwarm
 from phyclone.smc.utils import RootPermutationDistribution
-from phyclone.utils.math import discrete_rvs
+from phyclone.utils.math_utils import discrete_rvs
 
 
 class ParticleGibbsTreeSampler(object):

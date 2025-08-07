@@ -1,5 +1,6 @@
 import numpy as np
-from phyclone.utils.math import log_sum_exp_over_dims_to_arr
+
+from phyclone.utils.math_utils import log_sum_exp_over_dims_to_arr
 
 
 class DataPoint(object):

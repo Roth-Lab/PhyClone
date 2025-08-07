@@ -1,6 +1,6 @@
 from phyclone.smc.samplers import SMCSampler
 from phyclone.smc.utils import RootPermutationDistribution
-from phyclone.utils.math import discrete_rvs
+from phyclone.utils.math_utils import discrete_rvs
 
 
 class UnconditionalSMCSampler(object):

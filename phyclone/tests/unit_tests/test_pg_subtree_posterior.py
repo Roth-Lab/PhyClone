@@ -3,14 +3,14 @@ from collections import defaultdict, Counter
 
 import numpy as np
 
-import phyclone.tests.simulate as simulate
+import phyclone.tests.utilities.simulate as simulate
 from phyclone.mcmc import ParticleGibbsSubtreeSampler
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.utils import RootPermutationDistribution
-from phyclone.tests.exact_posterior import get_exact_posterior
+from phyclone.tests.utilities.exact_posterior import get_exact_posterior
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
-from phyclone.utils.dev import clear_proposal_dist_caches
+from phyclone.utils.cache import clear_proposal_dist_caches
 
 
 class BaseTest(object):

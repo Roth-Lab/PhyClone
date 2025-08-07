@@ -6,7 +6,7 @@ from phyclone.smc.kernels import FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.kernels.fully_adapted import _get_cached_full_proposal_dist
 from phyclone.smc.kernels.semi_adapted import _get_cached_semi_proposal_dist
 from phyclone.smc.swarm import Particle
-from phyclone.tests.simulate import simulate_binomial_data
+from phyclone.tests.utilities.simulate import simulate_binomial_data
 from phyclone.tree import TreeJointDistribution, FSCRPDistribution, Tree
 
 

@@ -3,9 +3,9 @@ from collections import defaultdict
 
 import numpy as np
 
-from phyclone.tests.old_implementations import OldTree
+from phyclone.tests.utilities.old_implementations import OldTree
 from phyclone.tree.utils import get_clades
-from phyclone.utils.math import exp_normalize
+from phyclone.utils.math_utils import exp_normalize
 
 
 def get_exact_posterior(data, tree_dist, alpha=1.0):

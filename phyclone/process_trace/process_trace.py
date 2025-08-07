@@ -1,5 +1,8 @@
 import gzip
+import os
 import pickle
+import tarfile
+import tempfile
 from sys import maxsize
 
 import networkx as nx
@@ -10,10 +13,7 @@ from phyclone.process_trace.consensus import get_consensus_tree
 from phyclone.process_trace.map import get_map_node_ccfs_and_clonal_prev_dicts
 from phyclone.process_trace.utils import print_string_to_file
 from phyclone.tree import Tree
-import tarfile
-import os
-import tempfile
-from phyclone.utils.math import exp_normalize
+from phyclone.utils.math_utils import exp_normalize
 
 
 def write_map_results(

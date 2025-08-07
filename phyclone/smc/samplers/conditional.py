@@ -1,10 +1,11 @@
+from itertools import repeat
+
 import numpy as np
 import rustworkx as rx
 
 from phyclone.smc.samplers.base import AbstractSMCSampler
 from phyclone.smc.swarm import TreeHolder, ParticleSwarm
 from phyclone.tree import Tree
-from itertools import repeat
 
 
 class ConditionalSMCSampler(AbstractSMCSampler):

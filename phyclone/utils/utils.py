@@ -1,22 +1,10 @@
-import pickle
 import time
 from collections import deque
-from functools import lru_cache, wraps
+from functools import wraps, lru_cache
 from itertools import count
 
 import numpy as np
 from xxhash import xxh3_64_hexdigest
-
-
-def read_pickle(file):
-    with open(file, "rb") as f:
-        loaded = pickle.load(f)
-    return loaded
-
-
-def write_pickle(obj, filename):
-    with open(filename, "wb") as f:
-        pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def get_iterator_length(iterable):

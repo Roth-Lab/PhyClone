@@ -1,8 +1,10 @@
+import os
 import tempfile
 import unittest
+
 import numpy as np
-from phyclone.utils.exceptions import MajorCopyNumberError
-from phyclone.utils.math import log_normalize
+import pandas as pd
+
 from phyclone.data.pyclone import (
     _create_raw_data_df,
     _remove_cn_zero_mutations,
@@ -12,8 +14,8 @@ from phyclone.data.pyclone import (
     get_major_cn_prior,
     load_pyclone_data,
 )
-import pandas as pd
-import os
+from phyclone.utils.exceptions import MajorCopyNumberError
+from phyclone.utils.math_utils import log_normalize
 
 
 def tester_get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
@@ -329,7 +331,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        _process_required_cols_on_df(actual_df)
         pd.testing.assert_frame_equal(df, actual_df)
 
     def test_process_required_cols_on_df__tumour_content_missing(self):
@@ -346,7 +348,26 @@ class TestLoadPyCloneData(unittest.TestCase):
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
         samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        _process_required_cols_on_df(actual_df)
+        self.assertLess(len(df.columns), len(actual_df.columns))
+        self.assertIn("tumour_content", actual_df.columns)
+
+    def test_process_required_cols_on_df__tumour_content_missing_after_some_removals(self):
+        df_dict = {
+            "mutation_id": ["m1", "m1", "m1", "m2", "m2", "m2", "m3", "m3", "m3"],
+            "sample_id": ["s1", "s2", "s3", "s1", "s2", "s3", "s1", "s2", "s3"],
+            "ref_counts": [20, 4, 104, 20, 4, 104, 20, 4, 104],
+            "alt_counts": [8, 16, 45, 8, 16, 45, 8, 16, 45],
+            "major_cn": [2, 2, 4, 2, 2, 0, 2, 0, 4],
+            "minor_cn": [1, 2, 3, 1, 2, 3, 1, 2, 3],
+            "normal_cn": [2, 2, 2, 2, 2, 2, 2, 2, 2],
+            "error_rate": [0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001],
+        }
+        df = pd.DataFrame(df_dict)
+        actual_df = df.copy()
+        # samples = sorted(df["sample_id"].unique())
+        actual_df = _remove_cn_zero_mutations(actual_df)
+        _process_required_cols_on_df(actual_df)
         self.assertLess(len(df.columns), len(actual_df.columns))
         self.assertIn("tumour_content", actual_df.columns)
 
@@ -363,8 +384,8 @@ class TestLoadPyCloneData(unittest.TestCase):
         }
         df = pd.DataFrame(df_dict)
         actual_df = df.copy()
-        samples = sorted(df["sample_id"].unique())
-        _process_required_cols_on_df(actual_df, samples)
+        # samples = sorted(df["sample_id"].unique())
+        _process_required_cols_on_df(actual_df)
         self.assertLess(len(df.columns), len(actual_df.columns))
         self.assertIn("error_rate", actual_df.columns)
 

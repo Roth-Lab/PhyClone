@@ -1,6 +1,6 @@
 import numpy as np
 
-from phyclone.utils.math import log_sum_exp
+from phyclone.utils.math_utils import log_sum_exp
 
 
 class ParticleSwarm(object):

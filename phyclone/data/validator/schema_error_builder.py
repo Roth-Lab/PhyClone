@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from phyclone.utils.exceptions import InputFormatError
 
 
@@ -37,10 +38,11 @@ class SchemaErrorBuilder(object):
 
 
 class SchemaErrors(object):
-    __slots__ = ("errors", "_missing_column_error", "_invalid_column_error")
+    __slots__ = ("errors", "_missing_column_error", "_invalid_column_error", "file_path")
 
-    def __init__(self):
+    def __init__(self, file_path):
         self.errors = set()
+        self.file_path = file_path
         self._missing_column_error = SchemaErrorBuilder().with_error_type("Missing column(s)")
         self._invalid_column_error = SchemaErrorBuilder().with_error_type("Invalid column(s)")
 
@@ -55,5 +57,7 @@ class SchemaErrors(object):
 
     def raise_errors(self):
         if len(self.errors) > 0:
+            error_list = ["Input format error(s) found in file: {}".format(self.file_path)]
             built_errors = [err.build() for err in self.errors]
-            raise InputFormatError(built_errors)
+            error_list.extend(built_errors)
+            raise InputFormatError(error_list)

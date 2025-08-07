@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from phyclone.utils.math import fft_convolve_two_children, np_conv_dims
+from phyclone.utils.math_utils import fft_convolve_two_children, np_conv_dims
 
 
 def run_direct_two_child_convolve(child_1, child_2):

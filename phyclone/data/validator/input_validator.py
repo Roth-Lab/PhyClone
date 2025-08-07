@@ -1,9 +1,16 @@
-import pandas as pd
+import bz2
 import csv
-import warnings
-import json
-from phyclone.data.validator.schema_error_builder import SchemaErrors
 import gzip
+import json
+import lzma
+import tarfile
+import warnings
+import zipfile
+from io import TextIOWrapper
+
+import pandas as pd
+
+from phyclone.data.validator.schema_error_builder import SchemaErrors
 
 
 class InputValidator(object):
@@ -14,7 +21,7 @@ class InputValidator(object):
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
-        self.error_helper = SchemaErrors()
+        self.error_helper = SchemaErrors(file_path)
 
     @staticmethod
     def load_json_schema(schema_file):
@@ -26,13 +33,42 @@ class InputValidator(object):
     def load_df(file_path):
 
         try:
-            with open(file_path, "r") as csv_file:
-                dialect = csv.Sniffer().sniff(csv_file.readline())
-                csv_delim = str(dialect.delimiter)
+            if tarfile.is_tarfile(file_path):
+                with tarfile.open(file_path, "r") as tar:
+                    next_file = tar.next()
+                    with tar.extractfile(next_file) as csv_file:
+                        text_wrapper = TextIOWrapper(csv_file)
+                        dialect = csv.Sniffer().sniff(text_wrapper.readline())
+                        csv_delim = str(dialect.delimiter)
+            else:
+                with open(file_path, "r") as csv_file:
+                    dialect = csv.Sniffer().sniff(csv_file.readline())
+                    csv_delim = str(dialect.delimiter)
         except UnicodeDecodeError:
-            with gzip.open(file_path, "rt") as csv_file:
-                dialect = csv.Sniffer().sniff(csv_file.readline())
-                csv_delim = str(dialect.delimiter)
+            if zipfile.is_zipfile(file_path):
+                warnings.warn(
+                    "Zip file input detected, allowing pandas to infer parser dialect via python engine - "
+                    "could be slow for larger files.\n",
+                    stacklevel=2,
+                    category=UserWarning,
+                )
+                return pd.read_csv(file_path, sep=None, engine="python")
+            else:
+
+                decompression_func = InputValidator._get_decompression_function(file_path)
+
+                if decompression_func is None:
+                    warnings.warn(
+                        "Unknown input file compression type, "
+                        "allowing pandas to infer parser dialect via python engine - could be slow for larger files.\n",
+                        stacklevel=2,
+                        category=UserWarning,
+                    )
+                    return pd.read_csv(file_path, sep=None, engine="python")
+
+                with decompression_func(file_path, "rt") as csv_file:
+                    dialect = csv.Sniffer().sniff(csv_file.readline())
+                    csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
             warnings.warn(
@@ -42,6 +78,22 @@ class InputValidator(object):
                 category=UserWarning,
             )
         return pd.read_csv(file_path, sep=csv_delim)
+
+    @staticmethod
+    def _get_decompression_function(file_path):
+        magic_bytes = {
+            b"\x1f\x8b\x08": gzip.open,
+            b"\x42\x5a\x68": bz2.open,
+            b"\xfd\x37\x7a\x58\x5a\x00": lzma.open,
+        }
+        with open(file_path, "rb") as f:
+            file_head_bytes = f.read(6)
+        file_decompression_func = None
+        for byte_signature, decompression_func in magic_bytes.items():
+            if file_head_bytes.startswith(byte_signature):
+                file_decompression_func = decompression_func
+                break
+        return file_decompression_func
 
     def validate(self):
         are_required_columns_present = self._validate_required_column_presence()
