@@ -23,6 +23,8 @@ from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
 from phyclone.utils.cache import clear_proposal_dist_caches, clear_convolution_caches
+from phyclone.utils.save_h5df import save_trace_to_h5df
+from pathlib import Path
 
 
 def run(
@@ -152,6 +154,7 @@ def run(
                     results[res_chain] = result
                     print("Finished chain", res_chain)
 
+    save_trace_to_h5df(results, Path(out_file).with_suffix('.hdf5'))
     create_main_run_output(cluster_file, out_file, results)
 
 
@@ -315,6 +318,7 @@ def append_to_trace(i, timer, trace, tree, tree_dist):
             "alpha": tree_dist.prior.alpha,
             "log_p_one": tree_dist.log_p_one(tree),
             "tree": tree.to_dict(),
+            "tree_hash": hash(tree),
         }
     )
 
