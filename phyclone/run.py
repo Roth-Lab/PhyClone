@@ -269,7 +269,8 @@ def _run_main_sampler(
     subtree_update_prob,
 ):
     clear_convolution_caches()
-    trace = setup_trace(timer, tree, tree_dist)
+    # trace = setup_trace(timer, tree, tree_dist)
+    trace = []
 
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
@@ -337,7 +338,7 @@ def update_concentration_value(conc_sampler, tree, tree_dist):
 
 def setup_trace(timer, tree, tree_dist):
     trace = []
-    append_to_trace(0, timer, trace, tree, tree_dist)
+    append_to_trace(-1, timer, trace, tree, tree_dist)
     return trace
 
 
