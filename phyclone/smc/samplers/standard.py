@@ -27,8 +27,16 @@ class SMCSampler(AbstractSMCSampler):
 
             multiplicities = self._rng.multinomial(self.num_particles, self.swarm.weights)
 
-            for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
-                # assert not np.isneginf(particle.log_w)
+            neg_inf = -np.inf
+
+            particle_list = self.swarm.particles
+
+            kept_particle_indices = np.where(multiplicities > 0)[0]
+
+            for particle_idx in kept_particle_indices:
+                particle = particle_list[particle_idx]
+                assert particle.log_w != neg_inf
+                multiplicity = multiplicities[particle_idx]
                 new_swarm.add_particles_from_iterators(
                     repeat(log_uniform_weight, multiplicity), repeat(particle, multiplicity)
                 )
