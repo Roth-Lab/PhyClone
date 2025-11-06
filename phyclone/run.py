@@ -71,11 +71,11 @@ def run(
 
     outlier_modelling_active = outlier_prob > 0
 
-    print_welcome_message(
+    rng_seed = print_welcome_message(
         burnin, density, num_chains, num_iters, num_particles, seed, outlier_modelling_active, rng_main, proposal
     )
 
-    data, samples = load_data(
+    data, samples, minimal_cluster_df = load_data(
         in_file,
         rng_main,
         low_loss_prob,
@@ -154,7 +154,7 @@ def run(
                     results[res_chain] = result
                     print("Finished chain", res_chain)
 
-    save_trace_to_h5df(results, Path(out_file).with_suffix('.hdf5'))
+    save_trace_to_h5df(results, Path(out_file).with_suffix('.hdf5'), minimal_cluster_df, rng_seed)
     create_main_run_output(cluster_file, out_file, results)
 
 
@@ -185,11 +185,13 @@ def print_welcome_message(
         seed_msg = "(user-provided)"
     else:
         seed_msg = "(machine-entropy)"
-    print("Random seed: {} {}".format(rng_main.bit_generator.seed_seq.entropy, seed_msg))
+        seed = rng_main.bit_generator.seed_seq.entropy
+    print("Random seed: {} {}".format(seed, seed_msg))
     print("Outlier modelling allowed: {}".format(outlier_modelling_active))
     print()
     print("#" * 100)
     print()
+    return seed
 
 
 def run_phyclone_chain(

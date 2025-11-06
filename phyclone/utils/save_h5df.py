@@ -2,41 +2,55 @@ import h5py
 import numpy as np
 
 
-def save_trace_to_h5df(results, out_file):
-    # chain_0 = results[0]
-    # trace = chain_0['trace']
+def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
     num_chains = len(results)
 
     with h5py.File(out_file, "w", track_order=True) as fh:
-        data_grp = fh.create_group("data")
-        data = results[0]["data"]
-        data_grp.attrs["num_datapoints"] = len(data)
-        datapoints_grp = data_grp.create_group("datapoints")
-        datapoint_template = "datapoint_{}"
-        for datapoint in data:
-            idx = datapoint.idx
-            curr_dp_grp = datapoints_grp.create_group(datapoint_template.format(idx))
-            curr_dp_grp.attrs["idx"] = idx
-            curr_dp_grp.attrs["name"] = datapoint.name
-            curr_dp_grp.attrs["outlier_prob"] = datapoint.outlier_prob
-            curr_dp_grp.attrs["outlier_prob_not"] = datapoint.outlier_prob_not
-            curr_dp_grp.attrs["outlier_marginal_prob"] = datapoint.outlier_marginal_prob
-            curr_dp_grp.create_dataset("value", data=datapoint.value)
+        fh.create_dataset("samples", data=results[0]["samples"])
+        run_info_grp = fh.create_group("run_info")
+        run_info_grp.attrs["rng_seed"] = str(rng_seed)
 
-        trace_grp = fh.create_group("trace")
-        trace_grp.attrs["num_chains"] = num_chains
-        chains_grp = trace_grp.create_group("chains")
-        chain_template = "chain_{}"
-        tree_template = "tree_{}"
-        for chain, chain_results in results.items():
-            chain_trace = chain_results["trace"]
-            num_iters = len(chain_trace)
-            chain_num = chain_results["chain_num"]
-            curr_chain_grp = chains_grp.create_group(chain_template.format(chain_num))
-            curr_chain_grp.attrs["chain_idx"] = chain_num
-            curr_chain_grp.attrs["num_iters"] = num_iters
+        clusters_grp = fh.create_group("clusters")
+        clusters_grp.create_dataset("cluster_id", data=minimal_cluster_df["cluster_id"].to_numpy())
+        clusters_grp.create_dataset("mutation_id", data=minimal_cluster_df["mutation_id"].to_numpy())
 
-            store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template)
+        store_datapoints(fh, results)
+
+        store_trace(fh, num_chains, results)
+
+
+def store_trace(fh, num_chains, results):
+    trace_grp = fh.create_group("trace")
+    trace_grp.attrs["num_chains"] = num_chains
+    chains_grp = trace_grp.create_group("chains")
+    chain_template = "chain_{}"
+    tree_template = "tree_{}"
+    for chain, chain_results in results.items():
+        chain_trace = chain_results["trace"]
+        num_iters = len(chain_trace)
+        chain_num = chain_results["chain_num"]
+        curr_chain_grp = chains_grp.create_group(chain_template.format(chain_num))
+        curr_chain_grp.attrs["chain_idx"] = chain_num
+        curr_chain_grp.attrs["num_iters"] = num_iters
+
+        store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template)
+
+
+def store_datapoints(fh, results):
+    data_grp = fh.create_group("data")
+    data = results[0]["data"]
+    data_grp.attrs["num_datapoints"] = len(data)
+    datapoints_grp = data_grp.create_group("datapoints")
+    datapoint_template = "datapoint_{}"
+    for datapoint in data:
+        idx = datapoint.idx
+        curr_dp_grp = datapoints_grp.create_group(datapoint_template.format(idx))
+        curr_dp_grp.attrs["idx"] = idx
+        curr_dp_grp.attrs["name"] = datapoint.name
+        curr_dp_grp.attrs["outlier_prob"] = datapoint.outlier_prob
+        curr_dp_grp.attrs["outlier_prob_not"] = datapoint.outlier_prob_not
+        curr_dp_grp.attrs["outlier_marginal_prob"] = datapoint.outlier_marginal_prob
+        curr_dp_grp.create_dataset("value", data=datapoint.value)
 
 
 def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):

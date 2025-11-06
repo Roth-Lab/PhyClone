@@ -32,6 +32,7 @@ def load_data(
 
     if cluster_file is None:
         data = []
+        unprocessed_cluster_df = None
 
         for idx, (mut, val) in enumerate(pyclone_data.items()):
             out_probs = compute_outlier_prob(outlier_prob, 1)
@@ -46,7 +47,7 @@ def load_data(
             data.append(data_point)
 
     else:
-        cluster_df = _setup_cluster_df(
+        cluster_df, unprocessed_cluster_df = _setup_cluster_df(
             cluster_file,
             outlier_prob,
             rng,
@@ -78,7 +79,7 @@ def load_data(
     print("#" * 100)
     print()
 
-    return data, samples
+    return data, samples, unprocessed_cluster_df
 
 
 def _create_clustered_data_arr(
@@ -121,7 +122,7 @@ def _setup_cluster_df(
     min_clust_size,
     data_df,
 ):
-    cluster_df = _get_raw_cluster_df(cluster_file, data_df)
+    cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df)
     cluster_prob_status_msg = ""
     if "outlier_prob" not in cluster_df.columns:
         cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
@@ -153,19 +154,20 @@ def _setup_cluster_df(
             cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
 
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
-    return cluster_df
+    return cluster_df, unprocessed_cluster_df
 
 
 def _get_raw_cluster_df(cluster_file, data_df):
     cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
     cluster_input_validator.validate()
     cluster_df = cluster_input_validator.df
+    unprocessed_cluster_df = cluster_df[["mutation_id", "cluster_id"]].drop_duplicates(inplace=False)
     if "chrom" not in cluster_df.columns:
         if "chrom" in data_df.columns:
             data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
             cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
             cluster_df = cluster_df.drop_duplicates()
-    return cluster_df.drop_duplicates()
+    return cluster_df.drop_duplicates(), unprocessed_cluster_df
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
