@@ -6,19 +6,34 @@ def save_trace_to_h5df(results, out_file):
     # chain_0 = results[0]
     # trace = chain_0['trace']
     num_chains = len(results)
-    # num_iters = len(results[0]["trace"])
-    chain_template = "chain_{}"
-    tree_template = "tree_{}"
+
     with h5py.File(out_file, "w", track_order=True) as fh:
+        data_grp = fh.create_group("data")
+        data = results[0]["data"]
+        data_grp.attrs["num_datapoints"] = len(data)
+        datapoints_grp = data_grp.create_group("datapoints")
+        datapoint_template = "datapoint_{}"
+        for datapoint in data:
+            idx = datapoint.idx
+            curr_dp_grp = datapoints_grp.create_group(datapoint_template.format(idx))
+            curr_dp_grp.attrs["idx"] = idx
+            curr_dp_grp.attrs["name"] = datapoint.name
+            curr_dp_grp.attrs["outlier_prob"] = datapoint.outlier_prob
+            curr_dp_grp.attrs["outlier_prob_not"] = datapoint.outlier_prob_not
+            curr_dp_grp.attrs["outlier_marginal_prob"] = datapoint.outlier_marginal_prob
+            curr_dp_grp.create_dataset("value", data=datapoint.value)
+
         trace_grp = fh.create_group("trace")
         trace_grp.attrs["num_chains"] = num_chains
-        # trace_grp.attrs["num_iters"] = num_iters
         chains_grp = trace_grp.create_group("chains")
+        chain_template = "chain_{}"
+        tree_template = "tree_{}"
         for chain, chain_results in results.items():
             chain_trace = chain_results["trace"]
             num_iters = len(chain_trace)
-            curr_chain_grp = chains_grp.create_group(chain_template.format(chain))
-            curr_chain_grp.attrs["chain_idx"] = chain
+            chain_num = chain_results["chain_num"]
+            curr_chain_grp = chains_grp.create_group(chain_template.format(chain_num))
+            curr_chain_grp.attrs["chain_idx"] = chain_num
             curr_chain_grp.attrs["num_iters"] = num_iters
 
             store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template)
