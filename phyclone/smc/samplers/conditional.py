@@ -75,7 +75,6 @@ class ConditionalSMCSampler(AbstractSMCSampler):
     def _init_swarm(self):
         self.swarm = ParticleSwarm()
 
-        # uniform_weight = -np.log(self.num_particles)
         uniform_weight = self.uniform_weight
 
         self.swarm.add_particle(uniform_weight, self.constrained_path[1])
@@ -92,17 +91,24 @@ class ConditionalSMCSampler(AbstractSMCSampler):
         if self.swarm.relative_ess <= self.resample_threshold:
             new_swarm = ParticleSwarm()
 
-            # log_uniform_weight = -np.log(self.num_particles)
             log_uniform_weight = self.uniform_weight
 
             multiplicities = self._rng.multinomial(self.num_particles - 1, self.swarm.weights)
 
-            assert not np.isneginf(self.constrained_path[self.iteration + 1].log_w)
+            neg_inf = -np.inf
+
+            assert self.constrained_path[self.iteration + 1].log_w != neg_inf
 
             new_swarm.add_particle(log_uniform_weight, self.constrained_path[self.iteration + 1])
 
-            for particle, multiplicity in filter(lambda ele: ele[1] != 0, zip(self.swarm.particles, multiplicities)):
-                assert not np.isneginf(particle.log_w)
+            particle_list = self.swarm.particles
+
+            kept_particle_indices = np.where(multiplicities > 0)[0]
+
+            for particle_idx in kept_particle_indices:
+                particle = particle_list[particle_idx]
+                assert particle.log_w != neg_inf
+                multiplicity = multiplicities[particle_idx]
                 new_swarm.add_particles_from_iterators(
                     repeat(log_uniform_weight, multiplicity), repeat(particle, multiplicity)
                 )
