@@ -321,7 +321,7 @@ def append_to_trace(i, timer, trace, tree, tree_dist):
             "alpha": tree_dist.prior.alpha,
             "log_p_one": tree_dist.log_p_one(tree),
             "tree": tree.to_dict(),
-            "tree_hash": hash(tree),
+            "tree_hash": tree.get_hash_id_obj(),
         }
     )
 

@@ -67,12 +67,15 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):
         curr_tree_grp.attrs["time"] = iter_dict["time"]
         curr_tree_grp.attrs["alpha"] = iter_dict["alpha"]
         curr_tree_grp.attrs["log_p_one"] = iter_dict["log_p_one"]
-        curr_tree_grp.attrs["tree_hash"] = iter_dict["tree_hash"]
+
+        tree_hash_val = hash(iter_dict["tree_hash"])
+
+        curr_tree_grp.attrs["tree_hash"] = tree_hash_val
 
         iters[i] = tree_iter
         alpha[i] = iter_dict["alpha"]
         log_p_one[i] = iter_dict["log_p_one"]
-        tree_hash[i] = iter_dict["tree_hash"]
+        tree_hash[i] = tree_hash_val
 
         store_tree_dict(curr_tree_grp, iter_dict)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")

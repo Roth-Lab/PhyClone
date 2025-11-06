@@ -93,6 +93,9 @@ class Tree(object):
 
         return new
 
+    def get_hash_id_obj(self):
+        return self.get_clades(), frozenset(self.outliers)
+
     def to_newick_string(self) -> str:
         visitor = GraphToNewickVisitor(self)
         root_idx = self._node_indices[self._root_node_name]
