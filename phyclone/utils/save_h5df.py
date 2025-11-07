@@ -58,7 +58,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
     tree_hash = np.empty(num_iters, dtype=int)
-    # tree_key_name = np.empty(num_iters, dtype=np.dtypes.StringDType)
+
     trees_grp = curr_chain_grp.create_group("trees")
     for i, iter_dict in enumerate(chain_trace):
         tree_iter = iter_dict["iter"]
@@ -108,7 +108,11 @@ def store_node_data(subtree_grp, tree_dict):
     node_data = tree_dict["node_data"]
     num_nodes = len(node_data)
     node_data_grp.create_dataset("keys", data=list(node_data.keys()))
-    val_dset = node_data_grp.create_dataset("values", shape=(num_nodes,), dtype=h5py.vlen_dtype(np.dtype('int32')), )
+    val_dset = node_data_grp.create_dataset(
+        "values",
+        shape=(num_nodes,),
+        dtype=h5py.vlen_dtype(np.dtype("int32")),
+    )
     for i, val in enumerate(node_data.values()):
         val_dset[i] = list(map(lambda x: x.idx, val))
 

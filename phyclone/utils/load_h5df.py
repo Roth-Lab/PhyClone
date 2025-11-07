@@ -12,7 +12,7 @@ def load_chain_trace_data_df(in_file):
         for chain, chain_grp in result_chains.items():
             chain_idx = chain_grp.attrs["chain_idx"]
             chain_trace_data = chain_grp["trace_data"]
-            df_dict = {k:v[()] for k, v in chain_trace_data.items()}
+            df_dict = {k: v[()] for k, v in chain_trace_data.items()}
             df = pd.DataFrame(df_dict)
             df["chain_num"] = chain_idx
             chain_df_list.append(df)
@@ -45,9 +45,8 @@ def _load_dataset_string_or_numerical(dset):
     if string_check is None:
         loaded_val = dset[()]
     else:
-        loaded_val = dset[()].astype('T')
+        loaded_val = dset[()].astype("T")
     return loaded_val
-
 
 
 def build_datapoints_dict_from_trace(in_file):
@@ -101,7 +100,7 @@ def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
     tree_dict = {
         "graph": list(map(tuple, tree_grp["graph"][()])),
         "node_idx": node_idx_dict,
-        "node_idx_rev": {v:k for k,v in node_idx_dict.items()},
+        "node_idx_rev": {v: k for k, v in node_idx_dict.items()},
         "node_data": _get_node_data_dict(datapoints, tree_grp),
         "grid_size": tree_grp.attrs["grid_size"],
         "node_last_added_to": node_last_added_to,
@@ -124,6 +123,7 @@ def _get_node_data_dict(datapoints, tree_grp):
 def _get_node_idx_dict(tree_grp):
     node_idx_grp = tree_grp["node_idx"]
     node_idx_dict = dict(
-        zip(node_idx_grp["str_nodes"]["keys"][()].astype('T'), node_idx_grp["str_nodes"]["values"][()]),)
+        zip(node_idx_grp["str_nodes"]["keys"][()].astype("T"), node_idx_grp["str_nodes"]["values"][()]),
+    )
     node_idx_dict.update(dict(zip(node_idx_grp["int_nodes"]["keys"][()], node_idx_grp["int_nodes"]["values"][()])))
     return node_idx_dict
