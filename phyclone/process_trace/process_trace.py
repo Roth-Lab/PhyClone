@@ -1,6 +1,6 @@
-import gzip
+# import gzip
 import os
-import pickle
+# import pickle
 import tarfile
 import tempfile
 from sys import maxsize
@@ -278,14 +278,14 @@ def create_topology_dataframe(chain_trace_df):
 #     _create_results_output_files(out_table_file, out_tree_file, table, tree)
 
 
-def create_topology_dict_from_trace(trace):
-    topologies = dict()
-    for chain_num, chain_result in trace.items():
-        chain_trace = chain_result["trace"]
-        for i, x in enumerate(chain_trace):
-            curr_tree = Tree.from_dict(x["tree"])
-            count_topology(topologies, x, i, curr_tree, chain_num)
-    return topologies
+# def create_topology_dict_from_trace(trace):
+#     topologies = dict()
+#     for chain_num, chain_result in trace.items():
+#         chain_trace = chain_result["trace"]
+#         for i, x in enumerate(chain_trace):
+#             curr_tree = Tree.from_dict(x["tree"])
+#             count_topology(topologies, x, i, curr_tree, chain_num)
+#     return topologies
 
 
 # def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
@@ -360,27 +360,27 @@ def create_topology_dict_from_trace(trace):
 #                 archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
 
 
-def count_topology(topologies, x, i, x_top, chain_num=0):
-    if x_top in topologies:
-        topology = topologies[x_top]
-        topology["count"] += 1
-        curr_log_p_one = x["log_p_one"]
-        if curr_log_p_one > topology["log_p_joint_max"]:
-            topology["log_p_joint_max"] = curr_log_p_one
-            topology["iter"] = i
-            topology["topology"] = x_top
-            topology["chain_num"] = chain_num
-    else:
-        log_mult = x_top.multiplicity
-        topologies[x_top] = {
-            "topology": x_top,
-            "count": 1,
-            "log_p_joint_max": x["log_p_one"],
-            "iter": i,
-            "chain_num": chain_num,
-            "multiplicity": np.exp(log_mult),
-            "log_multiplicity": log_mult,
-        }
+# def count_topology(topologies, x, i, x_top, chain_num=0):
+#     if x_top in topologies:
+#         topology = topologies[x_top]
+#         topology["count"] += 1
+#         curr_log_p_one = x["log_p_one"]
+#         if curr_log_p_one > topology["log_p_joint_max"]:
+#             topology["log_p_joint_max"] = curr_log_p_one
+#             topology["iter"] = i
+#             topology["topology"] = x_top
+#             topology["chain_num"] = chain_num
+#     else:
+#         log_mult = x_top.multiplicity
+#         topologies[x_top] = {
+#             "topology": x_top,
+#             "count": 1,
+#             "log_p_joint_max": x["log_p_one"],
+#             "iter": i,
+#             "chain_num": chain_num,
+#             "multiplicity": np.exp(log_mult),
+#             "log_multiplicity": log_mult,
+#         }
 
 
 def _create_results_output_files(out_table_file, out_tree_file, table, tree):
@@ -453,9 +453,7 @@ def _create_results_output_files(out_table_file, out_tree_file, table, tree):
 def get_tree_from_consensus_graph(data, graph):
 
     graph2 = graph.copy()
-
     nodes = list(graph2.nodes)
-
     root_node_name = "root"
 
     for node in nodes:
@@ -533,9 +531,7 @@ def get_clone_table(data, samples, tree, clusters=None):
 
 def get_labels_table(data, tree, clusters=None):
     df_records_list = []
-
     clone_muts = set()
-
     outlier_node_name = tree.outlier_node_name
 
     if clusters is None:
@@ -555,20 +551,18 @@ def get_labels_table(data, tree, clusters=None):
                 df_records_list.append({"mutation_id": x.name, "clone_id": outlier_node_name})
 
         df = pd.DataFrame(df_records_list)
-
         df = df.sort_values(by=["clone_id", "mutation_id"])
 
     else:
         tree_labels = tree.labels
-
         clusters_grouped = clusters.groupby("cluster_id")
+
         for idx in tree_labels:
 
             cluster_id = int(data[idx].name)
             clone_id = tree_labels[idx]
 
             muts = clusters_grouped.get_group(cluster_id)["mutation_id"]
-
             muts_set = muts.unique()
 
             curr_muts_records = [
@@ -580,25 +574,22 @@ def get_labels_table(data, tree, clusters=None):
             df_records_list.extend(curr_muts_records)
 
         missing_muts_df = clusters.loc[~clusters["mutation_id"].isin(clone_muts)]
-
         missing_muts_df = missing_muts_df.copy()
-
         missing_muts_df["clone_id"] = outlier_node_name
 
         df_records_list.extend(missing_muts_df.to_dict("records"))
 
         df = pd.DataFrame(df_records_list)
-
         df = df.sort_values(by=["clone_id", "cluster_id", "mutation_id"])
 
     return df
 
 
-def create_main_run_output(cluster_file, out_file, results):
-    for chain_result in results.values():
-        if cluster_file is not None:
-            chain_result["clusters"] = pd.read_csv(cluster_file, sep="\t")[
-                ["mutation_id", "cluster_id"]
-            ].drop_duplicates()
-    with gzip.GzipFile(out_file, mode="wb") as fh:
-        pickle.dump(results, fh)
+# def create_main_run_output(cluster_file, out_file, results):
+#     for chain_result in results.values():
+#         if cluster_file is not None:
+#             chain_result["clusters"] = pd.read_csv(cluster_file, sep="\t")[
+#                 ["mutation_id", "cluster_id"]
+#             ].drop_duplicates()
+#     with gzip.GzipFile(out_file, mode="wb") as fh:
+#         pickle.dump(results, fh)
