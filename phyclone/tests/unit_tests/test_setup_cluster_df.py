@@ -477,7 +477,7 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 0,
                 self.rng,
@@ -495,7 +495,7 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 0,
                 self.rng,
@@ -513,7 +513,7 @@ class TestSetupClusterDF(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
@@ -532,7 +532,7 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
@@ -552,7 +552,7 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
@@ -573,7 +573,7 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
@@ -593,7 +593,7 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
@@ -613,7 +613,7 @@ class TestSetupClusterDF(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             phyclone.data.pyclone._assign_out_prob = MagicMock(side_effect=emulate_assign_out_prob_output)
-            actual_df = _setup_cluster_df(
+            actual_df, _ = _setup_cluster_df(
                 file_path,
                 self.outlier_prob,
                 self.rng,
