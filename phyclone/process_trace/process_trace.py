@@ -197,7 +197,7 @@ def get_tree_from_consensus_graph(data, graph):
 
     graph2 = graph.copy()
     nodes = list(graph2.nodes)
-    root_node_name = "root"
+    root_node_name = Tree._ROOT_NODE_NAME
 
     for node in nodes:
         if len(list(graph2.predecessors(node))) == 0:
