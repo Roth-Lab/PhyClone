@@ -14,7 +14,8 @@ from phyclone.process_trace.map import get_map_node_ccfs_and_clonal_prev_dicts
 from phyclone.process_trace.utils import print_string_to_file
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import exp_normalize
-from phyclone.utils.load_h5df import load_chain_trace_data_df, load_clusters_df_from_trace, build_map_tree_from_trace, build_datapoints_dict_from_trace, load_samples_from_trace
+from phyclone.utils.load_h5df import load_chain_trace_data_df, load_clusters_df_from_trace, build_map_tree_from_trace, build_datapoints_dict_from_trace, load_samples_from_trace, build_df_trees_from_trace
+from itertools import repeat
 
 
 def write_map_results(
@@ -42,6 +43,60 @@ def write_map_results(
     clusters = load_clusters_df_from_trace(in_file)
     samples = load_samples_from_trace(in_file)
     table = get_clone_table(datapoints, samples, tree, clusters=clusters)
+
+    _create_results_output_files(out_table_file, out_tree_file, table, tree)
+
+
+def write_consensus_results(
+    in_file,
+    out_table_file,
+    out_tree_file,
+    consensus_threshold=0.5,
+    weight_type="joint-likelihood",
+):
+
+    datapoints = build_datapoints_dict_from_trace(in_file)
+    chain_trace_df = load_chain_trace_data_df(in_file)
+
+    df = create_topology_dataframe(chain_trace_df)
+    build_df_trees_from_trace(in_file, df, datapoints)
+
+    trees = []
+    probs = None
+
+    if weight_type == "counts":
+        weighted_consensus = False
+
+        for idx, row in df.iterrows():
+            tree = row["tree_obj"]
+            count = row["count"]
+            trees.extend(repeat(tree, count))
+    else:
+        weighted_consensus = True
+
+        df["log_count"] = np.log(df["count"])
+        df["weighted_prob"] = df["log_p_one"] + df["log_count"]
+        trees = df["tree_obj"].tolist()
+        probs = df["weighted_prob"].to_numpy()
+
+    if weighted_consensus:
+        probs = np.asarray(probs)
+        probs, _ = exp_normalize(probs)
+
+    graph = get_consensus_tree(
+        trees,
+        data=datapoints,
+        threshold=consensus_threshold,
+        weighted=weighted_consensus,
+        log_p_list=probs,
+    )
+
+    tree = get_tree_from_consensus_graph(datapoints, graph)
+    clusters = load_clusters_df_from_trace(in_file)
+    samples = load_samples_from_trace(in_file)
+
+    table = get_clone_table(datapoints, samples, tree, clusters=clusters)
+    table = pd.DataFrame(table)
 
     _create_results_output_files(out_table_file, out_tree_file, table, tree)
 
@@ -89,7 +144,7 @@ def create_topology_dataframe(chain_trace_df):
     df_list = []
     for grp_name, grp in grouped:
         count = len(grp)
-        best_one = grp.loc[grp["log_p_one"].idxmax()]
+        best_one = grp.loc[grp["log_p_one"].idxmax()].copy()
         best_one["count"] = count
         df_list.append(best_one)
     df = pd.concat(df_list, axis=1, ignore_index=True).T
@@ -265,55 +320,55 @@ def _create_results_output_files(out_table_file, out_tree_file, table, tree):
 #     return df
 
 
-def write_consensus_results(
-    in_file,
-    out_table_file,
-    out_tree_file,
-    consensus_threshold=0.5,
-    weight_type="joint-likelihood",
-):
-
-    with gzip.GzipFile(in_file, "rb") as fh:
-        results = pickle.load(fh)
-
-    data = results[0]["data"]
-
-    trees = []
-    probs = []
-
-    if weight_type == "counts":
-        weighted_consensus = False
-        for chain_results in results.values():
-            trees.extend([Tree.from_dict(x["tree"]) for x in chain_results["trace"]])
-    else:
-        weighted_consensus = True
-        topologies = create_topology_dict_from_trace(results)
-
-        for tree, top_info in topologies.items():
-            trees.append(tree)
-            probs.append(top_info["log_p_joint_max"] + np.log(top_info["count"]))
-
-    if weighted_consensus:
-        probs = np.array(probs)
-        probs, _ = exp_normalize(probs)
-
-    graph = get_consensus_tree(
-        trees,
-        data=data,
-        threshold=consensus_threshold,
-        weighted=weighted_consensus,
-        log_p_list=probs,
-    )
-
-    tree = get_tree_from_consensus_graph(data, graph)
-
-    clusters = results[0].get("clusters", None)
-
-    table = get_clone_table(data, results[0]["samples"], tree, clusters=clusters)
-
-    table = pd.DataFrame(table)
-
-    _create_results_output_files(out_table_file, out_tree_file, table, tree)
+# def write_consensus_results(
+#     in_file,
+#     out_table_file,
+#     out_tree_file,
+#     consensus_threshold=0.5,
+#     weight_type="joint-likelihood",
+# ):
+#
+#     with gzip.GzipFile(in_file, "rb") as fh:
+#         results = pickle.load(fh)
+#
+#     data = results[0]["data"]
+#
+#     trees = []
+#     probs = []
+#
+#     if weight_type == "counts":
+#         weighted_consensus = False
+#         for chain_results in results.values():
+#             trees.extend([Tree.from_dict(x["tree"]) for x in chain_results["trace"]])
+#     else:
+#         weighted_consensus = True
+#         topologies = create_topology_dict_from_trace(results)
+#
+#         for tree, top_info in topologies.items():
+#             trees.append(tree)
+#             probs.append(top_info["log_p_joint_max"] + np.log(top_info["count"]))
+#
+#     if weighted_consensus:
+#         probs = np.array(probs)
+#         probs, _ = exp_normalize(probs)
+#
+#     graph = get_consensus_tree(
+#         trees,
+#         data=data,
+#         threshold=consensus_threshold,
+#         weighted=weighted_consensus,
+#         log_p_list=probs,
+#     )
+#
+#     tree = get_tree_from_consensus_graph(data, graph)
+#
+#     clusters = results[0].get("clusters", None)
+#
+#     table = get_clone_table(data, results[0]["samples"], tree, clusters=clusters)
+#
+#     table = pd.DataFrame(table)
+#
+#     _create_results_output_files(out_table_file, out_tree_file, table, tree)
 
 
 def get_tree_from_consensus_graph(data, graph):
@@ -339,7 +394,11 @@ def build_phyclone_tree_from_nx(nx_tree, data_list, root_name):
 
     post_order_nodes = nx.dfs_postorder_nodes(nx_tree, root_name)
 
-    dp_dict = dict(zip([x.idx for x in data_list], data_list))
+    if isinstance(data_list, list):
+        dp_dict = dict(zip([x.idx for x in data_list], data_list))
+    else:
+        dp_dict = data_list
+        data_list = list(dp_dict.values())
 
     node_map = {}
 

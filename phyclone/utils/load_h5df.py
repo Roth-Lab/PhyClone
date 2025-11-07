@@ -63,6 +63,18 @@ def build_map_tree_from_trace(in_file, chain, iteration, datapoints):
         tree_dict = build_tree_dict_from_trace(chain, iteration, fh, datapoints)
     return Tree.from_dict(tree_dict)
 
+# def build_trees_from_trace(in_file, chain, iteration, datapoints):
+#     tree_dict = None
+#     with h5py.File(in_file) as fh:
+
+def build_df_trees_from_trace(in_file, df, datapoints, col="tree_obj"):
+    with h5py.File(in_file) as fh:
+        df[col] = df.apply(_process_df_row_build_tree, axis=1, args=(datapoints, fh))
+
+def _process_df_row_build_tree(row, datapoints, fh):
+    tree_dict = build_tree_dict_from_trace(row["chain_num"], row["iter"], fh, datapoints)
+    return Tree.from_dict(tree_dict)
+
 def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
     chain_template = "chain_{}"
     chain_name = chain_template.format(chain)
