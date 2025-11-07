@@ -101,6 +101,85 @@ def write_consensus_results(
     _create_results_output_files(out_table_file, out_tree_file, table, tree)
 
 
+def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
+    if top_trees == maxsize:
+        top_trees = float("inf")
+    print()
+    print("#" * 100)
+    print("PhyClone - Topology Report")
+    print("#" * 100)
+
+    datapoints = build_datapoints_dict_from_trace(in_file)
+    chain_trace_df = load_chain_trace_data_df(in_file)
+
+    print("\nExtracting unique topologies from sample trace.")
+    # topologies_dict = create_topology_dict_from_trace(results)
+    #
+    # topology_df = create_topology_dataframe(topologies_dict.values())
+    # topology_df.to_csv(out_file, index=False, sep="\t")
+    topology_df = create_topology_dataframe(chain_trace_df)
+    topo_df_to_save = topology_df.drop(columns="tree_hash")
+    topo_df_to_save.to_csv(out_file, index=False, sep="\t")
+
+    num_unique_tree = len(topology_df)
+
+    print("Topology report created, saved as: {}".format(out_file))
+
+    if topologies_archive is not None:
+        print()
+        print("#" * 50)
+
+        if top_trees == float("inf"):
+            top_trees_statement = "for all {}".format(num_unique_tree)
+        else:
+            top_trees_statement = "for the top {}".format(top_trees)
+            if top_trees > num_unique_tree:
+                print(
+                    "Warning: Number of top trees requested ({}) "
+                    "is greater than the total number of "
+                    "uniquely sampled topologies ({}).".format(top_trees, num_unique_tree)
+                )
+                top_trees_statement = "for all {}".format(num_unique_tree)
+        print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
+        build_df_trees_from_trace(in_file, topology_df, datapoints)
+        create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, datapoints)
+        print("Topologies archive created, saved as: {}".format(topologies_archive))
+    print("\nFinished.")
+    print("#" * 100)
+
+
+def create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, data):
+    filename_template = "{}_results_table.tsv"
+    nwk_template = "{}.nwk"
+    clusters = load_clusters_df_from_trace(in_file)
+    samples = load_samples_from_trace(in_file)
+    with tarfile.open(topologies_archive, "w:gz") as archive:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            for idx, row in topology_df.iterrows():
+                # row = topology_df.loc[
+                #     (topology_df["topology"] == values["topology"])
+                #     & (topology_df["count"] == values["count"])
+                #     & (topology_df["log_p_joint_max"] == values["log_p_joint_max"])
+                #     & (topology_df["iter"] == values["iter"])
+                #     & (topology_df["chain_num"] == values["chain_num"])
+                #     ]
+                # assert len(row) == 1
+                tree = row["tree_obj"]
+                topology_id = row["topology_id"]
+                topology_rank = int(topology_id[2:])
+                if topology_rank >= top_trees:
+                    continue
+                table = get_clone_table(data, samples, tree, clusters=clusters)
+                filename = filename_template.format(topology_id)
+                filepath = os.path.join(tmp_dir, filename)
+                table.to_csv(filepath, index=False, sep="\t")
+                archive.add(filepath, arcname=str(os.path.join(topology_id, filename)))
+                nwk_filename = nwk_template.format(topology_id)
+                nwk_path = os.path.join(tmp_dir, nwk_filename)
+                print_string_to_file(tree.to_newick_string(), nwk_path)
+                archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
+
+
     # with gzip.GzipFile(in_file, "rb") as fh:
     #     results = pickle.load(fh)
     #
@@ -209,76 +288,76 @@ def create_topology_dict_from_trace(trace):
     return topologies
 
 
-def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
-    if top_trees == maxsize:
-        top_trees = float("inf")
-    print()
-    print("#" * 100)
-    print("PhyClone - Topology Report")
-    print("#" * 100)
+# def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
+#     if top_trees == maxsize:
+#         top_trees = float("inf")
+#     print()
+#     print("#" * 100)
+#     print("PhyClone - Topology Report")
+#     print("#" * 100)
+#
+#     with gzip.GzipFile(in_file, "rb") as fh:
+#         results = pickle.load(fh)
+#
+#     print("\nExtracting unique topologies from sample trace.")
+#     topologies_dict = create_topology_dict_from_trace(results)
+#
+#     topology_df = create_topology_dataframe(topologies_dict.values())
+#     topology_df.to_csv(out_file, index=False, sep="\t")
+#
+#     print("Topology report created, saved as: {}".format(out_file))
+#
+#     if topologies_archive is not None:
+#         print()
+#         print("#" * 50)
+#         if top_trees == float("inf"):
+#             top_trees_statement = "for all {}".format(len(topologies_dict))
+#         else:
+#             top_trees_statement = "for the top {}".format(top_trees)
+#             if top_trees > len(topologies_dict):
+#                 print(
+#                     "Warning: Number of top trees requested ({}) "
+#                     "is greater than the total number of "
+#                     "uniquely sampled topologies ({}).".format(top_trees, len(topologies_dict))
+#                 )
+#                 top_trees_statement = "for all {}".format(len(topologies_dict))
+#         print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
+#         create_topologies_archive(topology_df, results, top_trees, topologies_dict, topologies_archive)
+#         print("Topologies archive created, saved as: {}".format(topologies_archive))
+#     print("\nFinished.")
+#     print("#" * 100)
 
-    with gzip.GzipFile(in_file, "rb") as fh:
-        results = pickle.load(fh)
 
-    print("\nExtracting unique topologies from sample trace.")
-    topologies_dict = create_topology_dict_from_trace(results)
-
-    topology_df = create_topology_dataframe(topologies_dict.values())
-    topology_df.to_csv(out_file, index=False, sep="\t")
-
-    print("Topology report created, saved as: {}".format(out_file))
-
-    if topologies_archive is not None:
-        print()
-        print("#" * 50)
-        if top_trees == float("inf"):
-            top_trees_statement = "for all {}".format(len(topologies_dict))
-        else:
-            top_trees_statement = "for the top {}".format(top_trees)
-            if top_trees > len(topologies_dict):
-                print(
-                    "Warning: Number of top trees requested ({}) "
-                    "is greater than the total number of "
-                    "uniquely sampled topologies ({}).".format(top_trees, len(topologies_dict))
-                )
-                top_trees_statement = "for all {}".format(len(topologies_dict))
-        print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
-        create_topologies_archive(topology_df, results, top_trees, topologies_dict, topologies_archive)
-        print("Topologies archive created, saved as: {}".format(topologies_archive))
-    print("\nFinished.")
-    print("#" * 100)
-
-
-def create_topologies_archive(topology_df, results, top_trees, topologies_dict, topologies_archive):
-    filename_template = "{}_results_table.tsv"
-    nwk_template = "{}.nwk"
-    clusters = results[0].get("clusters", None)
-    data = results[0]["data"]
-    samples = results[0]["samples"]
-    with tarfile.open(topologies_archive, "w:gz") as archive:
-        with tempfile.TemporaryDirectory() as tmp_dir:
-            for tree, values in topologies_dict.items():
-                row = topology_df.loc[
-                    (topology_df["topology"] == values["topology"])
-                    & (topology_df["count"] == values["count"])
-                    & (topology_df["log_p_joint_max"] == values["log_p_joint_max"])
-                    & (topology_df["iter"] == values["iter"])
-                    & (topology_df["chain_num"] == values["chain_num"])
-                ]
-                assert len(row) == 1
-                topology_id = row["topology_id"].iloc[0]
-                topology_rank = int(topology_id[2:])
-                if topology_rank >= top_trees:
-                    continue
-                table = get_clone_table(data, samples, tree, clusters=clusters)
-                filename = filename_template.format(topology_id)
-                filepath = os.path.join(tmp_dir, filename)
-                table.to_csv(filepath, index=False, sep="\t")
-                archive.add(filepath, arcname=str(os.path.join(topology_id, filename)))
-                nwk_filename = nwk_template.format(topology_id)
-                nwk_path = os.path.join(tmp_dir, nwk_filename)
-                print_string_to_file(tree.to_newick_string(), nwk_path)
-                archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
+# def create_topologies_archive(topology_df, results, top_trees, topologies_dict, topologies_archive):
+#     filename_template = "{}_results_table.tsv"
+#     nwk_template = "{}.nwk"
+#     clusters = results[0].get("clusters", None)
+#     data = results[0]["data"]
+#     samples = results[0]["samples"]
+#     with tarfile.open(topologies_archive, "w:gz") as archive:
+#         with tempfile.TemporaryDirectory() as tmp_dir:
+#             for tree, values in topologies_dict.items():
+#                 row = topology_df.loc[
+#                     (topology_df["topology"] == values["topology"])
+#                     & (topology_df["count"] == values["count"])
+#                     & (topology_df["log_p_joint_max"] == values["log_p_joint_max"])
+#                     & (topology_df["iter"] == values["iter"])
+#                     & (topology_df["chain_num"] == values["chain_num"])
+#                 ]
+#                 assert len(row) == 1
+#                 topology_id = row["topology_id"].iloc[0]
+#                 topology_rank = int(topology_id[2:])
+#                 if topology_rank >= top_trees:
+#                     continue
+#                 table = get_clone_table(data, samples, tree, clusters=clusters)
+#                 filename = filename_template.format(topology_id)
+#                 filepath = os.path.join(tmp_dir, filename)
+#                 table.to_csv(filepath, index=False, sep="\t")
+#                 archive.add(filepath, arcname=str(os.path.join(topology_id, filename)))
+#                 nwk_filename = nwk_template.format(topology_id)
+#                 nwk_path = os.path.join(tmp_dir, nwk_filename)
+#                 print_string_to_file(tree.to_newick_string(), nwk_path)
+#                 archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
 
 
 def count_topology(topologies, x, i, x_top, chain_num=0):
