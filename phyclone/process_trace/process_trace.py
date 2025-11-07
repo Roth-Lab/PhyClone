@@ -142,6 +142,11 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
                 )
                 top_trees_statement = "for all {}".format(num_unique_tree)
         print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
+        if top_trees >= num_unique_tree:
+            topology_df = topology_df
+        else:
+            top_trees = int(top_trees)
+            topology_df = topology_df.head(n=top_trees)
         build_df_trees_from_trace(in_file, topology_df, datapoints)
         create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, datapoints)
         print("Topologies archive created, saved as: {}".format(topologies_archive))
