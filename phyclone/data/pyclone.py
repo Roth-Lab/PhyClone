@@ -103,7 +103,7 @@ def _create_clustered_data_arr(
         data_point = DataPoint(
             idx,
             val,
-            name="{}".format(cluster_id),
+            name=cluster_id,
             outlier_prob=out_probs[0],
             outlier_prob_not=out_probs[1],
         )

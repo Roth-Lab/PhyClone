@@ -248,28 +248,27 @@ def get_clone_table(data, samples, tree, clusters=None):
 
     ccfs, clonal_prev_dict = get_map_node_ccfs_and_clonal_prev_dicts(tree)
 
-    samples_idx_dict = {k: v for v, k in enumerate(samples)}
+    outlier_node_name = tree.outlier_node_name
 
-    labels["sample_id"] = [samples] * len(labels)
+    if outlier_node_name not in ccfs:
+        ccfs[outlier_node_name] = np.zeros(len(samples))
 
-    labels = labels.explode("sample_id")
-    grouped = labels.groupby(["clone_id", "sample_id"])
+    if outlier_node_name not in clonal_prev_dict:
+        clonal_prev_dict[outlier_node_name] = np.zeros(len(samples))
 
-    df_list = []
+    prev_df_list = []
+    for clone, sample_prevs in clonal_prev_dict.items():
+        curr_df = pd.DataFrame({"sample_id": samples, "ccf": ccfs[clone], "clonal_prev": sample_prevs})
+        curr_df["clone_id"] = clone
+        prev_df_list.append(curr_df)
 
-    for name, group in grouped:
-        clone_id, sample_id = name
+    sample_prevs_df = pd.concat(prev_df_list, ignore_index=True)
 
-        if clone_id in ccfs:
-            group["ccf"] = ccfs[clone_id][samples_idx_dict[sample_id]]
-            group["clonal_prev"] = clonal_prev_dict[clone_id][samples_idx_dict[sample_id]]
-        else:
-            group["ccf"] = 0.0
-            group["clonal_prev"] = 0.0
+    res_df = pd.merge(labels, sample_prevs_df, on="clone_id")
 
-        df_list.append(group)
+    res_df.sort_values(by=["clone_id", "cluster_id", "mutation_id"], ignore_index=True, inplace=True)
 
-    return pd.concat(df_list, ignore_index=True)
+    return res_df
 
 
 def get_labels_table(data, tree, clusters=None):
@@ -302,7 +301,7 @@ def get_labels_table(data, tree, clusters=None):
 
         for idx in tree_labels:
 
-            cluster_id = int(data[idx].name)
+            cluster_id = data[idx].name
             clone_id = tree_labels[idx]
 
             muts = clusters_grouped.get_group(cluster_id)["mutation_id"]
