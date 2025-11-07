@@ -1,5 +1,4 @@
 import h5py
-import numpy as np
 import pandas as pd
 from phyclone.data.base import DataPoint
 from phyclone.tree import Tree
@@ -24,20 +23,31 @@ def load_chain_trace_data_df(in_file):
 
 def load_samples_from_trace(in_file):
     with h5py.File(in_file) as fh:
-        samples = fh["samples"][()].astype('T')
+        samples = _load_dataset_string_or_numerical(fh["samples"])
     return samples
+
 
 def load_clusters_df_from_trace(in_file):
     df_dict = dict()
     with h5py.File(in_file) as fh:
         clusters_grp = fh["clusters"]
-        # df_dict = {k: v[()] for k, v in clusters_grp.items()}
-        #TODO: set this up to be more flexible on type, IDs could be strings or numbers for any of these
-        df_dict["cluster_id"] = clusters_grp["cluster_id"][()]
-        df_dict["mutation_id"] = clusters_grp["mutation_id"][()].astype('T')
+
+        df_dict["cluster_id"] = _load_dataset_string_or_numerical(clusters_grp["cluster_id"])
+        df_dict["mutation_id"] = _load_dataset_string_or_numerical(clusters_grp["mutation_id"])
 
     df = pd.DataFrame(df_dict)
     return df
+
+
+def _load_dataset_string_or_numerical(dset):
+    dset_dtype = dset.dtype
+    string_check = h5py.check_string_dtype(dset_dtype)
+    if string_check is None:
+        loaded_val = dset[()]
+    else:
+        loaded_val = dset[()].astype('T')
+    return loaded_val
+
 
 
 def build_datapoints_dict_from_trace(in_file):
@@ -63,17 +73,16 @@ def build_map_tree_from_trace(in_file, chain, iteration, datapoints):
         tree_dict = build_tree_dict_from_trace(chain, iteration, fh, datapoints)
     return Tree.from_dict(tree_dict)
 
-# def build_trees_from_trace(in_file, chain, iteration, datapoints):
-#     tree_dict = None
-#     with h5py.File(in_file) as fh:
 
 def build_df_trees_from_trace(in_file, df, datapoints, col="tree_obj"):
     with h5py.File(in_file) as fh:
         df[col] = df.apply(_process_df_row_build_tree, axis=1, args=(datapoints, fh))
 
+
 def _process_df_row_build_tree(row, datapoints, fh):
     tree_dict = build_tree_dict_from_trace(row["chain_num"], row["iter"], fh, datapoints)
     return Tree.from_dict(tree_dict)
+
 
 def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
     chain_template = "chain_{}"
@@ -106,7 +115,7 @@ def _get_node_data_dict(datapoints, tree_grp):
     node_data_grp = tree_grp["node_data"]
     node_data_dict = dict()
     val_dset = node_data_grp["values"][()]
-    node_keys = node_data_grp["keys"][()]
+    node_keys = _load_dataset_string_or_numerical(node_data_grp["keys"])
     for i, node_data in enumerate(val_dset):
         node_data_dict[node_keys[i]] = [datapoints[dp_idx] for dp_idx in node_data]
     return node_data_dict
