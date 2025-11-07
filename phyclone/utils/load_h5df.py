@@ -15,12 +15,17 @@ def load_chain_trace_data_df(in_file):
             chain_trace_data = chain_grp["trace_data"]
             df_dict = {k:v[()] for k, v in chain_trace_data.items()}
             df = pd.DataFrame(df_dict)
-            df["chain"] = chain_idx
+            df["chain_num"] = chain_idx
             chain_df_list.append(df)
 
     final_df = pd.concat(chain_df_list, ignore_index=True)
     return final_df
 
+
+def load_samples_from_trace(in_file):
+    with h5py.File(in_file) as fh:
+        samples = fh["samples"][()].astype('T')
+    return samples
 
 def load_clusters_df_from_trace(in_file):
     df_dict = dict()
@@ -52,14 +57,11 @@ def build_datapoints_dict_from_trace(in_file):
     return datapoints
 
 
-# def tmp_tree_build(in_file, chain=0, iteration=2):
-#     datapoints = build_datapoints_dict_from_trace(in_file)
-#
-#     with h5py.File(in_file) as fh:
-#         tree_dict = build_tree_dict_from_trace(chain, iteration, fh, datapoints)
-#         tree = Tree.from_dict(tree_dict)
-#         print('d')
-
+def build_map_tree_from_trace(in_file, chain, iteration, datapoints):
+    tree_dict = None
+    with h5py.File(in_file) as fh:
+        tree_dict = build_tree_dict_from_trace(chain, iteration, fh, datapoints)
+    return Tree.from_dict(tree_dict)
 
 def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
     chain_template = "chain_{}"

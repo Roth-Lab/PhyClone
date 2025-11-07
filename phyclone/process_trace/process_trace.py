@@ -14,6 +14,7 @@ from phyclone.process_trace.map import get_map_node_ccfs_and_clonal_prev_dicts
 from phyclone.process_trace.utils import print_string_to_file
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import exp_normalize
+from phyclone.utils.load_h5df import load_chain_trace_data_df, load_clusters_df_from_trace, build_map_tree_from_trace, build_datapoints_dict_from_trace, load_samples_from_trace
 
 
 def write_map_results(
@@ -23,42 +24,124 @@ def write_map_results(
     map_type="joint-likelihood",
 ):
 
-    with gzip.GzipFile(in_file, "rb") as fh:
-        results = pickle.load(fh)
-
-    data = results[0]["data"]
-
-    chain_num = 0
+    chain_trace_df = load_chain_trace_data_df(in_file)
 
     if map_type == "frequency":
-
-        topologies = create_topology_dict_from_trace(results)
-
-        df = create_topology_dataframe(topologies.values())
-        df = df.sort_values(by="count", ascending=False)
-
-        map_iter = df["iter"].iloc[0]
-        chain_num = df["chain_num"].iloc[0]
+        df = create_topology_dataframe(chain_trace_df)
+        max_idx = df["count"].idxmax()
+        map_iter = df.loc[max_idx, "iter"]
+        chain_num = df.loc[max_idx, "chain_num"]
     else:
-        map_iter = 0
+        max_idx = chain_trace_df["log_p_one"].idxmax()
+        map_iter = chain_trace_df.loc[max_idx, "iter"]
+        chain_num = chain_trace_df.loc[max_idx, "chain_num"]
 
-        map_val = float("-inf")
+    datapoints = build_datapoints_dict_from_trace(in_file)
+    tree = build_map_tree_from_trace(in_file, chain_num, map_iter, datapoints)
 
-        for curr_chain_num, chain_results in results.items():
-            for i, x in enumerate(chain_results["trace"]):
-                if x["log_p_one"] > map_val:
-                    map_iter = i
-
-                    map_val = x["log_p_one"]
-                    chain_num = curr_chain_num
-
-    tree = Tree.from_dict(results[chain_num]["trace"][map_iter]["tree"])
-
-    clusters = results[0].get("clusters", None)
-
-    table = get_clone_table(data, results[0]["samples"], tree, clusters=clusters)
+    clusters = load_clusters_df_from_trace(in_file)
+    samples = load_samples_from_trace(in_file)
+    table = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
     _create_results_output_files(out_table_file, out_tree_file, table, tree)
+
+
+    # with gzip.GzipFile(in_file, "rb") as fh:
+    #     results = pickle.load(fh)
+    #
+    # data = results[0]["data"]
+    #
+    # chain_num = 0
+
+    # if map_type == "frequency":
+    #
+    #     topologies = create_topology_dict_from_trace(results)
+    #
+    #     df = create_topology_dataframe(topologies.values())
+    #     df = df.sort_values(by="count", ascending=False)
+    #
+    #     map_iter = df["iter"].iloc[0]
+    #     chain_num = df["chain_num"].iloc[0]
+    # else:
+    #     map_iter = 0
+    #
+    #     map_val = float("-inf")
+    #
+    #     for curr_chain_num, chain_results in results.items():
+    #         for i, x in enumerate(chain_results["trace"]):
+    #             if x["log_p_one"] > map_val:
+    #                 map_iter = i
+    #
+    #                 map_val = x["log_p_one"]
+    #                 chain_num = curr_chain_num
+    #
+    # tree = Tree.from_dict(results[chain_num]["trace"][map_iter]["tree"])
+    #
+    # clusters = results[0].get("clusters", None)
+    #
+    # table = get_clone_table(data, results[0]["samples"], tree, clusters=clusters)
+    #
+    # _create_results_output_files(out_table_file, out_tree_file, table, tree)
+
+
+def create_topology_dataframe(chain_trace_df):
+    grouped = chain_trace_df.groupby("tree_hash")
+    df_list = []
+    for grp_name, grp in grouped:
+        count = len(grp)
+        best_one = grp.loc[grp["log_p_one"].idxmax()]
+        best_one["count"] = count
+        df_list.append(best_one)
+    df = pd.concat(df_list, axis=1, ignore_index=True).T
+    df = df.convert_dtypes()
+    df = df.sort_values(by="log_p_one", ascending=False, ignore_index=True)
+    df.insert(0, "topology_id", "t_" + df.index.astype(str))
+    return df
+
+
+# def write_map_results(
+#     in_file,
+#     out_table_file,
+#     out_tree_file,
+#     map_type="joint-likelihood",
+# ):
+#
+#     with gzip.GzipFile(in_file, "rb") as fh:
+#         results = pickle.load(fh)
+#
+#     data = results[0]["data"]
+#
+#     chain_num = 0
+#
+#     if map_type == "frequency":
+#
+#         topologies = create_topology_dict_from_trace(results)
+#
+#         df = create_topology_dataframe(topologies.values())
+#         df = df.sort_values(by="count", ascending=False)
+#
+#         map_iter = df["iter"].iloc[0]
+#         chain_num = df["chain_num"].iloc[0]
+#     else:
+#         map_iter = 0
+#
+#         map_val = float("-inf")
+#
+#         for curr_chain_num, chain_results in results.items():
+#             for i, x in enumerate(chain_results["trace"]):
+#                 if x["log_p_one"] > map_val:
+#                     map_iter = i
+#
+#                     map_val = x["log_p_one"]
+#                     chain_num = curr_chain_num
+#
+#     tree = Tree.from_dict(results[chain_num]["trace"][map_iter]["tree"])
+#
+#     clusters = results[0].get("clusters", None)
+#
+#     table = get_clone_table(data, results[0]["samples"], tree, clusters=clusters)
+#
+#     _create_results_output_files(out_table_file, out_tree_file, table, tree)
 
 
 def create_topology_dict_from_trace(trace):
@@ -171,15 +254,15 @@ def _create_results_output_files(out_table_file, out_tree_file, table, tree):
     print_string_to_file(tree.to_newick_string(), out_tree_file)
 
 
-def create_topology_dataframe(topologies):
-    for topology in topologies:
-        tree = topology["topology"]
-        topology["topology"] = tree.to_newick_string()
-
-    df = pd.DataFrame(topologies)
-    df = df.sort_values(by="log_p_joint_max", ascending=False, ignore_index=True)
-    df.insert(0, "topology_id", "t_" + df.index.astype(str))
-    return df
+# def create_topology_dataframe(topologies):
+#     for topology in topologies:
+#         tree = topology["topology"]
+#         topology["topology"] = tree.to_newick_string()
+#
+#     df = pd.DataFrame(topologies)
+#     df = df.sort_values(by="log_p_joint_max", ascending=False, ignore_index=True)
+#     df.insert(0, "topology_id", "t_" + df.index.astype(str))
+#     return df
 
 
 def write_consensus_results(
