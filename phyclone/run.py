@@ -17,14 +17,13 @@ from phyclone.mcmc.particle_gibbs import (
     ParticleGibbsTreeSampler,
     ParticleGibbsSubtreeSampler,
 )
-# from phyclone.process_trace import create_main_run_output
+
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
 from phyclone.utils.cache import clear_proposal_dist_caches, clear_convolution_caches
 from phyclone.utils.save_h5df import save_trace_to_h5df
-# from pathlib import Path
 
 
 def run(
@@ -155,7 +154,6 @@ def run(
                     print("Finished chain", res_chain)
 
     save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed)
-    # create_main_run_output(cluster_file, out_file, results)
 
 
 def print_welcome_message(
@@ -271,7 +269,6 @@ def _run_main_sampler(
     subtree_update_prob,
 ):
     clear_convolution_caches()
-    # trace = setup_trace(timer, tree, tree_dist)
     trace = []
 
     dp_sampler = samplers.dp_sampler
