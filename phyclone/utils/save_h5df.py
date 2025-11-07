@@ -4,6 +4,9 @@ import numpy as np
 
 def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
     num_chains = len(results)
+    print()
+    print("#" * 20)
+    print("\nWriting sample trace to disk.")
 
     with h5py.File(out_file, "w", track_order=True) as fh:
         fh.create_dataset("samples", data=results[0]["samples"])
@@ -17,6 +20,8 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
         store_datapoints(fh, results)
 
         store_trace(fh, num_chains, results)
+
+    print("\nFinished.")
 
 
 def store_trace(fh, num_chains, results):
