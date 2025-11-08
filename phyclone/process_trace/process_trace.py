@@ -101,9 +101,7 @@ def write_consensus_results(
     tree = get_tree_from_consensus_graph(datapoints, graph)
     clusters = load_clusters_df_from_trace(in_file)
     samples = load_samples_from_trace(in_file)
-
     table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
-    # table = pd.DataFrame(table)
 
     _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
 
@@ -258,7 +256,6 @@ def build_phyclone_tree_from_nx(nx_tree, data_list, root_name):
 
 def get_clone_table(data, samples, tree, clusters=None):
     labels = get_labels_table(data, tree, clusters=clusters)
-
     ccfs, clonal_prev_dict = get_map_node_ccfs_and_clonal_prev_dicts(tree)
 
     outlier_node_name = tree.outlier_node_name
@@ -271,12 +268,17 @@ def get_clone_table(data, samples, tree, clusters=None):
 
     prev_df_list = []
     for clone, sample_prevs in clonal_prev_dict.items():
-        curr_df = pd.DataFrame({"sample_id": samples, "ccf": ccfs[clone], "clonal_prev": sample_prevs})
-        curr_df["clone_id"] = clone
+        curr_df = pd.DataFrame(
+            {
+                "sample_id": samples,
+                "clone_id": clone,
+                "ccf": ccfs[clone],
+                "clonal_prev": sample_prevs,
+            }
+        )
         prev_df_list.append(curr_df)
 
     sample_prevs_df = pd.concat(prev_df_list, ignore_index=True)
-
     sample_prevs_df.sort_values(by="sample_id", inplace=True)
 
     res_df = pd.merge(labels, sample_prevs_df, on="clone_id")
