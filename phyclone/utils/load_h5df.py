@@ -70,7 +70,9 @@ def build_map_tree_from_trace(in_file, chain, iteration, datapoints):
     tree_dict = None
     with h5py.File(in_file) as fh:
         tree_dict = build_tree_dict_from_trace(chain, iteration, fh, datapoints)
-    return Tree.from_dict(tree_dict)
+    tree = Tree.from_dict(tree_dict)
+    tree.relabel_nodes()
+    return tree
 
 
 def build_df_trees_from_trace(in_file, df, datapoints, col="tree_obj"):
@@ -80,7 +82,9 @@ def build_df_trees_from_trace(in_file, df, datapoints, col="tree_obj"):
 
 def _process_df_row_build_tree(row, datapoints, fh):
     tree_dict = build_tree_dict_from_trace(row["chain_num"], row["iter"], fh, datapoints)
-    return Tree.from_dict(tree_dict)
+    tree = Tree.from_dict(tree_dict)
+    tree.relabel_nodes()
+    return tree
 
 
 def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
@@ -112,6 +116,14 @@ def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
 
 def _get_node_data_dict(datapoints, tree_grp):
     node_data_grp = tree_grp["node_data"]
+    str_keys_grp = node_data_grp["str_nodes"]
+    int_keys_grp = node_data_grp["int_nodes"]
+    node_data_dict = _load_node_sub_dict(datapoints, str_keys_grp)
+    node_data_dict.update(_load_node_sub_dict(datapoints, int_keys_grp))
+    return node_data_dict
+
+
+def _load_node_sub_dict(datapoints, node_data_grp):
     node_data_dict = dict()
     val_dset = node_data_grp["values"][()]
     node_keys = _load_dataset_string_or_numerical(node_data_grp["keys"])

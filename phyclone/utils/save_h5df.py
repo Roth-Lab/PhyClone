@@ -111,20 +111,38 @@ def store_tree_dict(curr_tree_grp, iter_dict):
 def store_node_data(subtree_grp, tree_dict):
     node_data_grp = subtree_grp.create_group("node_data")
     node_data = tree_dict["node_data"]
-    num_nodes = len(node_data)
-    node_data_grp.create_dataset("keys", data=list(node_data.keys()))
-    val_dset = node_data_grp.create_dataset(
+
+    int_nodes_keys, int_nodes_values, str_nodes_keys, str_nodes_values = _split_dict_by_key_type(node_data)
+    str_nodes_grp = node_data_grp.create_group("str_nodes")
+    int_nodes_grp = node_data_grp.create_group("int_nodes")
+
+    _store_node_data_typed_dict(h5py.string_dtype(), str_nodes_grp, str_nodes_keys, str_nodes_values)
+    _store_node_data_typed_dict(None, int_nodes_grp, int_nodes_keys, int_nodes_values)
+
+
+def _store_node_data_typed_dict(dtype_to_use, dict_grp, dict_keys, dict_values):
+    num_vals = len(dict_keys)
+    dict_grp.create_dataset("keys", data=dict_keys, dtype=dtype_to_use)
+    val_dset = dict_grp.create_dataset(
         "values",
-        shape=(num_nodes,),
+        shape=(num_vals,),
         dtype=h5py.vlen_dtype(np.dtype("int32")),
     )
-    for i, val in enumerate(node_data.values()):
+    for i, val in enumerate(dict_values):
         val_dset[i] = list(map(lambda x: x.idx, val))
 
 
 def store_dict_mixed_type_keys(dict_to_store, parent_grp):
     str_nodes_grp = parent_grp.create_group("str_nodes")
     int_nodes_grp = parent_grp.create_group("int_nodes")
+    int_nodes_keys, int_nodes_values, str_nodes_keys, str_nodes_values = _split_dict_by_key_type(dict_to_store)
+    str_nodes_grp.create_dataset("keys", data=str_nodes_keys, dtype=h5py.string_dtype())
+    str_nodes_grp.create_dataset("values", data=str_nodes_values)
+    int_nodes_grp.create_dataset("keys", data=int_nodes_keys)
+    int_nodes_grp.create_dataset("values", data=int_nodes_values)
+
+
+def _split_dict_by_key_type(dict_to_store):
     str_nodes_keys = []
     int_nodes_keys = []
     str_nodes_values = []
@@ -136,7 +154,4 @@ def store_dict_mixed_type_keys(dict_to_store, parent_grp):
         else:
             int_nodes_keys.append(key)
             int_nodes_values.append(val)
-    str_nodes_grp.create_dataset("keys", data=str_nodes_keys, dtype=h5py.string_dtype())
-    str_nodes_grp.create_dataset("values", data=str_nodes_values)
-    int_nodes_grp.create_dataset("keys", data=int_nodes_keys)
-    int_nodes_grp.create_dataset("values", data=int_nodes_values)
+    return int_nodes_keys, int_nodes_values, str_nodes_keys, str_nodes_values
