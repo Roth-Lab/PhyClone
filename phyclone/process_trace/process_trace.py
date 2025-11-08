@@ -27,6 +27,7 @@ def write_map_results(
     in_file,
     out_table_file,
     out_tree_file,
+    out_sample_prev_table,
     map_type="joint-likelihood",
 ):
 
@@ -47,15 +48,16 @@ def write_map_results(
 
     clusters = load_clusters_df_from_trace(in_file)
     samples = load_samples_from_trace(in_file)
-    table = get_clone_table(datapoints, samples, tree, clusters=clusters)
+    table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
-    _create_results_output_files(out_table_file, out_tree_file, table, tree)
+    _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
 
 
 def write_consensus_results(
     in_file,
     out_table_file,
     out_tree_file,
+    out_sample_prev_table,
     consensus_threshold=0.5,
     weight_type="joint-likelihood",
 ):
@@ -100,10 +102,10 @@ def write_consensus_results(
     clusters = load_clusters_df_from_trace(in_file)
     samples = load_samples_from_trace(in_file)
 
-    table = get_clone_table(datapoints, samples, tree, clusters=clusters)
-    table = pd.DataFrame(table)
+    table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
+    # table = pd.DataFrame(table)
 
-    _create_results_output_files(out_table_file, out_tree_file, table, tree)
+    _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
 
 
 def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
@@ -157,6 +159,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
 def create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, data):
     filename_template = "{}_results_table.tsv"
     nwk_template = "{}.nwk"
+    sample_prevs_template = "{}_sample_prevs_table.tsv"
     clusters = load_clusters_df_from_trace(in_file)
     samples = load_samples_from_trace(in_file)
     with tarfile.open(topologies_archive, "w:gz") as archive:
@@ -167,7 +170,7 @@ def create_topologies_archive(topology_df, in_file, top_trees, topologies_archiv
                 topology_rank = int(topology_id[2:])
                 if topology_rank >= top_trees:
                     continue
-                table = get_clone_table(data, samples, tree, clusters=clusters)
+                table, sample_prevs_df = get_clone_table(data, samples, tree, clusters=clusters)
                 filename = filename_template.format(topology_id)
                 filepath = os.path.join(tmp_dir, filename)
                 table.to_csv(filepath, index=False, sep="\t")
@@ -176,6 +179,10 @@ def create_topologies_archive(topology_df, in_file, top_trees, topologies_archiv
                 nwk_path = os.path.join(tmp_dir, nwk_filename)
                 print_string_to_file(tree.to_newick_string(), nwk_path)
                 archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
+                sample_prevs_filename = sample_prevs_template.format(topology_id)
+                sample_prevs_filepath = os.path.join(tmp_dir, sample_prevs_filename)
+                sample_prevs_df.to_csv(sample_prevs_filepath, index=False, sep="\t")
+                archive.add(sample_prevs_filepath, arcname=str(os.path.join(topology_id, sample_prevs_filename)))
 
 
 def create_topology_dataframe(chain_trace_df):
@@ -193,9 +200,10 @@ def create_topology_dataframe(chain_trace_df):
     return df
 
 
-def _create_results_output_files(out_table_file, out_tree_file, table, tree):
+def _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df):
     table.to_csv(out_table_file, index=False, sep="\t")
     print_string_to_file(tree.to_newick_string(), out_tree_file)
+    sample_prevs_df.to_csv(out_sample_prev_table, index=False, sep="\t")
 
 
 def get_tree_from_consensus_graph(data, graph):
@@ -269,11 +277,11 @@ def get_clone_table(data, samples, tree, clusters=None):
 
     sample_prevs_df = pd.concat(prev_df_list, ignore_index=True)
 
+    sample_prevs_df.sort_values(by="sample_id", inplace=True)
+
     res_df = pd.merge(labels, sample_prevs_df, on="clone_id")
 
-    res_df.sort_values(by=["clone_id", "cluster_id", "mutation_id"], ignore_index=True, inplace=True)
-
-    return res_df
+    return res_df, sample_prevs_df
 
 
 def get_labels_table(data, tree, clusters=None):

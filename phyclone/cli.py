@@ -21,7 +21,7 @@ from phyclone.run import run as run_prog
     "--in-file",
     required=True,
     type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
@@ -34,6 +34,14 @@ from phyclone.run import run as run_prog
     "--out-tree-file",
     required=True,
     type=click.Path(resolve_path=True, writable=True),
+    help="""Path to where tree will be written in minimal newick format.""",
+)
+@click.option(
+    "-s",
+    "--out-sample-prev-table",
+    required=True,
+    type=click.Path(resolve_path=True, writable=True),
+    help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
     "--consensus-threshold",
@@ -66,7 +74,7 @@ def consensus(**kwargs):
     "--in-file",
     required=True,
     type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
@@ -79,6 +87,14 @@ def consensus(**kwargs):
     "--out-tree-file",
     required=True,
     type=click.Path(resolve_path=True, writable=True),
+    help="""Path to where tree will be written in minimal newick format.""",
+)
+@click.option(
+    "-s",
+    "--out-sample-prev-table",
+    required=True,
+    type=click.Path(resolve_path=True, writable=True),
+    help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
     "--map-type",
@@ -103,7 +119,7 @@ def map(**kwargs):
     "--in-file",
     required=True,
     type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
@@ -149,7 +165,7 @@ def topology_report(**kwargs):
     "--out-file",
     required=True,
     type=click.Path(resolve_path=True, writable=True),
-    help="""Path to where trace file will be written in gzip compressed pickle format.""",
+    help="""Path to where trace file will be written in HDF5 format.""",
 )
 @click.option(
     "-b",
