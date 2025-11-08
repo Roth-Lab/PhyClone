@@ -127,7 +127,7 @@ def _setup_cluster_df(
     if "outlier_prob" not in cluster_df.columns:
         cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
         if assign_loss_prob:
-            column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
+            column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns and "sample_id" in cluster_df.columns
             if column_checks:
                 cluster_prob_status_msg += "Assigning from data.\n"
                 print(cluster_prob_status_msg)

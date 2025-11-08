@@ -42,7 +42,6 @@
   },
   "required": [
     "mutation_id",
-    "sample_id",
     "cluster_id"
   ]
 }
