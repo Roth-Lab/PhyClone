@@ -193,7 +193,7 @@ class TreeHolderBuilder(object):
             "graph": self._graph.edge_list(),
             "node_idx": self._node_idx.copy(),
             "node_idx_rev": self._node_idx_rev.copy(),
-            "node_data": self._data.copy(),
+            "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
             "node_last_added_to": self._node_last_added_to,
             "log_prior": self._log_prior,
