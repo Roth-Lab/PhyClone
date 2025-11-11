@@ -2,6 +2,13 @@ import sys
 import numpy as np
 
 from phyclone.utils.math_utils import cached_log_factorial, log_sum_exp_over_dims
+from phyclone.utils.utils import fxn_with_np_array_cache
+
+
+@fxn_with_np_array_cache(maxsize=2046)
+def _cached_log_sum_exp_over_dims(data_log_r):
+    retval = log_sum_exp_over_dims(data_log_r)
+    return retval
 
 
 class FSCRPDistribution(object):
@@ -133,7 +140,7 @@ class TreeJointDistribution(object):
         log_p += self.outlier_prior(tree)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
-            log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
+            log_p += _cached_log_sum_exp_over_dims(tree.data_log_likelihood)
 
         log_p += self.outlier_marginal_prob(tree)
 
@@ -163,7 +170,7 @@ class TreeJointDistribution(object):
         log_p_one += outlier_prior
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
-            log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
+            log_p += _cached_log_sum_exp_over_dims(tree.data_log_likelihood)
             log_p_one += tree.data_log_likelihood[:, -1].sum()
 
         outlier_marginal_prob = self.outlier_marginal_prob(tree)
