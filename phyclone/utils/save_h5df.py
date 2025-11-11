@@ -14,8 +14,8 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
         run_info_grp.attrs["rng_seed"] = str(rng_seed)
 
         clusters_grp = fh.create_group("clusters")
-        clusters_grp.create_dataset("cluster_id", data=minimal_cluster_df["cluster_id"].to_numpy())
-        clusters_grp.create_dataset("mutation_id", data=minimal_cluster_df["mutation_id"].to_numpy())
+        clusters_grp.create_dataset("cluster_id", data=minimal_cluster_df["cluster_id"].to_numpy(), compression="gzip")
+        clusters_grp.create_dataset("mutation_id", data=minimal_cluster_df["mutation_id"].to_numpy(), compression="gzip")
 
         store_datapoints(fh, results)
 
@@ -56,7 +56,7 @@ def store_datapoints(fh, results):
         curr_dp_grp.attrs["outlier_prob"] = datapoint.outlier_prob
         curr_dp_grp.attrs["outlier_prob_not"] = datapoint.outlier_prob_not
         curr_dp_grp.attrs["outlier_marginal_prob"] = datapoint.outlier_marginal_prob
-        curr_dp_grp.create_dataset("value", data=datapoint.value)
+        curr_dp_grp.create_dataset("value", data=datapoint.value, compression="gzip")
 
 
 def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict):
