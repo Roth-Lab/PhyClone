@@ -2,6 +2,7 @@ from phyclone.smc.kernels.base import get_cached_new_tree_adder
 from phyclone.smc.kernels.fully_adapted import _get_cached_full_proposal_dist
 from phyclone.smc.kernels.semi_adapted import _get_cached_semi_proposal_dist
 from phyclone.tree.utils import compute_log_S, _convolve_two_children
+from phyclone.tree.distributions import _cached_log_sum_exp_over_dims
 
 
 def clear_proposal_dist_caches():
@@ -17,6 +18,12 @@ def clear_convolution_caches():
 
 def print_cache_info():
     print("\n***********************************************************")
+    print(
+        "_cached_log_sum_exp_over_dims cache info: {}, hit ratio: {}".format(
+            _cached_log_sum_exp_over_dims.cache_info(),
+            _cache_ratio(_cached_log_sum_exp_over_dims.cache_info()),
+        )
+    )
     print(
         "get_cached_new_tree_adder cache info: {}, hit ratio: {}".format(
             get_cached_new_tree_adder.cache_info(),

@@ -5,7 +5,7 @@ from phyclone.utils.math_utils import cached_log_factorial, log_sum_exp_over_dim
 from phyclone.utils.utils import fxn_with_np_array_cache
 
 
-@fxn_with_np_array_cache(maxsize=2046)
+@fxn_with_np_array_cache(maxsize=8192)
 def _cached_log_sum_exp_over_dims(data_log_r):
     retval = log_sum_exp_over_dims(data_log_r)
     return retval
