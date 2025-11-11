@@ -60,9 +60,9 @@ class FSCRPDistribution(object):
         log_p += sum(cached_log_factorial(len(v) - 1) for k, v in tree_node_data.items() if k != outlier_node_name)
         return log_p, num_nodes
 
-    def log_p_one(self, tree):
-        # log_p, num_nodes = self.compute_CRP_prior(tree)
-        log_p = self.log_p(tree)
+    def log_p_one(self, tree, log_p=None):
+        if log_p is None:
+            log_p = self.log_p(tree)
 
         tree_roots = tree.roots
 
@@ -76,8 +76,6 @@ class FSCRPDistribution(object):
             num_ways += num_sub_trees
 
         log_p += -num_ways + r_term
-
-        # log_p -= tree.multiplicity
 
         return log_p
 
@@ -155,8 +153,32 @@ class TreeJointDistribution(object):
 
         return log_p_one
 
+    def compute_log_p_and_log_p_one(self, tree):
+        log_p = self.prior.log_p(tree)
+        log_p_one = self.prior.log_p_one(tree, log_p)
+
+        outlier_prior = self.outlier_prior(tree)
+
+        log_p += outlier_prior
+        log_p_one += outlier_prior
+
+        if tree.get_number_of_children(tree.root_node_name) > 0:
+            log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
+            log_p_one += tree.data_log_likelihood[:, -1].sum()
+
+        outlier_marginal_prob = self.outlier_marginal_prob(tree)
+
+        log_p += outlier_marginal_prob
+        log_p_one += outlier_marginal_prob
+
+        return log_p, log_p_one
+
+
     def outlier_marginal_prob(self, tree):
-        outliers_marginal_prob = sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        if self.outlier_modelling_active:
+            outliers_marginal_prob = sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        else:
+            outliers_marginal_prob = 0.0
         return outliers_marginal_prob
 
     def outlier_prior(self, tree):

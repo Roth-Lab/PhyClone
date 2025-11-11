@@ -62,10 +62,10 @@ class TreeHolder(object):
         else:
             self.log_pdf = self._perm_dist.log_pdf(tree)
 
-        # self.log_p, self.log_p_one = self._tree_dist.compute_both_log_p_and_log_p_one(tree)
+        # self.log_p = self._tree_dist.log_p(tree)
+        # self.log_p_one = self._tree_dist.log_p_one(tree)
 
-        self.log_p = self._tree_dist.log_p(tree)
-        self.log_p_one = self._tree_dist.log_p_one(tree)
+        self.log_p, self.log_p_one = self._tree_dist.compute_log_p_and_log_p_one(tree)
 
         self.tree_roots = np.asarray(tree.roots)
         self.tree_nodes = tree.nodes
