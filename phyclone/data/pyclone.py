@@ -1,6 +1,7 @@
 from collections import OrderedDict, defaultdict
 from functools import lru_cache
-from math import ulp
+# from math import ulp
+import sys
 
 import numba
 import numpy as np
@@ -175,7 +176,7 @@ def _get_raw_cluster_df(cluster_file, data_df):
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
-    eps = ulp(0.0)
+    eps = sys.float_info.min
     if outlier_prob == 0:
         return np.log(eps) * cluster_size, np.log(1.0)
     else:

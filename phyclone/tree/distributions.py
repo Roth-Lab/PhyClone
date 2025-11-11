@@ -1,5 +1,5 @@
-from math import ulp
-
+# from math import ulp
+import sys
 import numpy as np
 
 from phyclone.utils.math_utils import cached_log_factorial, log_sum_exp_over_dims
@@ -13,7 +13,7 @@ class FSCRPDistribution(object):
     def __init__(self, alpha, c_const=1000):
         self.alpha = alpha
         self.c_const = c_const
-        self._smallest_alpha = ulp(0.0)
+        self._smallest_alpha = sys.float_info.min
 
     def __eq__(self, other):
         alpha_check = self.alpha == other.alpha

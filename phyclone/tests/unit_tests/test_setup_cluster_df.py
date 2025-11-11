@@ -1,8 +1,8 @@
 import os
 import tempfile
 import unittest
-from math import ulp
 from unittest.mock import MagicMock
+import sys
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ from phyclone.data.pyclone import (
     load_data,
 )
 
-EPS = ulp(0.0)
+EPS = sys.float_info.min
 LOG_EPS = np.log(EPS)
 
 
