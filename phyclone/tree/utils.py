@@ -20,7 +20,9 @@ def compute_log_S(child_log_R_values):
     log_S = np.empty_like(log_D)
     log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
 
-    return np.ascontiguousarray(log_S)
+    retval = np.ascontiguousarray(log_S)
+    retval.setflags(write=False)
+    return retval
 
 
 def compute_log_D(child_log_R_values):
@@ -60,6 +62,7 @@ def _convolve_two_children(child_1, child_2):
         res_arr = np_conv_dims(child_1, child_2)
     else:
         res_arr = np.ascontiguousarray(fft_convolve_two_children(child_1, child_2))
+    res_arr.setflags(write=False)
     return res_arr
 
 

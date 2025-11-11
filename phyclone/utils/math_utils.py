@@ -47,7 +47,7 @@ def exp_normalize(log_p):
     return p, log_norm
 
 
-@numba.jit("float64(float64[:])", nopython=True, fastmath=True)
+@numba.jit("float64(float64[:])", nopython=True, fastmath=False)
 def log_sum_exp(log_X):
     """Given a list of values in log space, log_X. Compute exp(log_X[0] + log_X[1] + ... log_X[n])
 
@@ -65,7 +65,7 @@ def log_sum_exp(log_X):
     return np.log(total) + max_exp
 
 
-@numba.jit("float64(float64[:, ::1])", nopython=True, fastmath=True)
+@numba.jit("float64(float64[:, ::1])", nopython=True, fastmath=False)
 def log_sum_exp_over_dims(log_x_arr):
 
     sum_total = 0.0
