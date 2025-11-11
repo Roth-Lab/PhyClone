@@ -92,7 +92,8 @@ def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
     chain_name = chain_template.format(chain)
     tree_template = "tree_{}"
     tree_name = tree_template.format(iteration)
-    tree_grp = fh["trace"]["chains"][chain_name]["trees"][tree_name]["tree"]
+    tree_grp = fh["trace"]["chains"][chain_name]["trees"][tree_name].attrs["tree_group"]
+    tree_grp = fh[tree_grp]
 
     node_idx_dict = _get_node_idx_dict(tree_grp)
 

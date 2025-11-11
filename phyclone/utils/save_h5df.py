@@ -30,6 +30,7 @@ def store_trace(fh, num_chains, results):
     chains_grp = trace_grp.create_group("chains")
     chain_template = "chain_{}"
     tree_template = "tree_{}"
+    tree_obj_dict = dict()
     for chain, chain_results in results.items():
         chain_trace = chain_results["trace"]
         num_iters = len(chain_trace)
@@ -38,7 +39,7 @@ def store_trace(fh, num_chains, results):
         curr_chain_grp.attrs["chain_idx"] = chain_num
         curr_chain_grp.attrs["num_iters"] = num_iters
 
-        store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template)
+        store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict)
 
 
 def store_datapoints(fh, results):
@@ -58,7 +59,7 @@ def store_datapoints(fh, results):
         curr_dp_grp.create_dataset("value", data=datapoint.value)
 
 
-def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):
+def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict):
     iters = np.empty(num_iters, dtype=np.int32)
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
@@ -82,7 +83,8 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):
         log_p_one[i] = iter_dict["log_p_one"]
         tree_hash[i] = tree_hash_val
 
-        store_tree_dict(curr_tree_grp, iter_dict)
+        tree_group_ref = store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict)
+        curr_tree_grp.attrs["tree_group"] = tree_group_ref
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
     chain_trace_data_grp.create_dataset("iter", data=iters)
     chain_trace_data_grp.create_dataset("alpha", data=alpha)
@@ -90,22 +92,27 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template):
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash)
 
 
-def store_tree_dict(curr_tree_grp, iter_dict):
-    subtree_grp = curr_tree_grp.create_group("tree")
-    tree_dict = iter_dict["tree"]
-    subtree_grp.create_dataset("graph", data=tree_dict["graph"])
-    node_idx_grp = subtree_grp.create_group("node_idx")
-    store_dict_mixed_type_keys(tree_dict["node_idx"], node_idx_grp)
-    store_node_data(subtree_grp, tree_dict)
-    subtree_grp.attrs["grid_size"] = tree_dict["grid_size"]
-    node_last_added_to = tree_dict["node_last_added_to"]
-    if node_last_added_to is None:
-        subtree_grp.attrs["is_node_last_added_to_null"] = True
-        subtree_grp.attrs["node_last_added_to"] = "None"
+def store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict):
+    if tree_hash_val in tree_obj_dict:
+        return tree_obj_dict[tree_hash_val]
     else:
-        subtree_grp.attrs["is_node_last_added_to_null"] = False
-        subtree_grp.attrs["node_last_added_to"] = node_last_added_to
-    subtree_grp.attrs["log_prior"] = tree_dict["log_prior"]
+        subtree_grp = curr_tree_grp.create_group("tree")
+        tree_obj_dict[tree_hash_val] = subtree_grp.ref
+        tree_dict = iter_dict["tree"]
+        subtree_grp.create_dataset("graph", data=tree_dict["graph"])
+        node_idx_grp = subtree_grp.create_group("node_idx")
+        store_dict_mixed_type_keys(tree_dict["node_idx"], node_idx_grp)
+        store_node_data(subtree_grp, tree_dict)
+        subtree_grp.attrs["grid_size"] = tree_dict["grid_size"]
+        node_last_added_to = tree_dict["node_last_added_to"]
+        if node_last_added_to is None:
+            subtree_grp.attrs["is_node_last_added_to_null"] = True
+            subtree_grp.attrs["node_last_added_to"] = "None"
+        else:
+            subtree_grp.attrs["is_node_last_added_to_null"] = False
+            subtree_grp.attrs["node_last_added_to"] = node_last_added_to
+        subtree_grp.attrs["log_prior"] = tree_dict["log_prior"]
+        return subtree_grp.ref
 
 
 def store_node_data(subtree_grp, tree_dict):
