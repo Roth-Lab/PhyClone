@@ -59,6 +59,7 @@ class NumpyArrayListHasher:
     def __init__(self, x) -> None:
         self.values = x
         self.h = NumpyArrayListHasher._create_hashable(x)
+        self._hash_val = hash(self.h)
 
     @staticmethod
     def _create_hashable(list_of_np_arrays):
@@ -67,7 +68,7 @@ class NumpyArrayListHasher:
         return ret
 
     def __hash__(self) -> int:
-        return hash(self.h)
+        return self._hash_val
 
     def __eq__(self, __value: object) -> bool:
         return __value.h == self.h
@@ -101,10 +102,12 @@ class NumpyTwoArraysHasher:
     def __init__(self, arr_1, arr_2) -> None:
         self.input_1 = arr_1
         self.input_2 = arr_2
-        self.h = frozenset([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)])
+        # self.h = frozenset([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)])
+        self.h = tuple(sorted([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)]))
+        self._hash_val = hash(self.h)
 
     def __hash__(self) -> int:
-        return hash(self.h)
+        return self._hash_val
 
     def __eq__(self, __value: object) -> bool:
         return __value.h == self.h
