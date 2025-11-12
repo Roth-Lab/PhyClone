@@ -34,6 +34,8 @@ def compute_log_D(child_log_R_values):
     if num_children == 1:
         return child_log_R_values[0]
 
+    child_log_R_values = np.ascontiguousarray(child_log_R_values)
+
     all_maxes = np.max(child_log_R_values, axis=-1, keepdims=True)
     normed_children = np.empty_like(child_log_R_values, order="C")
 

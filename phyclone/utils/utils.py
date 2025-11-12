@@ -86,7 +86,7 @@ def list_of_np_cache(*args, **kwargs):
 
         @lru_cache(*args, **kwargs)
         def cached_wrapper(hashable_set, *args, **kwargs):
-            array = np.array(hashable_set.values, order="C")
+            array = hashable_set.values
             hashable_set.clear_inputs()
             return function(array, *args, **kwargs)
 
