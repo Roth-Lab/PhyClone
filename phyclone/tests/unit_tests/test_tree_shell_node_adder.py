@@ -303,8 +303,10 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built_roots = expected_tree.roots
 
+        root_clade_hash = {rt: hash(expected_tree.get_node_clade(rt)) for rt in actual_tree_built_roots}
+
         actual_tree_builder = tree_shell.create_tree_holder_with_new_node(
-            children=[actual_tree_built_roots[0]], datapoint=data[-1]
+            children=[root_clade_hash[actual_tree_built_roots[0]]], datapoint=data[-1]
         )
 
         actual_tree_holder = actual_tree_builder.build()
@@ -329,8 +331,10 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built_roots = actual_tree_built.roots
 
+        root_clade_hash = {rt:hash(actual_tree_built.get_node_clade(rt)) for rt in actual_tree_built_roots}
+
         actual_tree_builder = tree_shell.create_tree_holder_with_datapoint_added_to_node(
-            actual_tree_built_roots[0], datapoint=data[-1]
+            root_clade_hash[actual_tree_built_roots[0]], datapoint=data[-1]
         )
 
         self.assertEqual(actual_tree_builder.multiplicity, actual_tree_built.multiplicity)

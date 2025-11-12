@@ -12,6 +12,17 @@ def clear_proposal_dist_caches():
     _get_cached_full_proposal_dist.cache_clear()
 
 
+def clear_all_caches():
+    get_cached_dp_added_to_outliers_builder.cache_clear()
+    get_cached_dp_added_to_node_builder.cache_clear()
+    get_cached_new_tree_adder.cache_clear()
+    get_cached_built_tree_holder.cache_clear()
+    _get_cached_semi_proposal_dist.cache_clear()
+    _get_cached_full_proposal_dist.cache_clear()
+    compute_log_S.cache_clear()
+    _convolve_two_children.cache_clear()
+
+
 def clear_convolution_caches():
     compute_log_S.cache_clear()
     _convolve_two_children.cache_clear()
