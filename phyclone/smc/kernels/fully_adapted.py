@@ -1,7 +1,7 @@
 from functools import lru_cache
 from itertools import combinations
 
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder, get_cached_built_tree_holder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 
 
@@ -59,7 +59,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         trees = []
 
         num_roots = self._num_roots
-        tree_roots = self._tree_roots
+        tree_roots = self._hashed_roots
 
         for r in range(0, num_roots + 1):
             for children in combinations(tree_roots, r):
@@ -70,7 +70,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
                     self.data_point,
                     frozen_children,
                 )
-                trees.append(tree_container)
+                trees.append(get_cached_built_tree_holder(tree_container))
 
         return trees
 

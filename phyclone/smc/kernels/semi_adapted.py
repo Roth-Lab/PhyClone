@@ -2,7 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder, get_cached_built_tree_holder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.utils.math_utils import cached_log_binomial_coefficient
 
@@ -93,13 +93,22 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         if self._empty_tree():
             self.parent_is_empty_tree = True
 
-            tree_holder = get_cached_new_tree_adder(
+            # tree_holder = get_cached_new_tree_adder(
+            #     self._tree_shell_node_adder,
+            #     self.data_point,
+            #     frozenset([]),
+            # )
+            #
+            # trees.append(tree_holder)
+            tree_holder_builder = get_cached_new_tree_adder(
                 self._tree_shell_node_adder,
                 self.data_point,
                 frozenset([]),
             )
 
-            trees.append(tree_holder)
+            # tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node([],
+            #                                                                                    self.data_point)
+            trees.append(get_cached_built_tree_holder(tree_holder_builder))
         else:
             self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
@@ -120,7 +129,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         return tree
 
     def _propose_new_node(self):
-        roots = self._tree_roots
+        roots = self._hashed_roots
         num_roots = self._num_roots
 
         num_children = self._rng.integers(0, num_roots + 1)
@@ -132,15 +141,23 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         else:
             children = self._rng.choice(roots, num_children, replace=False)
 
+        # frozen_children = frozenset(children)
+        #
+        # tree_container = get_cached_new_tree_adder(
+        #     self._tree_shell_node_adder,
+        #     self.data_point,
+        #     frozen_children,
+        # )
+        # tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point)
         frozen_children = frozenset(children)
 
-        tree_container = get_cached_new_tree_adder(
+        tree_holder_builder = get_cached_new_tree_adder(
             self._tree_shell_node_adder,
             self.data_point,
             frozen_children,
         )
 
-        return tree_container
+        return get_cached_built_tree_holder(tree_holder_builder)
 
 
 class SemiAdaptedKernel(Kernel):

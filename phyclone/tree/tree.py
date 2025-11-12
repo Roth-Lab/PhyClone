@@ -109,6 +109,14 @@ class Tree(object):
         vis_clades = frozenset(visitor.clades)
         return vis_clades
 
+    def get_node_clade(self, node) -> frozenset:
+        visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, node)
+        root_idx = self._node_indices[node]
+        rx.dfs_search(self._graph, [root_idx], visitor)
+        visitor.clades.add(frozenset({dp.idx for dp in self._data[node]}))
+        vis_clades = frozenset(visitor.clades)
+        return vis_clades
+
     @classmethod
     def get_single_node_tree(cls, data: list[DataPoint]) -> Tree:
         """Load a tree with all data points assigned single node.

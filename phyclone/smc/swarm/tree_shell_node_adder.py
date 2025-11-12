@@ -113,6 +113,9 @@ class TreeHolderBuilder(object):
         hash_check = hash(self) == hash(other)
         return hash_check
 
+    def set_hash_val(self):
+        self._hash_val = hash((self.get_clades(), frozenset(self.outliers)))
+
     def with_graph(self, graph):
         self._graph = graph
         self.multiplicity = graph
@@ -167,7 +170,7 @@ class TreeHolderBuilder(object):
         return self
 
     def build(self) -> TreeHolder:
-        self._hash_val = hash((self.get_clades(), frozenset(self.outliers)))
+
         ret = TreeHolder(self, self._tree_dist, None)
         ret.log_pdf = self._log_pdf
         return ret
@@ -286,6 +289,7 @@ class TreeShellNodeAdder(object):
         "perm_dist",
         "_perm_dist_dict",
         "_num_datapoints",
+        "_root_clade_dict",
     )
 
     def __init__(self, tree: Tree, tree_dist: TreeJointDistribution, perm_dist: RootPermutationDistribution = None):
@@ -305,6 +309,7 @@ class TreeShellNodeAdder(object):
         self.tree_dist = tree_dist
         self._perm_dist_dict = None
         self._num_datapoints = 0
+        self._root_clade_dict = {hash(tree.get_node_clade(rt)): rt for rt in self._root_nodes_dict.keys()}
 
         if perm_dist:
             self._num_datapoints = self._tree_info.get_num_datapoints()
@@ -362,10 +367,12 @@ class TreeShellNodeAdder(object):
 
         self._compute_new_log_pdf_added_outlier(self._root_node_names_set, tree_holder_builder)
 
+        tree_holder_builder.set_hash_val()
+
         return tree_holder_builder
 
     def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
-
+        node_id = self._root_clade_dict[node_id]
         num_children = self.roots_num_children[node_id]
         tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
 
@@ -398,6 +405,8 @@ class TreeShellNodeAdder(object):
         tree_holder_builder.with_roots(list(self._root_node_names_set))
 
         self._compute_new_log_pdf_added_datapoint(node_id, self._root_node_names_set, tree_holder_builder, node_data)
+
+        tree_holder_builder.set_hash_val()
 
         return tree_holder_builder
 
@@ -438,6 +447,8 @@ class TreeShellNodeAdder(object):
         else:
             children = set(children)
 
+        children = {self._root_clade_dict[c] for c in children}
+
         node_id = self._next_node_id
 
         num_children = len(children)
@@ -471,6 +482,8 @@ class TreeShellNodeAdder(object):
         tree_holder_builder.with_roots(roots_list)
 
         self._compute_new_log_pdf_new_node(children, node_id, roots_list, tree_holder_builder)
+
+        tree_holder_builder.set_hash_val()
 
         return tree_holder_builder
 
