@@ -4,7 +4,7 @@ from functools import wraps, lru_cache
 from itertools import count
 
 import numpy as np
-from xxhash import xxh3_64_hexdigest
+from xxhash import xxh3_128_hexdigest
 
 
 def get_iterator_length(iterable):
@@ -63,7 +63,7 @@ class NumpyArrayListHasher:
 
     @staticmethod
     def _create_hashable(list_of_np_arrays):
-        hashable = sorted(xxh3_64_hexdigest(arr) for arr in list_of_np_arrays)
+        hashable = sorted(xxh3_128_hexdigest(arr) for arr in list_of_np_arrays)
         ret = tuple(hashable)
         return ret
 
@@ -103,7 +103,7 @@ class NumpyTwoArraysHasher:
         self.input_1 = arr_1
         self.input_2 = arr_2
         # self.h = frozenset([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)])
-        self.h = tuple(sorted([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)]))
+        self.h = tuple(sorted([xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2)]))
         self._hash_val = hash(self.h)
 
     def __hash__(self) -> int:
@@ -142,7 +142,7 @@ def two_np_arr_cache(*args, **kwargs):
 class NumpyArrayHasher:
     def __init__(self, arr_1) -> None:
         self.input = arr_1
-        self.h = xxh3_64_hexdigest(arr_1)
+        self.h = xxh3_128_hexdigest(arr_1)
 
     def __hash__(self) -> int:
         return hash(self.h)
