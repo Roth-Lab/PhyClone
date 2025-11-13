@@ -44,9 +44,29 @@ class TreeHolder(object):
     def __eq__(self, other):
         return hash(self) == hash(other)
 
+    def __copy__(self):
+        return self.copy()
+
+    # def copy(self) -> TreeHolder:
+    #     return TreeHolder(self.tree, self._tree_dist, self._perm_dist)
+
     def copy(self) -> TreeHolder:
-        return TreeHolder(self.tree, self._tree_dist, self._perm_dist)
-        # TODO: re-write this? building tree unnecessarily here
+        cls = self.__class__
+        new = cls.__new__(cls)
+        new._tree_dist = self._tree_dist
+        new.log_p = self.log_p
+        new._hash_val = self._hash_val
+        new._tree = self._tree.copy()
+        new.log_pdf = self.log_pdf
+        new.log_p_one = self.log_p_one
+        new._perm_dist = self._perm_dist
+        new.tree_nodes = list(self.tree_nodes)
+        new.tree_roots = self.tree_roots.copy()
+        new.labels = self.labels.copy()
+        new.node_last_added_to = self.node_last_added_to
+        new.num_children_on_node_that_matters = self.num_children_on_node_that_matters
+        new.outlier_node_name = self.outlier_node_name
+        return new
 
     @property
     def tree(self):
