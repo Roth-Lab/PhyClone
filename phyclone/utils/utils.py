@@ -59,6 +59,7 @@ class NumpyArrayListHasher:
     def __init__(self, x) -> None:
         self.values = x
         self.h = self._create_hashable(x)
+        self._hash_val = hash(self.h)
 
     def _create_hashable(self, list_of_np_arrays):
         if len(list_of_np_arrays) <= 1:
@@ -72,7 +73,7 @@ class NumpyArrayListHasher:
         return ret
 
     def __hash__(self) -> int:
-        return hash(self.h)
+        return self._hash_val
 
     def __eq__(self, __value: object) -> bool:
         return __value.h == self.h
