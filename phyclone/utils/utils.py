@@ -58,17 +58,21 @@ class Timer:
 class NumpyArrayListHasher:
     def __init__(self, x) -> None:
         self.values = x
-        self.h = NumpyArrayListHasher._create_hashable(x)
-        self._hash_val = hash(self.h)
+        self.h = self._create_hashable(x)
 
-    @staticmethod
-    def _create_hashable(list_of_np_arrays):
-        hashable = sorted(xxh3_128_hexdigest(arr) for arr in list_of_np_arrays)
-        ret = tuple(hashable)
+    def _create_hashable(self, list_of_np_arrays):
+        if len(list_of_np_arrays) <= 1:
+            hashable = sorted(xxh3_128_hexdigest(arr) for arr in list_of_np_arrays)
+            ret = tuple(hashable)
+        else:
+            hashable_dict = {xxh3_128_hexdigest(arr):arr for arr in list_of_np_arrays}
+            hashable = sorted(hashable_dict.keys())
+            ret = tuple(hashable)
+            self.values = [hashable_dict[hash_key] for hash_key in hashable]
         return ret
 
     def __hash__(self) -> int:
-        return self._hash_val
+        return hash(self.h)
 
     def __eq__(self, __value: object) -> bool:
         return __value.h == self.h
@@ -102,7 +106,6 @@ class NumpyTwoArraysHasher:
     def __init__(self, arr_1, arr_2) -> None:
         self.input_1 = arr_1
         self.input_2 = arr_2
-        # self.h = frozenset([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)])
         self.h = tuple(sorted([xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2)]))
         self._hash_val = hash(self.h)
 
