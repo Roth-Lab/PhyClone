@@ -311,6 +311,10 @@ class TreeShellNodeAdder(object):
         self._num_datapoints = 0
         self._root_clade_dict = {hash(tree.get_node_clade(rt)): rt for rt in self._root_nodes_dict.keys()}
 
+        for subroot in self._root_nodes_dict.values():
+            subroot.make_internal_arrays_read_only()
+        self._dummy_root_obj.make_internal_arrays_read_only()
+
         if perm_dist:
             self._num_datapoints = self._tree_info.get_num_datapoints()
             self._perm_dist_dict = self._precompute_subroot_log_counts(tree)

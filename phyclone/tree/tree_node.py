@@ -68,6 +68,10 @@ class TreeNode(object):
 
         np.add(log_p, log_s, out=log_r, order="C")
 
+    def make_internal_arrays_read_only(self):
+        self.log_p.setflags(write=False)
+        self.log_r.setflags(write=False)
+
     def copy(self) -> TreeNode:
         return self.__copy__()
 
