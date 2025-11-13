@@ -70,7 +70,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
                     self.data_point,
                     frozen_children,
                 )
-                trees.append(get_cached_built_tree_holder(tree_container))
+                trees.append(tree_container.build())
 
         return trees
 
