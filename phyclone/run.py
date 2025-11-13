@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.cache import clear_proposal_dist_caches, clear_convolution_caches
+from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
 from phyclone.utils.save_h5df import save_trace_to_h5df
 
 
@@ -49,7 +49,6 @@ def run(
     thin=1,
     num_chains=1,
     subtree_update_prob=0.0,
-    low_loss_prob=0.0001,
     high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
@@ -77,7 +76,7 @@ def run(
     data, samples, minimal_cluster_df = load_data(
         in_file,
         rng_main,
-        low_loss_prob,
+        outlier_prob,
         high_loss_prob,
         assign_loss_prob,
         cluster_file=cluster_file,
@@ -268,7 +267,7 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    clear_convolution_caches()
+    clear_all_caches()
     trace = []
 
     dp_sampler = samplers.dp_sampler

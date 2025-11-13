@@ -335,15 +335,6 @@ def topology_report(**kwargs):
     "Note: This option is incompatible with --assign-loss-prob",
 )
 @click.option(
-    "--low-loss-prob",
-    default=0.0001,
-    type=click.FloatRange(0.0001, 1.0, clamp=True),
-    show_default=True,
-    help="""Lower loss probability setting. 
-    Used when allowing PhyClone to assign loss prior probability from cluster data.
-    Unless combined with the --assign-loss-prob option and a cluster input file, this does nothing.""",
-)
-@click.option(
     "--high-loss-prob",
     default=0.4,
     type=click.FloatRange(0.0001, 1.0, clamp=True),
