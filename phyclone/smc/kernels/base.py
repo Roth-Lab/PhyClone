@@ -198,13 +198,6 @@ class ProposalDistribution(object):
         self._q_dist = q
 
 
-# @lru_cache(maxsize=4096)
-# def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
-#     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
-#     tree_container = tree_holder_builder.build()
-#
-#     return tree_container
-
 @lru_cache(maxsize=4096)
 def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
@@ -226,7 +219,7 @@ def get_cached_dp_added_to_outliers_builder(tree_shell_node_adder: TreeShellNode
     return tree_holder_builder
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=2048)
 def get_cached_built_tree_holder(tree_holder_builder: TreeHolderBuilder):
     tree_container = tree_holder_builder.build()
     return tree_container
