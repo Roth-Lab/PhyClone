@@ -37,6 +37,7 @@ class TestConvolutionCaching(unittest.TestCase):
 
     def setUp(self) -> None:
         clear_convolution_caches()
+        self.eps = 1e-6
 
     def test_compute_log_S_no_children_no_hits(self):
         child_list = []
@@ -112,6 +113,8 @@ class TestConvolutionCaching(unittest.TestCase):
                 np.testing.assert_allclose(actual, expected)
                 self.assertIsNot(actual, expected)
 
+                self.rng.shuffle(child_list)
+
     def test_compute_log_S_10_children_no_hits(self):
         num_dims = 1000
         num_children = 10
@@ -150,6 +153,7 @@ class TestConvolutionCaching(unittest.TestCase):
 
                 np.testing.assert_allclose(actual, expected)
                 self.assertIsNot(actual, expected)
+                self.rng.shuffle(child_list)
 
     def test_convolve_two_children_1_dim_no_hits(self):
         child_1 = self.rng.random(self.big_grid)
@@ -263,16 +267,19 @@ class TestConvolutionCaching(unittest.TestCase):
         num_dims = 1000
         num_items_in_cache = 10
 
+        shape = (num_dims, self.big_grid)
+
         for i in range(num_items_in_cache):
             with self.subTest(msg="Num items in cache: {}".format(i + 1), items_in_cache=i + 1):
 
-                child_1 = self.rng.random((num_dims, self.big_grid))
-                child_2 = self.rng.random((num_dims, self.big_grid))
+                child_1 = self._create_child_array(shape)
+                child_2 = self._create_child_array(shape)
 
                 actual = _convolve_two_children(child_1, child_2)
                 actual_rev = _convolve_two_children(child_2, child_1)
 
                 expected = np_conv_dims(child_1, child_2)
+                expected_rev = np_conv_dims(child_2, child_1)
 
                 num_hits = _convolve_two_children.cache_info().hits
                 cache_size = _convolve_two_children.cache_info().currsize
@@ -282,9 +289,17 @@ class TestConvolutionCaching(unittest.TestCase):
 
                 np.testing.assert_allclose(actual, expected)
                 np.testing.assert_allclose(actual_rev, actual)
+                np.testing.assert_allclose(actual_rev, expected_rev)
+                np.testing.assert_allclose(expected_rev, actual_rev)
                 self.assertIsNot(actual, expected)
                 self.assertIsNot(actual_rev, expected)
+                self.assertIsNot(actual_rev, expected_rev)
                 self.assertIs(actual, actual_rev)
+
+    def _create_child_array(self, shape):
+        child_arr = self.rng.random(shape)
+        child_arr.setflags(write=False)
+        return child_arr
 
 
 if __name__ == "__main__":
