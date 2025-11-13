@@ -113,7 +113,7 @@ class Tree(object):
         visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, node)
         root_idx = self._node_indices[node]
         rx.dfs_search(self._graph, [root_idx], visitor)
-        visitor.clades.add(frozenset({dp.idx for dp in self._data[node]}))
+        visitor.clades.add(frozenset(visitor.dict_of_sets[node]))
         vis_clades = frozenset(visitor.clades)
         return vis_clades
 
