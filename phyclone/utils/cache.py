@@ -7,7 +7,6 @@ from phyclone.smc.kernels.base import (
 from phyclone.smc.kernels.fully_adapted import _get_cached_full_proposal_dist
 from phyclone.smc.kernels.semi_adapted import _get_cached_semi_proposal_dist
 from phyclone.tree.utils import compute_log_S, _convolve_two_children
-from phyclone.tree.distributions import _cached_log_sum_exp_over_dims
 
 
 def clear_proposal_dist_caches():
@@ -51,12 +50,6 @@ def print_cache_info():
         "get_cached_built_tree_holder cache info: {}, hit ratio: {}".format(
             get_cached_built_tree_holder.cache_info(),
             _cache_ratio(get_cached_built_tree_holder.cache_info()),
-        )
-    )
-    print(
-        "_cached_log_sum_exp_over_dims cache info: {}, hit ratio: {}".format(
-            _cached_log_sum_exp_over_dims.cache_info(),
-            _cache_ratio(_cached_log_sum_exp_over_dims.cache_info()),
         )
     )
     print(
