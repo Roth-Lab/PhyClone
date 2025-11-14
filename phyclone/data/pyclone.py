@@ -1,6 +1,5 @@
 from collections import OrderedDict, defaultdict
 from functools import lru_cache
-# from math import ulp
 import sys
 
 import numba
@@ -17,7 +16,6 @@ from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone
 def load_data(
     file_name,
     rng,
-    low_loss_prob,
     high_loss_prob,
     assign_loss_prob,
     cluster_file=None,
@@ -52,7 +50,6 @@ def load_data(
             cluster_file,
             outlier_prob,
             rng,
-            low_loss_prob,
             high_loss_prob,
             assign_loss_prob,
             min_clust_size,
@@ -117,7 +114,6 @@ def _setup_cluster_df(
     cluster_file,
     outlier_prob,
     rng,
-    low_loss_prob,
     high_loss_prob,
     assign_loss_prob,
     min_clust_size,
@@ -134,22 +130,21 @@ def _setup_cluster_df(
                 and "sample_id" in cluster_df.columns
             )
             if column_checks:
-                cluster_prob_status_msg += "Assigning from data.\n"
+                cluster_prob_status_msg += "Assigning outlier probability from data.\n"
                 print(cluster_prob_status_msg)
-                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob, min_clust_size)
+                _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
             else:
-                cluster_prob_status_msg += "\nMutation chrom position column also not found."
-                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
-                cluster_prob_status_msg += " Setting values to {p}.\n".format(p=low_loss_prob)
+                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data, required columns are missing."
+                cluster_prob_status_msg += "\nSetting values to {p}.\n".format(p=outlier_prob)
                 print(cluster_prob_status_msg)
-                cluster_df.loc[:, "outlier_prob"] = low_loss_prob
+                cluster_df.loc[:, "outlier_prob"] = outlier_prob
         else:
             cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
             print(cluster_prob_status_msg)
             cluster_df.loc[:, "outlier_prob"] = outlier_prob
     else:
-        cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
-        cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
+        cluster_prob_status_msg += "\nCluster level outlier probability column is present."
+        cluster_prob_status_msg += "\nUsing user-supplied outlier probability prior values.\n"
         print(cluster_prob_status_msg)
 
     if not assign_loss_prob:
@@ -335,6 +330,10 @@ def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
 
     log_pi_val = -np.log(len(cn))
     log_pi = np.full(len(cn), log_pi_val)
+
+    cn.setflags(write=False)
+    mu.setflags(write=False)
+    log_pi.setflags(write=False)
 
     return cn, mu, log_pi
 

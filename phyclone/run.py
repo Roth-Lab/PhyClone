@@ -76,7 +76,6 @@ def run(
     data, samples, minimal_cluster_df = load_data(
         in_file,
         rng_main,
-        outlier_prob,
         high_loss_prob,
         assign_loss_prob,
         cluster_file=cluster_file,
