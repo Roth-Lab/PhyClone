@@ -33,14 +33,15 @@ def load_data(
         data = []
         unprocessed_cluster_df = None
 
+        out_prob_is, out_prob_is_not = compute_outlier_prob(outlier_prob, 1)
+
         for idx, (mut, val) in enumerate(pyclone_data.items()):
-            out_probs = compute_outlier_prob(outlier_prob, 1)
             data_point = DataPoint(
                 idx,
                 val.to_likelihood_grid(density, grid_size, precision=precision),
                 name=mut,
-                outlier_prob=out_probs[0],
-                outlier_prob_not=out_probs[1],
+                outlier_prob=out_prob_is,
+                outlier_prob_not=out_prob_is_not,
             )
 
             data.append(data_point)
@@ -276,9 +277,9 @@ def _create_loaded_pyclone_data_dict(df, samples):
 
     data_df = grouped.apply(make_datapoint_from_group, samples=samples, include_groups=False)
 
-    data = data_df.to_dict(into=OrderedDict)
+    # data = data_df.to_dict(into=OrderedDict)
 
-    return data
+    return data_df
 
 
 def make_datapoint_from_group(group, samples):
