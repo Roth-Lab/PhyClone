@@ -6,6 +6,7 @@ import rustworkx as rx
 from phyclone.smc.samplers.base import AbstractSMCSampler
 from phyclone.smc.swarm import TreeHolder, ParticleSwarm
 from phyclone.tree import Tree
+import operator
 
 
 class ConditionalSMCSampler(AbstractSMCSampler):
@@ -72,6 +73,7 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         return constrained_path
 
+
     def _init_swarm(self):
         self.swarm = ParticleSwarm()
 
@@ -79,8 +81,15 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         self.swarm.add_particle(uniform_weight, self.constrained_path[1])
 
-        for _ in range(self.num_particles - 1):
-            self.swarm.add_particle(uniform_weight, self._propose_particle(None))
+        # for _ in range(self.num_particles - 1):
+        #     self.swarm.add_particle(uniform_weight, self._propose_particle(None))
+
+        num_repeats = self.num_particles - 1
+
+        self.swarm.add_particles_from_iterators(
+            repeat(uniform_weight, num_repeats),
+            map(self._propose_particle, repeat(None, num_repeats)),
+        )
 
         for particle in self.swarm.particles:
             assert particle.parent_particle is None
@@ -115,6 +124,7 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
             self.swarm = new_swarm
 
+
     def _update_swarm(self):
         new_swarm = ParticleSwarm()
 
@@ -124,9 +134,14 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         new_swarm.add_particle(parent_log_W + self._get_log_w(particle), particle)
 
-        for parent_log_W, parent_particle in zip(self.swarm.log_weights[1:], self.swarm.particles[1:]):
-            particle = self._propose_particle(parent_particle)
+        # for parent_log_W, parent_particle in zip(self.swarm.log_weights[1:], self.swarm.particles[1:]):
+        #     particle = self._propose_particle(parent_particle)
+        #
+        #     new_swarm.add_particle(parent_log_W + self._get_log_w(particle), particle)
 
-            new_swarm.add_particle(parent_log_W + self._get_log_w(particle), particle)
+        new_particles = list(map(self._propose_particle, self.swarm.particles[1:]))
+        new_weights = map(operator.add, self.swarm.log_weights[1:], map(self._get_log_w, new_particles))
+
+        new_swarm.add_particles_from_iterators(new_weights, new_particles)
 
         self.swarm = new_swarm
