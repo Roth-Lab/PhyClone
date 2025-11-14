@@ -125,7 +125,6 @@ class BaseLoadDataTest(object):
             cluster_df,
             data_df,
             high_loss_prob,
-            low_loss_prob,
             outlier_prob,
             min_clust_size=4,
         ):
@@ -150,7 +149,7 @@ class BaseLoadDataTest(object):
                 )
             return actual_samples, data
 
-        def run_unclustered_load_data(self, assign_loss_prob, data_df, high_loss_prob, low_loss_prob, outlier_prob):
+        def run_unclustered_load_data(self, assign_loss_prob, data_df, high_loss_prob, outlier_prob):
             with tempfile.TemporaryDirectory() as tmp_dir:
                 data_file_path = os.path.join(tmp_dir, "data.tsv")
                 data_df.to_csv(data_file_path, sep="\t", index=False)
@@ -186,9 +185,8 @@ class BaseLoadDataTest(object):
         def test_clustered__no_outliers(self):
             cluster_df = build_standard_cluster_df()
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
-            outlier_prob = 0.0
+            outlier_prob = 0.001
             assign_loss_prob = False
 
             actual_samples, data = self.run_clustered_load_data(
@@ -196,7 +194,6 @@ class BaseLoadDataTest(object):
                 cluster_df,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
@@ -207,19 +204,17 @@ class BaseLoadDataTest(object):
 
         def test_clustered_outlier__prob_col_supplied(self):
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
             outlier_prob = 0.001
             assign_loss_prob = False
             cluster_df = build_standard_cluster_df()
-            emulate_assign_out_prob_output(cluster_df, self.rng, low_loss_prob, high_loss_prob)
+            emulate_assign_out_prob_output(cluster_df, self.rng, outlier_prob, high_loss_prob)
 
             actual_samples, data = self.run_clustered_load_data(
                 assign_loss_prob,
                 cluster_df,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
@@ -230,7 +225,6 @@ class BaseLoadDataTest(object):
         def test_clustered__global_outlier_prior(self):
             cluster_df = build_standard_cluster_df()
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
             outlier_prob = 0.05
             assign_loss_prob = False
@@ -240,7 +234,6 @@ class BaseLoadDataTest(object):
                 cluster_df,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
@@ -252,9 +245,8 @@ class BaseLoadDataTest(object):
         def test_clustered__assign_from_data_no_loss(self):
             cluster_df = build_standard_cluster_df()
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
-            outlier_prob = 0.05
+            outlier_prob = 0.001
             assign_loss_prob = True
 
             actual_samples, data = self.run_clustered_load_data(
@@ -262,21 +254,19 @@ class BaseLoadDataTest(object):
                 cluster_df,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
             expected_samples = sorted(data_df["sample_id"].unique())
-            cluster_df["outlier_prob"] = low_loss_prob
+            cluster_df["outlier_prob"] = outlier_prob
 
             self.run_clustered_test(actual_samples, cluster_df, data, expected_samples)
 
         def test_clustered__assign_from_data_with_loss(self):
             cluster_df = build_lossy_cluster_df()
             data_df = build_lossy_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
-            outlier_prob = 0.05
+            outlier_prob = 0.001
             assign_loss_prob = True
 
             actual_samples, data = self.run_clustered_load_data(
@@ -284,29 +274,26 @@ class BaseLoadDataTest(object):
                 cluster_df,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
                 min_clust_size=1,
             )
 
             expected_samples = sorted(data_df["sample_id"].unique())
-            cluster_df["outlier_prob"] = low_loss_prob
+            cluster_df["outlier_prob"] = outlier_prob
             cluster_df.loc[cluster_df["cluster_id"] == 1, "outlier_prob"] = high_loss_prob
 
             self.run_clustered_test(actual_samples, cluster_df, data, expected_samples)
 
         def test_unclustered__global_outlier_prior(self):
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
-            outlier_prob = 0.05
+            outlier_prob = 0.001
             assign_loss_prob = False
 
             actual_samples, data = self.run_unclustered_load_data(
                 assign_loss_prob,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
@@ -315,7 +302,6 @@ class BaseLoadDataTest(object):
 
         def test_unclustered__no_outliers(self):
             data_df = build_standard_data_df()
-            low_loss_prob = 0.001
             high_loss_prob = 0.4
             outlier_prob = 0.0
             assign_loss_prob = False
@@ -324,7 +310,6 @@ class BaseLoadDataTest(object):
                 assign_loss_prob,
                 data_df,
                 high_loss_prob,
-                low_loss_prob,
                 outlier_prob,
             )
 
