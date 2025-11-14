@@ -1,4 +1,4 @@
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from functools import lru_cache
 import sys
 
@@ -30,21 +30,20 @@ def load_data(
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
     if cluster_file is None:
-        data = []
         unprocessed_cluster_df = None
 
         out_prob_is, out_prob_is_not = compute_outlier_prob(outlier_prob, 1)
 
-        for idx, (mut, val) in enumerate(pyclone_data.items()):
-            data_point = DataPoint(
+        data = [
+            DataPoint(
                 idx,
                 val.to_likelihood_grid(density, grid_size, precision=precision),
                 name=mut,
                 outlier_prob=out_prob_is,
                 outlier_prob_not=out_prob_is_not,
             )
-
-            data.append(data_point)
+            for idx, (mut, val) in enumerate(pyclone_data.items())
+        ]
 
     else:
         cluster_df, unprocessed_cluster_df = _setup_cluster_df(
@@ -57,23 +56,18 @@ def load_data(
             data_df,
         )
 
-        cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
+        num_samples = len(samples)
 
-        clusters = cluster_df.set_index("mutation_id")["cluster_id"].to_dict()
-
-        cluster_outlier_probs = cluster_df.set_index("cluster_id")["outlier_prob"].to_dict()
+        data = _create_clustered_data_point_list(
+            cluster_df,
+            pyclone_data,
+            num_samples,
+            grid_size,
+            density,
+            precision,
+        )
 
         print("\nUsing input clustering with {} clusters\n".format(cluster_df["cluster_id"].nunique()))
-
-        data = _create_clustered_data_arr(
-            cluster_outlier_probs,
-            cluster_sizes,
-            clusters,
-            density,
-            grid_size,
-            precision,
-            pyclone_data,
-        )
 
     print("#" * 100)
     print()
@@ -81,33 +75,39 @@ def load_data(
     return data, samples, unprocessed_cluster_df
 
 
-def _create_clustered_data_arr(
-    cluster_outlier_probs,
-    cluster_sizes,
-    clusters,
-    density,
-    grid_size,
-    precision,
-    pyclone_data,
-):
-    raw_data = defaultdict(list)
-    for mut, val in pyclone_data.items():
-        raw_data[clusters[mut]].append(val.to_likelihood_grid(density, grid_size, precision=precision))
+def _create_clustered_data_point_list(cluster_df, pyclone_data, num_samples, grid_size, density, precision):
+    pyclone_data.rename("pyclone_datapoint", inplace=True)
+    new_df = pd.merge(cluster_df, pyclone_data, how="outer", left_on="mutation_id", right_index=True)
+    grouped = new_df.groupby("cluster_id")
     data = []
-    for idx, cluster_id in enumerate(sorted(raw_data.keys())):
-        val = np.sum(np.array(raw_data[cluster_id]), axis=0)
-        cluster_outlier_prob = cluster_outlier_probs[cluster_id]
-        out_probs = compute_outlier_prob(cluster_outlier_prob, cluster_sizes[cluster_id])
+    for idx, (cluster_id, sub_df) in enumerate(grouped):
+        cluster_size = len(sub_df)
+        cluster_outlier_prob = sub_df["outlier_prob"].iloc[0]
+        vals = np.fromiter(
+            (
+                dp.to_likelihood_grid(
+                    density,
+                    grid_size,
+                    precision=precision,
+                )
+                for dp in sub_df["pyclone_datapoint"].array
+            ),
+            dtype=np.dtype((np.float64, (num_samples, grid_size))),
+            count=cluster_size,
+        )
+
+        out_prob_is, out_prob_is_not = compute_outlier_prob(cluster_outlier_prob, cluster_size)
 
         data_point = DataPoint(
             idx,
-            val,
+            vals.sum(axis=0),
             name=cluster_id,
-            outlier_prob=out_probs[0],
-            outlier_prob_not=out_probs[1],
+            outlier_prob=out_prob_is,
+            outlier_prob_not=out_prob_is_not,
         )
 
         data.append(data_point)
+
     return data
 
 
@@ -135,7 +135,9 @@ def _setup_cluster_df(
                 print(cluster_prob_status_msg)
                 _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
             else:
-                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data, required columns are missing."
+                cluster_prob_status_msg += (
+                    "\nOutlier probability cannot be assigned from data, required columns are missing."
+                )
                 cluster_prob_status_msg += "\nSetting values to {p}.\n".format(p=outlier_prob)
                 print(cluster_prob_status_msg)
                 cluster_df.loc[:, "outlier_prob"] = outlier_prob
@@ -186,15 +188,12 @@ def compute_outlier_prob(outlier_prob, cluster_size):
 
 def load_pyclone_data(file_name):
     df = _create_raw_data_df(file_name)
-
     df = _remove_cn_zero_mutations(df)
 
     samples = sorted(df["sample_id"].unique())
 
     df = _remove_duplicated_and_partially_absent_mutations(df, samples)
-
     _process_required_cols_on_df(df)
-
     _print_num_mutations_samples_message(df, samples)
 
     data = _create_loaded_pyclone_data_dict(df, samples)
@@ -276,8 +275,6 @@ def _create_loaded_pyclone_data_dict(df, samples):
     grouped = df.groupby("mutation_id", sort=True)
 
     data_df = grouped.apply(make_datapoint_from_group, samples=samples, include_groups=False)
-
-    # data = data_df.to_dict(into=OrderedDict)
 
     return data_df
 

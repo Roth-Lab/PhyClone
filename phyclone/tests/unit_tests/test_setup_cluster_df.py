@@ -11,7 +11,7 @@ import phyclone
 from phyclone.data.pyclone import (
     _setup_cluster_df,
     compute_outlier_prob,
-    _create_clustered_data_arr,
+    _create_clustered_data_point_list,
     _create_loaded_pyclone_data_dict,
     load_data,
 )
@@ -336,19 +336,18 @@ class BaseClusteredDataArrTest(object):
         def run_test(self, grid_size, high_loss_prob, low_loss_prob):
             cluster_df = self.build_cluster_df(low_loss_prob, high_loss_prob)
             cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
-            clusters = cluster_df.set_index("mutation_id")["cluster_id"].to_dict()
+            # clusters = cluster_df.set_index("mutation_id")["cluster_id"].to_dict()
             cluster_outlier_probs = cluster_df.set_index("cluster_id")["outlier_prob"].to_dict()
             data_df = build_standard_data_df()
             samples = sorted(data_df["sample_id"].unique())
             pyclone_data = _create_loaded_pyclone_data_dict(data_df, samples)
-            data = _create_clustered_data_arr(
-                cluster_outlier_probs,
-                cluster_sizes,
-                clusters,
-                self.density,
-                grid_size,
-                self.precision,
+            data = _create_clustered_data_point_list(
+                cluster_df,
                 pyclone_data,
+                len(samples),
+                grid_size,
+                self.density,
+                self.precision,
             )
             self.assertEqual(len(data), len(cluster_sizes))
             for dp in data:
