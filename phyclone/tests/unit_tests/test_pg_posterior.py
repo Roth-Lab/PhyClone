@@ -132,7 +132,7 @@ class BaseTest(object):
             print()
             print(list(true_probs.items()))
             for key in true_probs:
-                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.03)
+                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.02)
 
 
 class BootstrapAdaptedTest(BaseTest.BaseTest):
@@ -159,7 +159,7 @@ class SemiAdaptedTest(BaseTest.BaseTest):
         self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         clear_all_caches()
         self.sampler = self._get_sampler(SemiAdaptedKernel)
-        self.run_scale = 1
+        self.run_scale = 2
 
 
 if __name__ == "__main__":

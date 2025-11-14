@@ -167,7 +167,7 @@ class Tree(object):
 
     @property
     def labels(self):
-        result = {dp.idx: k for k, l in self.node_data.items() for dp in l}
+        result = {dp.idx: k for k, l in self._data.items() for dp in l}
         return result
 
     @property
@@ -332,10 +332,14 @@ class Tree(object):
 
         self._last_node_added_to = subtree._last_node_added_to
 
+        for data_point in subtree.outliers:
+            self.add_data_point_to_outliers(data_point)
+
         self._update_path_to_root(parent_node.node_id)
 
     def _relabel_grafted_subtree_nodes(self, node_map_idx, subtree: Tree, subtree_dummy_root):
         first_label = max(self.nodes + subtree.nodes + [-1])
+        last_node_added_to = subtree._last_node_added_to
 
         for old_idx, new_idx in node_map_idx.items():
             if old_idx == subtree_dummy_root:
@@ -343,10 +347,12 @@ class Tree(object):
             node_obj = self._graph[new_idx]
             node_name = node_obj.node_id
             old_node_name = node_name
-            if node_name in self._data:
+            if old_node_name in self._data:
                 first_label += 1
                 node_name = first_label
                 node_obj.node_id = node_name
+            if old_node_name == last_node_added_to:
+                subtree._last_node_added_to = node_name
             self._data[node_name] = subtree._data[old_node_name]
             self._add_node_to_indices(node_name, new_idx)
 

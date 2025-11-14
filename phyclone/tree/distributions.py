@@ -82,7 +82,7 @@ class FSCRPDistribution(object):
             num_sub_trees = (curr_num_nodes - 1) * np.log(curr_num_nodes)
             num_ways += num_sub_trees
 
-        log_p += -num_ways + r_term
+        log_p += (-num_ways + r_term)
 
         return log_p
 

@@ -118,7 +118,7 @@ class BaseTest(object):
             print()
             print(sorted(true_probs.items(), key=lambda x: x[1], reverse=True))
             for key in true_probs:
-                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.03)
+                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.02)
 
 
 class BootstrapAdaptedTest(BaseTest.BaseTest):
