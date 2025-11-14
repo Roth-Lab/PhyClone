@@ -28,12 +28,15 @@ def load_samples_from_trace(in_file):
 
 
 def load_clusters_df_from_trace(in_file):
-    df_dict = dict()
+    df_dict = {}
     with h5py.File(in_file) as fh:
-        clusters_grp = fh["clusters"]
+        if "clusters" in fh:
+            clusters_grp = fh["clusters"]
+            df_dict["cluster_id"] = _load_dataset_string_or_numerical(clusters_grp["cluster_id"])
+            df_dict["mutation_id"] = _load_dataset_string_or_numerical(clusters_grp["mutation_id"])
 
-        df_dict["cluster_id"] = _load_dataset_string_or_numerical(clusters_grp["cluster_id"])
-        df_dict["mutation_id"] = _load_dataset_string_or_numerical(clusters_grp["mutation_id"])
+    if len(df_dict) == 0:
+        return None
 
     df = pd.DataFrame(df_dict)
     return df
