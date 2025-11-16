@@ -279,7 +279,7 @@ def get_clone_table(data, samples, tree, clusters=None):
         prev_df_list.append(curr_df)
 
     sample_prevs_df = pd.concat(prev_df_list, ignore_index=True)
-    sample_prevs_df.sort_values(by="sample_id", inplace=True)
+    sample_prevs_df.sort_values(by=["sample_id", "clone_id"], inplace=True, ignore_index=True)
 
     res_df = pd.merge(labels, sample_prevs_df, on="clone_id")
 
