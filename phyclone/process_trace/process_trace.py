@@ -215,6 +215,7 @@ def get_tree_from_consensus_graph(data, graph):
             graph2.add_edge(root_node_name, node)
 
     tree = build_phyclone_tree_from_nx(graph2, data, root_node_name)
+    tree.relabel_nodes()
 
     return tree
 
