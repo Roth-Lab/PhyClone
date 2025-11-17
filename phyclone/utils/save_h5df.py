@@ -105,13 +105,13 @@ def store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict):
         store_dict_mixed_type_keys(tree_dict["node_idx"], node_idx_grp)
         store_node_data(subtree_grp, tree_dict)
         subtree_grp.attrs["grid_size"] = tree_dict["grid_size"]
-        node_last_added_to = tree_dict["node_last_added_to"]
-        if node_last_added_to is None:
-            subtree_grp.attrs["is_node_last_added_to_null"] = True
-            subtree_grp.attrs["node_last_added_to"] = "None"
-        else:
-            subtree_grp.attrs["is_node_last_added_to_null"] = False
-            subtree_grp.attrs["node_last_added_to"] = node_last_added_to
+        # node_last_added_to = tree_dict["node_last_added_to"]
+        # if node_last_added_to is None:
+        #     subtree_grp.attrs["is_node_last_added_to_null"] = True
+        #     subtree_grp.attrs["node_last_added_to"] = "None"
+        # else:
+        #     subtree_grp.attrs["is_node_last_added_to_null"] = False
+        #     subtree_grp.attrs["node_last_added_to"] = node_last_added_to
         subtree_grp.attrs["log_prior"] = tree_dict["log_prior"]
         return subtree_grp.ref
 
