@@ -45,10 +45,15 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             # node = tree.labels[self.data_point.idx]
             # assert node == tree.node_last_added_to
-            node = tree.node_last_added_to
+            # node = tree.node_last_added_to
+
+            # node_clade = tree.get_node_clade(node)
+            # hashed_node_clade = hash(node_clade)
 
             # Existing node
-            if node in self._tree_nodes or node == tree.outlier_node_name:
+            # if node in self._tree_nodes or node == tree.outlier_node_name:
+            #     log_p = self.log_half + self._log_p[tree]
+            if tree in self._log_p:
                 log_p = self.log_half + self._log_p[tree]
 
             # New node
@@ -56,11 +61,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
                 if tree in self._computed_prob:
                     log_p = self._computed_prob[tree]
                 else:
+                    node = tree.labels[self.data_point.idx]
+
                     old_num_roots = self._num_roots
 
                     log_p = self.log_half
 
-                    num_children = tree.num_children_on_node_that_matters
+                    num_children = tree.get_number_of_children(node)
 
                     log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(
                         old_num_roots, num_children

@@ -20,7 +20,7 @@ class TreeInfo:
     node_idx_rev: dict
     node_data: defaultdict[list[DataPoint]]
     grid_size: tuple[int, int]
-    node_last_added_to: int | str
+    # node_last_added_to: int | str
     log_prior: float
 
     def build_graph_shell(self):
@@ -54,8 +54,8 @@ class TreeHolderBuilder(object):
         "_roots",
         "_outlier_node_name",
         "_nodes",
-        "_node_last_added_to",
-        "_num_children_on_node_that_matters",
+        # "_node_last_added_to",
+        # "_num_children_on_node_that_matters",
         "_data",
         "_node_idx",
         "_node_idx_rev",
@@ -86,14 +86,14 @@ class TreeHolderBuilder(object):
         self.roots_num_desc = None
         self.roots_num_children = None
         self._labels = None
-        self._node_last_added_to = None
+        # self._node_last_added_to = None
         self._graph = None
         self._multiplicity = None
         self._roots = None
         self._outlier_node_name = outlier_node_name
         self._root_node_name = root_node_name
-        self._nodes = nodes.copy()
-        self._num_children_on_node_that_matters = 0
+        self._nodes = set(nodes)
+        # self._num_children_on_node_that_matters = 0
         self._data = None
         self._node_idx = None
         self._node_idx_rev = None
@@ -124,22 +124,25 @@ class TreeHolderBuilder(object):
 
     def with_node_data(self, node_data):
         self._data = node_data
-        self.labels = node_data
+        # self.labels = node_data
         self.outliers = node_data
         return self
 
     def with_log_pdf(self, log_pdf):
         self._log_pdf = log_pdf
 
-    def with_node_last_added_to(self, node_last_added_to, datapoint_add=False):
-        self._node_last_added_to = node_last_added_to
-        if not datapoint_add:
-            self._nodes.append(node_last_added_to)
+    def with_node_last_added_to(self, node_last_added_to):
+        # self._node_last_added_to = node_last_added_to
+        # if not datapoint_add:
+        #     self._nodes.append(node_last_added_to)
+        # if node_last_added_to not in self._nodes:
+        self._nodes.add(node_last_added_to)
+
         return self
 
-    def with_num_children_on_node_that_matters(self, num_children_on_node_that_matters):
-        self._num_children_on_node_that_matters = num_children_on_node_that_matters
-        return self
+    # def with_num_children_on_node_that_matters(self, num_children_on_node_that_matters):
+    #     self._num_children_on_node_that_matters = num_children_on_node_that_matters
+    #     return self
 
     def with_root_node_object(self, root_node_obj):
         self.data_log_likelihood = root_node_obj
@@ -182,6 +185,14 @@ class TreeHolderBuilder(object):
         vis_clades = frozenset(visitor.clades)
         return vis_clades
 
+    def get_node_clade(self, node) -> frozenset:
+        visitor = GraphToCladesVisitor(self._node_idx_rev, self._data, node)
+        root_idx = self._node_idx[node]
+        rx.dfs_search(self._graph, [root_idx], visitor)
+        visitor.clades.add(frozenset(visitor.dict_of_sets[node]))
+        vis_clades = frozenset(visitor.clades)
+        return vis_clades
+
     def get_number_of_descendants(self, node):
         return self.roots_num_desc[node]
 
@@ -198,7 +209,7 @@ class TreeHolderBuilder(object):
             "node_idx_rev": self._node_idx_rev.copy(),
             "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
-            "node_last_added_to": self._node_last_added_to,
+            # "node_last_added_to": self._node_last_added_to,
             "log_prior": self._log_prior,
         }
         return tree_dict
@@ -213,11 +224,11 @@ class TreeHolderBuilder(object):
 
     @property
     def nodes(self):
-        return self._nodes
+        return list(self._nodes)
 
     @property
     def roots(self):
-        return self._roots
+        return list(self._roots)
 
     @property
     def node_data(self):
@@ -228,21 +239,21 @@ class TreeHolderBuilder(object):
 
         return result
 
-    @property
-    def node_last_added_to(self):
-        return self._node_last_added_to
+    # @property
+    # def node_last_added_to(self):
+    #     return self._node_last_added_to
 
-    @property
-    def num_children_on_node_that_matters(self):
-        return self._num_children_on_node_that_matters
+    # @property
+    # def num_children_on_node_that_matters(self):
+    #     return self._num_children_on_node_that_matters
 
     @property
     def labels(self):
-        return self._labels
+        return {dp.idx: k for k, l in self._data.items() for dp in l}
 
-    @labels.setter
-    def labels(self, node_data):
-        self._labels = {dp.idx: k for k, l in node_data.items() for dp in l}
+    # @labels.setter
+    # def labels(self, node_data):
+    #     self._labels = {dp.idx: k for k, l in node_data.items() for dp in l}
 
     @property
     def multiplicity(self):
@@ -254,7 +265,7 @@ class TreeHolderBuilder(object):
 
     @property
     def outliers(self):
-        return self._outliers
+        return list(self._outliers)
 
     @outliers.setter
     def outliers(self, node_data):
@@ -343,7 +354,7 @@ class TreeShellNodeAdder(object):
 
         num_children = 0
         node_id = self._outlier_node_name
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id)
 
         graph = self._tree_info.build_graph_shell()
         node_idx_dict = self._tree_info.get_node_idx_dict()
@@ -378,7 +389,7 @@ class TreeShellNodeAdder(object):
     def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
         node_id = self._root_clade_dict[node_id]
         num_children = self.roots_num_children[node_id]
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children, datapoint_add=True)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id)
 
         node_obj = self._root_nodes_dict[node_id].copy()
 
@@ -456,7 +467,7 @@ class TreeShellNodeAdder(object):
         node_id = self._next_node_id
 
         num_children = len(children)
-        tree_holder_builder = self._add_num_children_and_node_id(node_id, num_children)
+        tree_holder_builder = self._add_num_children_and_node_id(node_id)
 
         graph = self._tree_info.build_graph_shell()
         node_idx_dict = self._tree_info.get_node_idx_dict()
@@ -501,10 +512,10 @@ class TreeShellNodeAdder(object):
             graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
         return new_node_obj, node_idx
 
-    def _add_num_children_and_node_id(self, node_id, num_children, datapoint_add=False):
+    def _add_num_children_and_node_id(self, node_id):
         tree_holder_builder = self._get_initial_tree_holder_builder()
-        tree_holder_builder.with_node_last_added_to(node_id, datapoint_add)
-        tree_holder_builder.with_num_children_on_node_that_matters(num_children)
+        tree_holder_builder.with_node_last_added_to(node_id)
+        # tree_holder_builder.with_num_children_on_node_that_matters(num_children)
         tree_holder_builder.with_tree_dist(self.tree_dist)
         return tree_holder_builder
 

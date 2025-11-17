@@ -17,9 +17,11 @@ class TreeHolder(object):
         "tree_nodes",
         "tree_roots",
         "labels",
-        "node_last_added_to",
-        "num_children_on_node_that_matters",
+        # "node_last_added_to",
+        # "num_children_on_node_that_matters",
         "outlier_node_name",
+        "_num_child_dict",
+        # "_node_clade_dict"
     )
 
     def __init__(self, tree, tree_dist, perm_dist):
@@ -63,8 +65,8 @@ class TreeHolder(object):
         new.tree_nodes = list(self.tree_nodes)
         new.tree_roots = self.tree_roots.copy()
         new.labels = self.labels.copy()
-        new.node_last_added_to = self.node_last_added_to
-        new.num_children_on_node_that_matters = self.num_children_on_node_that_matters
+        # new.node_last_added_to = self.node_last_added_to
+        # new.num_children_on_node_that_matters = self.num_children_on_node_that_matters
         new.outlier_node_name = self.outlier_node_name
         return new
 
@@ -87,17 +89,25 @@ class TreeHolder(object):
 
         self.log_p, self.log_p_one = self._tree_dist.compute_log_p_and_log_p_one(tree)
 
-        self.tree_roots = np.asarray(tree.roots)
-        self.tree_nodes = tree.nodes
+        self.tree_roots = list(tree.roots)
+        self.tree_nodes = list(tree.nodes)
         self._hash_val = hash(tree)
         self._tree = tree.to_dict()
         self.labels = tree.labels
-        self.node_last_added_to = tree.node_last_added_to
-        if self.node_last_added_to != tree.outlier_node_name:
-            self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
-        else:
-            self.num_children_on_node_that_matters = 0
+        self._num_child_dict = {k:tree.get_number_of_children(k) for k in self.tree_roots}
+        # self._node_clade_dict = {k:tree.get_node_clade(k) for k in self.tree_roots}
+        # self.node_last_added_to = tree.node_last_added_to
+        # if self.node_last_added_to != tree.outlier_node_name:
+        #     self.num_children_on_node_that_matters = tree.get_number_of_children(self.node_last_added_to)
+        # else:
+        #     self.num_children_on_node_that_matters = 0
 
     @tree.getter
     def tree(self) -> Tree:
         return Tree.from_dict(self._tree)
+
+    def get_number_of_children(self, node):
+        return self._num_child_dict[node]
+
+    # def get_node_clade(self, node):
+    #     return self._node_clade_dict[node]

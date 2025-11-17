@@ -27,7 +27,7 @@ class Tree(object):
         "_graph",
         "_node_indices",
         "_node_indices_rev",
-        "_last_node_added_to",
+        # "_last_node_added_to",
         "_root_node_name",
         "_outlier_node_name",
     )
@@ -45,7 +45,7 @@ class Tree(object):
 
         self._node_indices_rev = dict()
 
-        self._last_node_added_to = None
+        # self._last_node_added_to = None
 
         self._root_node_name = self.__class__._ROOT_NODE_NAME
 
@@ -82,7 +82,7 @@ class Tree(object):
 
         new._node_indices_rev = self._node_indices_rev.copy()
 
-        new._last_node_added_to = self._last_node_added_to
+        # new._last_node_added_to = self._last_node_added_to
 
         new._root_node_name = self._root_node_name
 
@@ -195,9 +195,9 @@ class Tree(object):
         result = [node.node_id for node in self._graph.nodes() if node.node_id != self._root_node_name]
         return result
 
-    @property
-    def node_last_added_to(self):
-        return self._last_node_added_to
+    # @property
+    # def node_last_added_to(self):
+    #     return self._last_node_added_to
 
     def get_number_of_nodes(self):
         return self._graph.num_nodes() - 1
@@ -241,7 +241,7 @@ class Tree(object):
 
         new._node_indices_rev = tree_dict["node_idx_rev"].copy()
         new._node_indices = tree_dict["node_idx"].copy()
-        new._last_node_added_to = tree_dict["node_last_added_to"]
+        # new._last_node_added_to = tree_dict["node_last_added_to"]
         new._data.update({k: v.copy() for k, v in tree_dict["node_data"].items()})
         new._root_node_name = cls._ROOT_NODE_NAME
         new._outlier_node_name = cls._OUTLIER_NODE_NAME
@@ -277,7 +277,7 @@ class Tree(object):
             "node_idx_rev": self._node_indices_rev.copy(),
             "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
-            "node_last_added_to": self._last_node_added_to,
+            # "node_last_added_to": self._last_node_added_to,
             "log_prior": self._log_prior,
         }
         return tree_dict
@@ -301,7 +301,7 @@ class Tree(object):
 
     def _internal_add_data_point_to_node(self, build_add: bool, data_point: DataPoint, node):
         self._data[node].append(data_point)
-        self._last_node_added_to = node
+        # self._last_node_added_to = node
 
         if node != self._outlier_node_name:
             node_idx = self._node_indices[node]
@@ -330,7 +330,7 @@ class Tree(object):
 
         self._relabel_grafted_subtree_nodes(node_map_idx, subtree, subtree_dummy_root)
 
-        self._last_node_added_to = subtree._last_node_added_to
+        # self._last_node_added_to = subtree._last_node_added_to
 
         for data_point in subtree.outliers:
             self.add_data_point_to_outliers(data_point)
@@ -339,7 +339,7 @@ class Tree(object):
 
     def _relabel_grafted_subtree_nodes(self, node_map_idx, subtree: Tree, subtree_dummy_root):
         first_label = max(self.nodes + subtree.nodes + [-1])
-        last_node_added_to = subtree._last_node_added_to
+        # last_node_added_to = subtree._last_node_added_to
 
         for old_idx, new_idx in node_map_idx.items():
             if old_idx == subtree_dummy_root:
@@ -351,8 +351,8 @@ class Tree(object):
                 first_label += 1
                 node_name = first_label
                 node_obj.node_id = node_name
-            if old_node_name == last_node_added_to:
-                subtree._last_node_added_to = node_name
+            # if old_node_name == last_node_added_to:
+            #     subtree._last_node_added_to = node_name
             self._data[node_name] = subtree._data[old_node_name]
             self._add_node_to_indices(node_name, new_idx)
 
@@ -382,7 +382,7 @@ class Tree(object):
             child_indices = [self._node_indices[child] for child in children]
             self._graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
 
-        self._last_node_added_to = node
+        # self._last_node_added_to = node
 
         self._update_path_to_root(node)
 
@@ -405,9 +405,9 @@ class Tree(object):
         node_idx = self._node_indices[node]
         return len(self._graph.successors(node_idx))
 
-    @property
-    def num_children_on_node_that_matters(self):
-        return self.get_number_of_children(self._last_node_added_to)
+    # @property
+    # def num_children_on_node_that_matters(self):
+    #     return self.get_number_of_children(self._last_node_added_to)
 
     def get_descendants(self, source=None):
         if source is None:
