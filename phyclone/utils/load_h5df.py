@@ -100,18 +100,12 @@ def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
 
     node_idx_dict = _get_node_idx_dict(tree_grp)
 
-    # if tree_grp.attrs["is_node_last_added_to_null"]:
-    #     node_last_added_to = None
-    # else:
-    #     node_last_added_to = tree_grp.attrs["node_last_added_to"]
-
     tree_dict = {
         "graph": list(map(tuple, tree_grp["graph"][()])),
         "node_idx": node_idx_dict,
         "node_idx_rev": {v: k for k, v in node_idx_dict.items()},
         "node_data": _get_node_data_dict(datapoints, tree_grp),
         "grid_size": tree_grp.attrs["grid_size"],
-        # "node_last_added_to": node_last_added_to,
         "log_prior": tree_grp.attrs["log_prior"],
     }
 
