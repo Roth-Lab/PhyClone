@@ -107,7 +107,7 @@ class NumpyTwoArraysHasher:
     def __init__(self, arr_1, arr_2) -> None:
         self.input_1 = arr_1
         self.input_2 = arr_2
-        self.h = tuple(sorted([xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2)]))
+        self.h = frozenset([xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2)])
         self._hash_val = hash(self.h)
 
     def __hash__(self) -> int:

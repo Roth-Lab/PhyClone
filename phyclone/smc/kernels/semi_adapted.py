@@ -127,21 +127,21 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         frozen_children = frozenset(children)
 
-        # tree_holder = get_cached_dp_added_to_new_node_tree_holder(
-        #     self._tree_shell_node_adder,
-        #     self.data_point,
-        #     frozen_children,
-        # )
-        #
-        # return tree_holder
-
-        tree_holder_builder = get_cached_dp_added_to_new_node_builder(
+        tree_holder = get_cached_dp_added_to_new_node_tree_holder(
             self._tree_shell_node_adder,
             self.data_point,
             frozen_children,
         )
 
-        return get_cached_built_tree_holder(tree_holder_builder)
+        return tree_holder
+
+        # tree_holder_builder = get_cached_dp_added_to_new_node_builder(
+        #     self._tree_shell_node_adder,
+        #     self.data_point,
+        #     frozen_children,
+        # )
+        #
+        # return get_cached_built_tree_holder(tree_holder_builder)
 
 
 class SemiAdaptedKernel(Kernel):
