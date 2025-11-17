@@ -60,6 +60,26 @@ class FSCRPDistribution(object):
         log_p += sum(cached_log_factorial(len(v) - 1) for k, v in tree_node_data.items() if k != outlier_node_name)
         return log_p, num_nodes
 
+    # def log_p_one(self, tree):
+    #     log_p, num_nodes = self.compute_CRP_prior(tree)
+    #
+    #     tree_roots = tree.roots
+    #
+    #     r_term = self._compute_r_term(len(tree_roots), num_nodes)
+    #
+    #     num_ways = 0
+    #
+    #     for root in tree_roots:
+    #         curr_num_nodes = tree.get_number_of_descendants(root) + 1
+    #         num_sub_trees = (curr_num_nodes - 1) * np.log(curr_num_nodes)
+    #         num_ways += num_sub_trees
+    #
+    #     log_p += (-num_ways + r_term)
+    #
+    #     log_p -= tree.multiplicity
+    #
+    #     return log_p
+
     def log_p_one(self, tree, log_p=None):
         if log_p is None:
             log_p = self.log_p(tree)
@@ -155,6 +175,7 @@ class TreeJointDistribution(object):
 
     def compute_log_p_and_log_p_one(self, tree):
         log_p = self.prior.log_p(tree)
+        # log_p_one = self.prior.log_p_one(tree)
         log_p_one = self.prior.log_p_one(tree, log_p)
 
         outlier_prior = self.outlier_prior(tree)

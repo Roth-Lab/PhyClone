@@ -2,7 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_dp_added_to_new_node_builder, get_cached_built_tree_holder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_dp_added_to_new_node_builder, get_cached_built_tree_holder, get_cached_dp_added_to_empty_tree_builder, get_cached_dp_added_to_new_node_tree_holder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.utils.math_utils import cached_log_binomial_coefficient
 
@@ -86,13 +86,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         if self._empty_tree():
             self.parent_is_empty_tree = True
 
-            tree_holder_builder = get_cached_dp_added_to_new_node_builder(
+            tree_holder_builder = get_cached_dp_added_to_empty_tree_builder(
                 self._tree_shell_node_adder,
                 self.data_point,
                 frozenset([]),
             )
 
-            trees.append(get_cached_built_tree_holder(tree_holder_builder))
+            trees.append(tree_holder_builder.build())
         else:
             self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
@@ -126,6 +126,14 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
             children = self._rng.choice(roots, num_children, replace=False)
 
         frozen_children = frozenset(children)
+
+        # tree_holder = get_cached_dp_added_to_new_node_tree_holder(
+        #     self._tree_shell_node_adder,
+        #     self.data_point,
+        #     frozen_children,
+        # )
+        #
+        # return tree_holder
 
         tree_holder_builder = get_cached_dp_added_to_new_node_builder(
             self._tree_shell_node_adder,

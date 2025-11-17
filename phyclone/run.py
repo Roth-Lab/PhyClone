@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
+from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches, print_cache_info
 from phyclone.utils.save_h5df import save_trace_to_h5df
 
 
@@ -303,7 +303,7 @@ def _run_main_sampler(
 
             if concentration_update:
                 update_concentration_value(conc_sampler, tree, tree_dist)
-
+    print_cache_info()
     results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
     return results
 

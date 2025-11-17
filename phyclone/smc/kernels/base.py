@@ -168,19 +168,21 @@ class ProposalDistribution(object):
         nodes = self._hashed_roots
         tree_adder = self._tree_shell_node_adder
         dp = self.data_point
-        # trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp).build() for node in nodes]
-        trees = [get_cached_dp_added_to_node_builder(tree_adder, dp, node).build() for node in nodes]
+        trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp).build() for node in nodes]
+        # trees = [get_cached_dp_added_to_node_builder(tree_adder, dp, node).build() for node in nodes]
 
         return trees
 
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
 
-        # tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
-        #     self.data_point
-        # )
-        # tree_holder = tree_holder_builder.build()
-        tree_holder_builder = get_cached_dp_added_to_outliers_builder(self._tree_shell_node_adder, self.data_point)
+        if self._empty_tree():
+            tree_holder_builder = get_cached_dp_added_to_outliers_builder(self._tree_shell_node_adder, self.data_point)
+        else:
+            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
+                self.data_point
+            )
+
         return tree_holder_builder.build()
 
     def _set_log_p_dist(self, trees):
@@ -198,6 +200,14 @@ class ProposalDistribution(object):
         self._q_dist = q
 
 
+
+@lru_cache(maxsize=4096)
+def get_cached_dp_added_to_empty_tree_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children,):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
+
+    return tree_holder_builder
+
+
 @lru_cache(maxsize=4096)
 def get_cached_dp_added_to_new_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
@@ -205,11 +215,11 @@ def get_cached_dp_added_to_new_node_builder(tree_shell_node_adder: TreeShellNode
     return tree_holder_builder
 
 
-@lru_cache(maxsize=4096)
-def get_cached_dp_added_to_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node, data_point)
-
-    return tree_holder_builder
+# @lru_cache(maxsize=4096)
+# def get_cached_dp_added_to_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node):
+#     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node, data_point)
+#
+#     return tree_holder_builder
 
 
 @lru_cache(maxsize=4096)
@@ -223,3 +233,11 @@ def get_cached_dp_added_to_outliers_builder(tree_shell_node_adder: TreeShellNode
 def get_cached_built_tree_holder(tree_holder_builder: TreeHolderBuilder):
     tree_container = tree_holder_builder.build()
     return tree_container
+
+
+@lru_cache(maxsize=2048)
+def get_cached_dp_added_to_new_node_tree_holder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
+    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
+    tree_holder = tree_holder_builder.build()
+
+    return tree_holder
