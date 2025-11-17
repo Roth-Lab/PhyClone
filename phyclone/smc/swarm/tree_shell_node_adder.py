@@ -88,7 +88,7 @@ class TreeHolderBuilder(object):
         self._roots = None
         self._outlier_node_name = outlier_node_name
         self._root_node_name = root_node_name
-        self._nodes = set(nodes)
+        self._nodes = list(nodes)
         self._data = None
         self._node_idx = None
         self._node_idx_rev = None
@@ -128,7 +128,8 @@ class TreeHolderBuilder(object):
 
     def with_node_last_added_to(self, node_last_added_to):
         if node_last_added_to != self._outlier_node_name:
-            self._nodes.add(node_last_added_to)
+            if node_last_added_to not in self._nodes:
+                self._nodes.append(node_last_added_to)
 
         return self
 
@@ -211,11 +212,11 @@ class TreeHolderBuilder(object):
 
     @property
     def nodes(self):
-        return list(self._nodes)
+        return self._nodes
 
     @property
     def roots(self):
-        return list(self._roots)
+        return self._roots
 
     @property
     def node_data(self):
@@ -228,7 +229,7 @@ class TreeHolderBuilder(object):
 
     @property
     def labels(self):
-        return self._labels.copy()
+        return self._labels
 
     @labels.setter
     def labels(self, node_data):
@@ -244,11 +245,11 @@ class TreeHolderBuilder(object):
 
     @property
     def outliers(self):
-        return list(self._outliers)
+        return self._outliers
 
     @outliers.setter
     def outliers(self, node_data):
-        self._outliers = np.asarray(node_data[self._outlier_node_name])
+        self._outliers = list(node_data[self._outlier_node_name])
 
     @property
     def outlier_node_name(self):
