@@ -1,5 +1,5 @@
 from phyclone.smc.kernels.base import (
-    get_cached_new_tree_adder,
+    get_cached_dp_added_to_new_node_builder,
     get_cached_built_tree_holder,
     get_cached_dp_added_to_node_builder,
     get_cached_dp_added_to_outliers_builder,
@@ -19,7 +19,7 @@ def clear_proposal_dist_caches():
 def clear_all_caches():
     get_cached_dp_added_to_outliers_builder.cache_clear()
     get_cached_dp_added_to_node_builder.cache_clear()
-    get_cached_new_tree_adder.cache_clear()
+    get_cached_dp_added_to_new_node_builder.cache_clear()
     get_cached_built_tree_holder.cache_clear()
     _get_cached_semi_proposal_dist.cache_clear()
     _get_cached_full_proposal_dist.cache_clear()
@@ -54,8 +54,8 @@ def print_cache_info():
     )
     print(
         "get_cached_new_tree_adder cache info: {}, hit ratio: {}".format(
-            get_cached_new_tree_adder.cache_info(),
-            _cache_ratio(get_cached_new_tree_adder.cache_info()),
+            get_cached_dp_added_to_new_node_builder.cache_info(),
+            _cache_ratio(get_cached_dp_added_to_new_node_builder.cache_info()),
         )
     )
     print(

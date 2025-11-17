@@ -1,7 +1,7 @@
 from functools import lru_cache
 from itertools import combinations
 
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder, get_cached_built_tree_holder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_dp_added_to_new_node_builder, get_cached_built_tree_holder
 from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 
 
@@ -65,7 +65,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
             for children in combinations(tree_roots, r):
                 frozen_children = frozenset(children)
 
-                tree_container = get_cached_new_tree_adder(
+                tree_container = get_cached_dp_added_to_new_node_builder(
                     self._tree_shell_node_adder,
                     self.data_point,
                     frozen_children,

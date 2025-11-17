@@ -199,7 +199,7 @@ class ProposalDistribution(object):
 
 
 @lru_cache(maxsize=4096)
-def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
+def get_cached_dp_added_to_new_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
 
     return tree_holder_builder
