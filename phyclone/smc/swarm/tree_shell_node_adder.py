@@ -136,7 +136,8 @@ class TreeHolderBuilder(object):
         # if not datapoint_add:
         #     self._nodes.append(node_last_added_to)
         # if node_last_added_to not in self._nodes:
-        self._nodes.add(node_last_added_to)
+        if node_last_added_to != self._outlier_node_name:
+            self._nodes.add(node_last_added_to)
 
         return self
 
