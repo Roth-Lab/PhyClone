@@ -27,30 +27,19 @@ class Tree(object):
         "_graph",
         "_node_indices",
         "_node_indices_rev",
-        # "_last_node_added_to",
         "_root_node_name",
         "_outlier_node_name",
     )
 
     def __init__(self, grid_size: tuple[int, int]):
         self.grid_size = grid_size
-
         self._data = defaultdict(list)
-
         self._log_prior = -np.log(grid_size[1])
-
         self._graph = rx.PyDiGraph(multigraph=False)
-
         self._node_indices = dict()
-
         self._node_indices_rev = dict()
-
-        # self._last_node_added_to = None
-
         self._root_node_name = self.__class__._ROOT_NODE_NAME
-
         self._outlier_node_name = self.__class__._OUTLIER_NODE_NAME
-
         self._add_node(self._root_node_name)
 
     def __hash__(self):
@@ -58,34 +47,21 @@ class Tree(object):
 
     def __eq__(self, other):
         self_key = (self.get_clades(), frozenset(self.outliers))
-
         other_key = (other.get_clades(), frozenset(other.outliers))
-
         return self_key == other_key
 
     def __copy__(self):
         cls = self.__class__
 
         new = cls.__new__(cls)
-
         new.grid_size = self.grid_size
-
         new._data = defaultdict(list)
-
         new._data.update({k: v.copy() for k, v in self._data.items()})
-
         new._log_prior = self._log_prior
-
         new._graph = self._graph.copy()
-
         new._node_indices = self._node_indices.copy()
-
         new._node_indices_rev = self._node_indices_rev.copy()
-
-        # new._last_node_added_to = self._last_node_added_to
-
         new._root_node_name = self._root_node_name
-
         new._outlier_node_name = self._outlier_node_name
 
         for node_idx in new._graph.node_indices():
@@ -127,9 +103,7 @@ class Tree(object):
             Data points.
         """
         tree = cls(data[0].grid_size)
-
         tree.create_root_node(data=data)
-
         return tree
 
     @property
@@ -143,11 +117,8 @@ class Tree(object):
     @property
     def graph(self):
         result = self._graph.copy()
-
         root_idx = self._node_indices[self._root_node_name]
-
         result.remove_node(root_idx)
-
         return result
 
     @property
@@ -195,10 +166,6 @@ class Tree(object):
         result = [node.node_id for node in self._graph.nodes() if node.node_id != self._root_node_name]
         return result
 
-    # @property
-    # def node_last_added_to(self):
-    #     return self._last_node_added_to
-
     def get_number_of_nodes(self):
         return self._graph.num_nodes() - 1
 
@@ -241,7 +208,6 @@ class Tree(object):
 
         new._node_indices_rev = tree_dict["node_idx_rev"].copy()
         new._node_indices = tree_dict["node_idx"].copy()
-        # new._last_node_added_to = tree_dict["node_last_added_to"]
         new._data.update({k: v.copy() for k, v in tree_dict["node_data"].items()})
         new._root_node_name = cls._ROOT_NODE_NAME
         new._outlier_node_name = cls._OUTLIER_NODE_NAME
@@ -277,7 +243,6 @@ class Tree(object):
             "node_idx_rev": self._node_indices_rev.copy(),
             "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
-            # "node_last_added_to": self._last_node_added_to,
             "log_prior": self._log_prior,
         }
         return tree_dict
@@ -301,7 +266,6 @@ class Tree(object):
 
     def _internal_add_data_point_to_node(self, build_add: bool, data_point: DataPoint, node):
         self._data[node].append(data_point)
-        # self._last_node_added_to = node
 
         if node != self._outlier_node_name:
             node_idx = self._node_indices[node]
@@ -327,10 +291,7 @@ class Tree(object):
         node_map_idx = self._graph.compose(subtree._graph, {parent_idx: (subtree_dummy_root, None)})
 
         self._graph.remove_node_retain_edges(node_map_idx[subtree_dummy_root])
-
         self._relabel_grafted_subtree_nodes(node_map_idx, subtree, subtree_dummy_root)
-
-        # self._last_node_added_to = subtree._last_node_added_to
 
         for data_point in subtree.outliers:
             self.add_data_point_to_outliers(data_point)
@@ -339,7 +300,6 @@ class Tree(object):
 
     def _relabel_grafted_subtree_nodes(self, node_map_idx, subtree: Tree, subtree_dummy_root):
         first_label = max(self.nodes + subtree.nodes + [-1])
-        # last_node_added_to = subtree._last_node_added_to
 
         for old_idx, new_idx in node_map_idx.items():
             if old_idx == subtree_dummy_root:
@@ -351,8 +311,6 @@ class Tree(object):
                 first_label += 1
                 node_name = first_label
                 node_obj.node_id = node_name
-            # if old_node_name == last_node_added_to:
-            #     subtree._last_node_added_to = node_name
             self._data[node_name] = subtree._data[old_node_name]
             self._add_node_to_indices(node_name, new_idx)
 
@@ -372,7 +330,6 @@ class Tree(object):
             children = []
 
         node = self._graph.num_nodes() - 1
-
         node_idx = self._add_node(node)
 
         if len(data) > 0:
@@ -381,8 +338,6 @@ class Tree(object):
         if len(children) > 0:
             child_indices = [self._node_indices[child] for child in children]
             self._graph.insert_node_on_in_edges_multiple(node_idx, child_indices)
-
-        # self._last_node_added_to = node
 
         self._update_path_to_root(node)
 
@@ -404,10 +359,6 @@ class Tree(object):
     def get_number_of_children(self, node):
         node_idx = self._node_indices[node]
         return len(self._graph.successors(node_idx))
-
-    # @property
-    # def num_children_on_node_that_matters(self):
-    #     return self.get_number_of_children(self._last_node_added_to)
 
     def get_descendants(self, source=None):
         if source is None:
@@ -438,11 +389,7 @@ class Tree(object):
 
     def get_subtree_data_len(self, node):
         data_len = self.get_data_len(node)
-
-        # for desc in self.get_descendants(node):
-        #     data_len += self.get_data_len(desc)
         data_len += sum(map(self.get_data_len, self.get_descendants(node)))
-
         return data_len
 
     def get_subtree(self, subtree_root) -> Tree:
@@ -452,13 +399,9 @@ class Tree(object):
         new = Tree(self.grid_size)
 
         subtree_root_idx = self._node_indices[subtree_root]
-
         subtree_graph_node_indices = [subtree_root_idx] + list(rx.descendants(self._graph, subtree_root_idx))
-
         subtree_graph = self._graph.subgraph(subtree_graph_node_indices, preserve_attrs=True)
-
         new_root_idx = new._node_indices[self._root_node_name]
-
         sub_root_idx = subtree_graph.filter_nodes(lambda node: bool(node.node_id == subtree_root))[0]
 
         new._graph.compose(subtree_graph, {new_root_idx: (sub_root_idx, None)})

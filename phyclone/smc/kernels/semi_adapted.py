@@ -24,15 +24,10 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         outlier_modelling_active=False,
     ):
         super().__init__(data_point, kernel, parent_particle, outlier_modelling_active)
-
         self.log_half = kernel.log_half
-
         self.parent_is_empty_tree = False
-
         self._computed_prob = dict()
-
         self._tree_nodes = None
-
         self._init_dist()
 
     def log_p(self, tree):
@@ -43,16 +38,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            # node = tree.labels[self.data_point.idx]
-            # assert node == tree.node_last_added_to
-            # node = tree.node_last_added_to
-
-            # node_clade = tree.get_node_clade(node)
-            # hashed_node_clade = hash(node_clade)
-
             # Existing node
-            # if node in self._tree_nodes or node == tree.outlier_node_name:
-            #     log_p = self.log_half + self._log_p[tree]
             if tree in self._log_p:
                 log_p = self.log_half + self._log_p[tree]
 
@@ -100,21 +86,12 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         if self._empty_tree():
             self.parent_is_empty_tree = True
 
-            # tree_holder = get_cached_new_tree_adder(
-            #     self._tree_shell_node_adder,
-            #     self.data_point,
-            #     frozenset([]),
-            # )
-            #
-            # trees.append(tree_holder)
             tree_holder_builder = get_cached_new_tree_adder(
                 self._tree_shell_node_adder,
                 self.data_point,
                 frozenset([]),
             )
 
-            # tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node([],
-            #                                                                                    self.data_point)
             trees.append(get_cached_built_tree_holder(tree_holder_builder))
         else:
             self._tree_nodes = set(self.parent_particle.tree_nodes)
@@ -148,14 +125,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         else:
             children = self._rng.choice(roots, num_children, replace=False)
 
-        # frozen_children = frozenset(children)
-        #
-        # tree_container = get_cached_new_tree_adder(
-        #     self._tree_shell_node_adder,
-        #     self.data_point,
-        #     frozen_children,
-        # )
-        # tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node(children, self.data_point)
         frozen_children = frozenset(children)
 
         tree_holder_builder = get_cached_new_tree_adder(
