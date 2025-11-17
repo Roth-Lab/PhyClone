@@ -124,7 +124,7 @@ class TreeHolderBuilder(object):
 
     def with_node_data(self, node_data):
         self._data = node_data
-        # self.labels = node_data
+        self.labels = node_data
         self.outliers = node_data
         return self
 
@@ -250,11 +250,11 @@ class TreeHolderBuilder(object):
 
     @property
     def labels(self):
-        return {dp.idx: k for k, l in self._data.items() for dp in l}
+        return self._labels.copy()
 
-    # @labels.setter
-    # def labels(self, node_data):
-    #     self._labels = {dp.idx: k for k, l in node_data.items() for dp in l}
+    @labels.setter
+    def labels(self, node_data):
+        self._labels = {dp.idx: k for k, l in node_data.items() for dp in l}
 
     @property
     def multiplicity(self):
