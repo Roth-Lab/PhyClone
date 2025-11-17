@@ -89,8 +89,8 @@ class TreeHolder(object):
 
         self.log_p, self.log_p_one = self._tree_dist.compute_log_p_and_log_p_one(tree)
 
-        self.tree_roots = list(tree.roots)
-        self.tree_nodes = list(tree.nodes)
+        self.tree_roots = tree.roots
+        self.tree_nodes = tree.nodes
         self._hash_val = hash(tree)
         self._tree = tree.to_dict()
         self.labels = tree.labels
