@@ -4,7 +4,7 @@ import numpy as np
 
 from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import Particle
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder, TreeHolderBuilder
+from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import log_normalize
 
@@ -97,8 +97,8 @@ class ProposalDistribution(object):
         "_curr_trees",
         "_tree_roots",
         "_num_roots",
-        "_root_clade_dict",
-        "_hashed_roots",
+        # "_root_clade_dict",
+        # "_hashed_roots",
     )
 
     def __init__(
@@ -148,8 +148,8 @@ class ProposalDistribution(object):
             self.parent_tree = Tree(self.data_point.grid_size)
             self._tree_roots = []
             self._num_roots = 0
-        self._root_clade_dict = {hash(self.parent_tree.get_node_clade(rt)): rt for rt in self._tree_roots}
-        self._hashed_roots = np.array(list(self._root_clade_dict.keys()))
+        # self._root_clade_dict = {hash(self.parent_tree.get_node_clade(rt)): rt for rt in self._tree_roots}
+        # self._hashed_roots = np.array(list(self._root_clade_dict.keys()))
 
     def log_p(self, state):
         """Get the log probability of proposing a tree."""
@@ -165,23 +165,19 @@ class ProposalDistribution(object):
         if self.parent_particle is None:
             return []
 
-        nodes = self._hashed_roots
+        nodes = self._tree_roots
         tree_adder = self._tree_shell_node_adder
         dp = self.data_point
         trees = [tree_adder.create_tree_holder_with_datapoint_added_to_node(node, dp).build() for node in nodes]
-        # trees = [get_cached_dp_added_to_node_builder(tree_adder, dp, node).build() for node in nodes]
 
         return trees
 
     def _get_outlier_tree(self):
         """Get the tree obtained by adding data point as outlier"""
 
-        if self._empty_tree():
-            tree_holder_builder = get_cached_dp_added_to_outliers_builder(self._tree_shell_node_adder, self.data_point)
-        else:
-            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
-                self.data_point
-            )
+        tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
+            self.data_point
+        )
 
         return tree_holder_builder.build()
 
@@ -198,41 +194,6 @@ class ProposalDistribution(object):
         assert abs(1 - q_sum) < 1e-6
         q /= q_sum
         self._q_dist = q
-
-
-
-@lru_cache(maxsize=4096)
-def get_cached_dp_added_to_empty_tree_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children,):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
-
-    return tree_holder_builder
-
-
-@lru_cache(maxsize=4096)
-def get_cached_dp_added_to_new_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
-
-    return tree_holder_builder
-
-
-# @lru_cache(maxsize=4096)
-# def get_cached_dp_added_to_node_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, node):
-#     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_node(node, data_point)
-#
-#     return tree_holder_builder
-
-
-@lru_cache(maxsize=4096)
-def get_cached_dp_added_to_outliers_builder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint):
-    tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(data_point)
-
-    return tree_holder_builder
-
-
-@lru_cache(maxsize=2048)
-def get_cached_built_tree_holder(tree_holder_builder: TreeHolderBuilder):
-    tree_container = tree_holder_builder.build()
-    return tree_container
 
 
 @lru_cache(maxsize=2048)

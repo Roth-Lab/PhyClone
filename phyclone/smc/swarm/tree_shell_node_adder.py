@@ -88,7 +88,7 @@ class TreeHolderBuilder(object):
         self._roots = None
         self._outlier_node_name = outlier_node_name
         self._root_node_name = root_node_name
-        self._nodes = list(nodes)
+        self._nodes = set(nodes)
         self._data = None
         self._node_idx = None
         self._node_idx_rev = None
@@ -128,8 +128,9 @@ class TreeHolderBuilder(object):
 
     def with_node_last_added_to(self, node_last_added_to):
         if node_last_added_to != self._outlier_node_name:
-            if node_last_added_to not in self._nodes:
-                self._nodes.append(node_last_added_to)
+            self._nodes.add(node_last_added_to)
+            # if node_last_added_to not in self._nodes:
+            #     self._nodes.append(node_last_added_to)
 
         return self
 
@@ -212,11 +213,11 @@ class TreeHolderBuilder(object):
 
     @property
     def nodes(self):
-        return self._nodes
+        return list(self._nodes)
 
     @property
     def roots(self):
-        return self._roots
+        return list(self._roots)
 
     @property
     def node_data(self):
@@ -229,7 +230,7 @@ class TreeHolderBuilder(object):
 
     @property
     def labels(self):
-        return self._labels
+        return self._labels.copy()
 
     @labels.setter
     def labels(self, node_data):
@@ -280,7 +281,7 @@ class TreeShellNodeAdder(object):
         "perm_dist",
         "_perm_dist_dict",
         "_num_datapoints",
-        "_root_clade_dict",
+        # "_root_clade_dict",
     )
 
     def __init__(self, tree: Tree, tree_dist: TreeJointDistribution, perm_dist: RootPermutationDistribution = None):
@@ -300,7 +301,7 @@ class TreeShellNodeAdder(object):
         self.tree_dist = tree_dist
         self._perm_dist_dict = None
         self._num_datapoints = 0
-        self._root_clade_dict = {hash(tree.get_node_clade(rt)): rt for rt in self._root_nodes_dict.keys()}
+        # self._root_clade_dict = {hash(tree.get_node_clade(rt)): rt for rt in self._root_nodes_dict.keys()}
 
         for subroot in self._root_nodes_dict.values():
             subroot.make_internal_arrays_read_only()
@@ -366,7 +367,7 @@ class TreeShellNodeAdder(object):
         return tree_holder_builder
 
     def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
-        node_id = self._root_clade_dict[node_id]
+        # node_id = self._root_clade_dict[node_id]
         tree_holder_builder = self._add_num_children_and_node_id(node_id)
 
         node_obj = self._root_nodes_dict[node_id].copy()
@@ -440,7 +441,7 @@ class TreeShellNodeAdder(object):
         else:
             children = set(children)
 
-        children = {self._root_clade_dict[c] for c in children}
+        # children = {self._root_clade_dict[c] for c in children}
 
         node_id = self._next_node_id
 
