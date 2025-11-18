@@ -129,8 +129,6 @@ class TreeHolderBuilder(object):
     def with_node_last_added_to(self, node_last_added_to):
         if node_last_added_to != self._outlier_node_name:
             self._nodes.add(node_last_added_to)
-            # if node_last_added_to not in self._nodes:
-            #     self._nodes.append(node_last_added_to)
 
         return self
 
@@ -172,14 +170,6 @@ class TreeHolderBuilder(object):
         visitor = GraphToCladesVisitor(self._node_idx_rev, self._data, self._root_node_name)
         root_idx = self._node_idx[self._root_node_name]
         rx.dfs_search(self._graph, [root_idx], visitor)
-        vis_clades = frozenset(visitor.clades)
-        return vis_clades
-
-    def get_node_clade(self, node) -> frozenset:
-        visitor = GraphToCladesVisitor(self._node_idx_rev, self._data, node)
-        root_idx = self._node_idx[node]
-        rx.dfs_search(self._graph, [root_idx], visitor)
-        visitor.clades.add(frozenset(visitor.dict_of_sets[node]))
         vis_clades = frozenset(visitor.clades)
         return vis_clades
 
@@ -301,7 +291,6 @@ class TreeShellNodeAdder(object):
         self.tree_dist = tree_dist
         self._perm_dist_dict = None
         self._num_datapoints = 0
-        # self._root_clade_dict = {hash(tree.get_node_clade(rt)): rt for rt in self._root_nodes_dict.keys()}
 
         for subroot in self._root_nodes_dict.values():
             subroot.make_internal_arrays_read_only()
