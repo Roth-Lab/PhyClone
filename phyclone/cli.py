@@ -1,5 +1,3 @@
-from sys import maxsize
-
 import click
 
 from phyclone.process_trace import (
@@ -20,27 +18,27 @@ from phyclone.run import run as run_prog
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where tree will be written in minimal newick format.""",
 )
 @click.option(
     "-s",
     "--out-sample-prev-table",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
@@ -73,27 +71,27 @@ def consensus(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where tree will be written in minimal newick format.""",
 )
 @click.option(
     "-s",
     "--out-sample-prev-table",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
@@ -118,27 +116,26 @@ def map(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path/filename to where topology report will be written in .tsv format""",
 )
 @click.option(
     "-t",
     "--topologies-archive",
     default=None,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""To produce the results tables and newick trees for each uniquely sampled topology in the report, provide a
     path to where the archive file will be written in tar.gz compressed format.""",
 )
 @click.option(
     "--top-trees",
-    default=maxsize,
     type=click.IntRange(1, clamp=True),
     help="""Number of uniquely sampled topologies to archive. Default is to produce an archive of all unique 
     topologies.""",
@@ -156,7 +153,7 @@ def topology_report(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(exists=True, resolve_path=True),
+    type=click.Path(exists=True, resolve_path=True, readable=True, file_okay=True, dir_okay=False),
     help="""Path to TSV format file with copy number and allele count information for all samples. 
     See the examples directory in the GitHub repository for format.""",
 )
@@ -164,7 +161,7 @@ def topology_report(**kwargs):
     "-o",
     "--out-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where trace file will be written in HDF5 format.""",
 )
 @click.option(
@@ -201,7 +198,7 @@ def topology_report(**kwargs):
     "-c",
     "--cluster-file",
     default=None,
-    type=click.Path(resolve_path=True, exists=True),
+    type=click.Path(resolve_path=True, exists=True, readable=True, file_okay=True, dir_okay=False),
     help="""Path to file with pre-computed cluster assignments of mutations.""",
 )
 @click.option(

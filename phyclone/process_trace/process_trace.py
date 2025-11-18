@@ -1,7 +1,6 @@
 import os
 import tarfile
 import tempfile
-from sys import maxsize
 
 import networkx as nx
 import numpy as np
@@ -108,7 +107,7 @@ def write_consensus_results(
 
 
 def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
-    if top_trees == maxsize:
+    if top_trees is None:
         top_trees = float("inf")
     print()
     print("#" * 100)
