@@ -22,7 +22,7 @@ from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdapte
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
-from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches, print_cache_info
+from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
 from phyclone.utils.save_h5df import save_trace_to_h5df
 
 
@@ -303,7 +303,7 @@ def _run_main_sampler(
 
             if concentration_update:
                 update_concentration_value(conc_sampler, tree, tree_dist)
-    print_cache_info()
+
     results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
     return results
 
@@ -358,9 +358,9 @@ def _run_burnin(
 
     if burnin > 0:
         best_score = -np.inf
-        print("#" * 100)
-        print("Burnin")
-        print("#" * 100)
+        print("#" * 100, flush=True)
+        print(f"Burnin - Chain {chain_num}", flush=True)
+        print("#" * 100, flush=True)
 
         for i in range(burnin):
             with timer:
@@ -387,11 +387,11 @@ def _run_burnin(
                 if timer.elapsed > max_time:
                     break
         print_stats(burnin, tree, tree_dist, chain_num)
-    print()
-    print("#" * 100)
-    print("Post-burnin")
-    print("#" * 100)
-    print()
+    print(flush=True)
+    print("#" * 100, flush=True)
+    print(f"Post-burnin - Chain {chain_num}", flush=True)
+    print("#" * 100, flush=True)
+    print(flush=True)
 
     return best_tree
 
@@ -459,5 +459,6 @@ def print_stats(iter_id, tree, tree_dist, chain_num):
             tree.get_number_of_nodes(),
             len(tree.outliers),
             tree.get_number_of_children(tree.root_node_name),
-        )
+        ),
+        flush=True,
     )
