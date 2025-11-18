@@ -62,14 +62,8 @@ class NumpyArrayListHasher:
         self._hash_val = hash(self.h)
 
     def _create_hashable(self, list_of_np_arrays):
-        if len(list_of_np_arrays) <= 1:
-            hashable = sorted(xxh3_128_hexdigest(arr) for arr in list_of_np_arrays)
-            ret = tuple(hashable)
-        else:
-            hashable_dict = {xxh3_128_hexdigest(arr):arr for arr in list_of_np_arrays}
-            hashable = sorted(hashable_dict.keys())
-            ret = tuple(hashable)
-            self.values = [hashable_dict[hash_key] for hash_key in hashable]
+        hashable = sorted(xxh3_128_hexdigest(arr) for arr in list_of_np_arrays)
+        ret = tuple(hashable)
         return ret
 
     def __hash__(self) -> int:
