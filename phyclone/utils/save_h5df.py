@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import click
 
 
 def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
@@ -39,8 +40,8 @@ def store_trace(fh, num_chains, results):
         curr_chain_grp = chains_grp.create_group(chain_template.format(chain_num))
         curr_chain_grp.attrs["chain_idx"] = chain_num
         curr_chain_grp.attrs["num_iters"] = num_iters
-
-        store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict)
+        with click.progressbar(length=num_iters, label=f"Saving chain {chain_num} trace") as bar:
+            store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar)
 
 
 def store_datapoints(fh, results):
@@ -60,7 +61,7 @@ def store_datapoints(fh, results):
         curr_dp_grp.create_dataset("value", data=datapoint.value, compression="gzip")
 
 
-def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict):
+def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar):
     iters = np.empty(num_iters, dtype=np.int32)
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
@@ -86,6 +87,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
 
         tree_group_ref = store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict)
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
+        bar.update(1)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
     chain_trace_data_grp.create_dataset("iter", data=iters)
     chain_trace_data_grp.create_dataset("alpha", data=alpha)
