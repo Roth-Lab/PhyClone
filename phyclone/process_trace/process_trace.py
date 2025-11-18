@@ -21,6 +21,7 @@ from phyclone.utils.load_h5df import (
     build_df_trees_from_trace,
 )
 from itertools import repeat
+import click
 
 
 def write_map_results(
@@ -144,6 +145,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
         print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
         if top_trees >= num_unique_tree:
             topology_df = topology_df
+            top_trees = int(num_unique_tree)
         else:
             top_trees = int(top_trees)
             topology_df = topology_df.head(n=top_trees)
@@ -162,25 +164,27 @@ def create_topologies_archive(topology_df, in_file, top_trees, topologies_archiv
     samples = load_samples_from_trace(in_file)
     with tarfile.open(topologies_archive, "w:gz") as archive:
         with tempfile.TemporaryDirectory() as tmp_dir:
-            for idx, row in topology_df.iterrows():
-                tree = row["tree_obj"]
-                topology_id = row["topology_id"]
-                topology_rank = int(topology_id[2:])
-                if topology_rank >= top_trees:
-                    continue
-                table, sample_prevs_df = get_clone_table(data, samples, tree, clusters=clusters)
-                filename = filename_template.format(topology_id)
-                filepath = os.path.join(tmp_dir, filename)
-                table.to_csv(filepath, index=False, sep="\t")
-                archive.add(filepath, arcname=str(os.path.join(topology_id, filename)))
-                nwk_filename = nwk_template.format(topology_id)
-                nwk_path = os.path.join(tmp_dir, nwk_filename)
-                print_string_to_file(tree.to_newick_string(), nwk_path)
-                archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
-                sample_prevs_filename = sample_prevs_template.format(topology_id)
-                sample_prevs_filepath = os.path.join(tmp_dir, sample_prevs_filename)
-                sample_prevs_df.to_csv(sample_prevs_filepath, index=False, sep="\t")
-                archive.add(sample_prevs_filepath, arcname=str(os.path.join(topology_id, sample_prevs_filename)))
+            with click.progressbar(length=top_trees, label="Building Trees") as bar:
+                for idx, row in topology_df.iterrows():
+                    tree = row["tree_obj"]
+                    topology_id = row["topology_id"]
+                    topology_rank = int(topology_id[2:])
+                    if topology_rank >= top_trees:
+                        continue
+                    table, sample_prevs_df = get_clone_table(data, samples, tree, clusters=clusters)
+                    filename = filename_template.format(topology_id)
+                    filepath = os.path.join(tmp_dir, filename)
+                    table.to_csv(filepath, index=False, sep="\t")
+                    archive.add(filepath, arcname=str(os.path.join(topology_id, filename)))
+                    nwk_filename = nwk_template.format(topology_id)
+                    nwk_path = os.path.join(tmp_dir, nwk_filename)
+                    print_string_to_file(tree.to_newick_string(), nwk_path)
+                    archive.add(nwk_path, arcname=str(os.path.join(topology_id, nwk_filename)))
+                    sample_prevs_filename = sample_prevs_template.format(topology_id)
+                    sample_prevs_filepath = os.path.join(tmp_dir, sample_prevs_filename)
+                    sample_prevs_df.to_csv(sample_prevs_filepath, index=False, sep="\t")
+                    archive.add(sample_prevs_filepath, arcname=str(os.path.join(topology_id, sample_prevs_filename)))
+                    bar.update(1)
 
 
 def create_topology_dataframe(chain_trace_df):
