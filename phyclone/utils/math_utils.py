@@ -76,17 +76,6 @@ def log_sum_exp_over_dims(log_x_arr):
     return sum_total
 
 
-@numba.jit(nopython=True, fastmath=False)
-def log_sum_exp_over_dims_to_arr(log_x_arr):
-    num_dims = log_x_arr.shape[0]
-    ret_arr = np.empty(num_dims, np.float64)
-
-    for dim, log_x_dim in enumerate(log_x_arr):
-        ret_arr[dim] = log_sum_exp(log_x_dim)
-
-    return ret_arr
-
-
 @numba.jit(nopython=True)
 def log_normalize(log_p):
     return log_p - log_sum_exp(log_p)
