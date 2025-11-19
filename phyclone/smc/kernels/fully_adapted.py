@@ -2,7 +2,7 @@ from functools import lru_cache
 from itertools import combinations
 
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+# from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 
 
 class FullyAdaptedProposalDistribution(ProposalDistribution):
@@ -42,7 +42,7 @@ class FullyAdaptedProposalDistribution(ProposalDistribution):
         self._log_p = {}
         trees = []
 
-        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
+        # self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
         trees.extend(self._get_new_node_trees())
 
         if self.outlier_modelling_active:

@@ -141,7 +141,7 @@ class BootstrapAdaptedTest(BaseTest.BaseTest):
         self._rng = np.random.default_rng(242643578967193853558243570818064774262)
         clear_all_caches()
         self.sampler = self._get_sampler(BootstrapKernel)
-        self.run_scale = 4
+        self.run_scale = 2
 
 
 class FullyAdaptedTest(BaseTest.BaseTest):

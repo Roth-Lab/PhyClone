@@ -131,6 +131,8 @@ class ProposalDistribution(object):
 
         self._set_parent_tree()
 
+        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
+
     def _empty_tree(self):
         """Tree has no nodes"""
         return (self.parent_particle is None) or (self._num_roots == 0)
@@ -142,7 +144,7 @@ class ProposalDistribution(object):
                 self.parent_tree = self.parent_particle.tree
             else:
                 self.parent_tree = parent_tree
-            self._tree_roots = self.parent_particle.tree_roots.copy()
+            self._tree_roots = np.array(self.parent_particle.tree_roots)
             self._num_roots = len(self._tree_roots)
         else:
             self.parent_tree = Tree(self.data_point.grid_size)
