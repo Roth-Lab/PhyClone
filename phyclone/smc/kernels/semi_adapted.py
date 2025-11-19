@@ -38,7 +38,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            # Existing node
+            # Existing node or outlier node
             if tree in self._log_p:
                 log_p = self.log_half + self._log_p[tree]
 
