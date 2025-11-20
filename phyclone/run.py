@@ -56,21 +56,25 @@ def run(
 
     rng_main = instantiate_and_seed_RNG(seed)
 
-    if assign_loss_prob and user_provided_loss_prob:
-        raise Exception(
-            "Cannot use both --assign-loss-prob and --user-provided-loss-prob, these options are mutually exclusive."
-        )
-
-    if assign_loss_prob and outlier_prob == 0:
-        outlier_prob = 0.0001
-
-    if user_provided_loss_prob and outlier_prob == 0:
-        outlier_prob = 0.0001
+    # if assign_loss_prob and outlier_prob == 0:
+    #     outlier_prob = 0.0001
+    #
+    # if user_provided_loss_prob and outlier_prob == 0:
+    #     outlier_prob = 0.0001
 
     outlier_modelling_active = outlier_prob > 0
 
     rng_seed = print_welcome_message(
-        burnin, density, num_chains, num_iters, num_particles, seed, outlier_modelling_active, rng_main, proposal
+        burnin,
+        density,
+        num_chains,
+        num_iters,
+        num_particles,
+        seed,
+        outlier_modelling_active,
+        rng_main,
+        proposal,
+        outlier_prob,
     )
 
     data, samples, minimal_cluster_df = load_data(
@@ -164,6 +168,7 @@ def print_welcome_message(
     outlier_modelling_active,
     rng_main,
     proposal_kernel,
+    outlier_prob,
 ):
     print()
     print("#" * 100)
@@ -184,6 +189,7 @@ def print_welcome_message(
         seed = rng_main.bit_generator.seed_seq.entropy
     print("Random seed: {} {}".format(seed, seed_msg))
     print("Outlier modelling allowed: {}".format(outlier_modelling_active))
+    print("Outlier prior probability setting: {}".format(outlier_prob))
     print()
     print("#" * 100)
     print()

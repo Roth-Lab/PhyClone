@@ -148,6 +148,43 @@ def topology_report(**kwargs):
 # =========================================================================
 # Analysis
 # =========================================================================
+
+def _validate_thin(ctx, param, value):
+    num_iters = ctx.params['num_iters']
+    if value >= num_iters:
+        raise click.BadParameter("Cannot be greater than or equal to number of iterations, as this will result in an empty trace.")
+    return value
+
+
+def _validate_assign_loss_prob(ctx, param, value):
+    if value:
+        if "user_provided_loss_prob" in ctx.params:
+            user_provided_loss_prob = ctx.params['user_provided_loss_prob']
+            if user_provided_loss_prob:
+                raise click.BadParameter("Cannot be used with --user-provided-loss-prob, as these options are mutually exclusive.")
+    return value
+
+
+def _validate_user_provided_loss_prob(ctx, param, value):
+    if value:
+        if "assign_loss_prob" in ctx.params:
+            assign_loss_prob = ctx.params['assign_loss_prob']
+            if assign_loss_prob:
+                raise click.BadParameter("Cannot be used with '--assign-loss-prob', as these options are mutually exclusive.")
+    return value
+
+
+def _validate_outlier_prob(ctx, param, value):
+    if value > 0:
+        return value
+    if ctx.params['assign_loss_prob'] or ctx.params['user_provided_loss_prob']:
+        min_val = 1e-4
+        click.echo()
+        click.echo(f"As outlier modelling is active, changing '--outlier-prob' from 0.0 to {min_val}.")
+        return min_val
+    return value
+
+
 @click.command(context_settings={"max_content_width": 120}, name="run")
 @click.option(
     "-i",
@@ -178,6 +215,7 @@ def topology_report(**kwargs):
     default=5000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
+    is_eager=True,
     help="""Number of iterations of the MCMC sampler to perform.""",
 )
 @click.option(
@@ -185,6 +223,7 @@ def topology_report(**kwargs):
     default=1,
     type=click.IntRange(1, clamp=True),
     show_default=True,
+    callback=_validate_thin,
     help="""Thinning parameter for storing entries in trace.""",
 )
 @click.option(
@@ -215,7 +254,8 @@ def topology_report(**kwargs):
     default=0,
     type=click.FloatRange(0.0, 1.0, clamp=True),
     show_default=True,
-    help="""Global prior probability that data points are outliers and don't fit tree.""",
+    callback=_validate_outlier_prob,
+    help="""Prior probability that data points are outliers and don't fit tree.""",
 )
 @click.option(
     "-p",
@@ -269,14 +309,14 @@ def topology_report(**kwargs):
 @click.option(
     "--num-samples-data-point",
     default=1,
-    type=int,
+    type=click.IntRange(0, clamp=True),
     show_default=True,
     help="""Number of Gibbs updates to reassign data points per SMC iteration.""",
 )
 @click.option(
     "--num-samples-prune-regraph",
     default=1,
-    type=int,
+    type=click.IntRange(0, clamp=True),
     show_default=True,
     help="""Number of prune-regraph updates per SMC iteration.""",
 )
@@ -320,6 +360,8 @@ def topology_report(**kwargs):
     "--assign-loss-prob/--no-assign-loss-prob",
     default=False,
     show_default=True,
+    callback=_validate_assign_loss_prob,
+    is_eager=True,
     help="Whether to assign loss probability prior from the cluster data."
     "Note: This option is incompatible with --user-provided-loss-prob",
 )
@@ -327,6 +369,8 @@ def topology_report(**kwargs):
     "--user-provided-loss-prob/--no-user-provided-loss-prob",
     default=False,
     show_default=True,
+    callback=_validate_user_provided_loss_prob,
+    is_eager=True,
     help="Whether to use user-provided cluster loss probability prior from the cluster file."
     "Requires that the 'outlier_prob' column be present and populated in the cluster file."
     "Note: This option is incompatible with --assign-loss-prob",
