@@ -18,6 +18,7 @@ def load_data(
     rng,
     high_loss_prob,
     assign_loss_prob,
+    user_provided_loss_prob,
     cluster_file=None,
     density="beta-binomial",
     grid_size=101,
@@ -54,6 +55,7 @@ def load_data(
             assign_loss_prob,
             min_clust_size,
             data_df,
+            user_provided_loss_prob,
         )
 
         num_samples = len(samples)
@@ -119,45 +121,45 @@ def _setup_cluster_df(
     assign_loss_prob,
     min_clust_size,
     data_df,
+    user_provided_loss_prob,
 ):
     cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df)
-    cluster_prob_status_msg = ""
-    if "outlier_prob" not in cluster_df.columns:
-        cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
-        if assign_loss_prob:
-            column_checks = (
-                "chrom" in cluster_df.columns
-                and "cellular_prevalence" in cluster_df.columns
-                and "sample_id" in cluster_df.columns
-            )
-            if column_checks:
-                cluster_prob_status_msg += "Assigning outlier probability from data.\n"
-                print(cluster_prob_status_msg)
-                _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
-            else:
-                cluster_prob_status_msg += (
-                    "\nOutlier probability cannot be assigned from data, required columns are missing."
-                )
-                cluster_prob_status_msg += "\nSetting values to {p}.\n".format(p=outlier_prob)
-                print(cluster_prob_status_msg)
-                cluster_df.loc[:, "outlier_prob"] = outlier_prob
+    print()
+    if assign_loss_prob:
+        _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng)
+    elif user_provided_loss_prob:
+        if "outlier_prob" not in cluster_df.columns:
+            print("Cluster level outlier probability column not found.")
+            _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
         else:
-            cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
-            print(cluster_prob_status_msg)
-            cluster_df.loc[:, "outlier_prob"] = outlier_prob
+            print("Cluster level outlier probability column is present.")
+            print("Using user-supplied outlier probability prior values.")
+            # cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+            cluster_df["outlier_prob"].fillna(outlier_prob, inplace=True)
     else:
-        cluster_prob_status_msg += "\nCluster level outlier probability column is present."
-        cluster_prob_status_msg += "\nUsing user-supplied outlier probability prior values.\n"
-        print(cluster_prob_status_msg)
-
-    if not assign_loss_prob:
-        if outlier_prob == 0:
-            cluster_df.loc[:, "outlier_prob"] = outlier_prob
-        else:
-            cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+        _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
 
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
     return cluster_df, unprocessed_cluster_df
+
+
+def _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng):
+    column_checks = (
+        "chrom" in cluster_df.columns
+        and "cellular_prevalence" in cluster_df.columns
+        and "sample_id" in cluster_df.columns
+    )
+    if column_checks:
+        print("Assigning outlier probability from data.")
+        _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
+    else:
+        print("Outlier probability cannot be assigned from data, required columns are missing.")
+        _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
+
+
+def _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob):
+    print("Setting outlier probability values to {p}".format(p=outlier_prob))
+    cluster_df.loc[:, "outlier_prob"] = outlier_prob
 
 
 def _get_raw_cluster_df(cluster_file, data_df):

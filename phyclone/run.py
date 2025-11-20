@@ -56,12 +56,6 @@ def run(
 
     rng_main = instantiate_and_seed_RNG(seed)
 
-    # if assign_loss_prob and outlier_prob == 0:
-    #     outlier_prob = 0.0001
-    #
-    # if user_provided_loss_prob and outlier_prob == 0:
-    #     outlier_prob = 0.0001
-
     outlier_modelling_active = outlier_prob > 0
 
     rng_seed = print_welcome_message(
@@ -82,6 +76,7 @@ def run(
         rng_main,
         high_loss_prob,
         assign_loss_prob,
+        user_provided_loss_prob,
         cluster_file=cluster_file,
         density=density,
         grid_size=grid_size,

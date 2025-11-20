@@ -135,18 +135,9 @@ class BaseLoadDataTest(object):
                 cluster_file_path = os.path.join(tmp_dir, "clusters.tsv")
                 cluster_df.to_csv(cluster_file_path, sep="\t", index=False)
 
-                data, actual_samples, _ = load_data(
-                    data_file_path,
-                    self.rng,
-                    high_loss_prob,
-                    assign_loss_prob,
-                    cluster_file_path,
-                    self.density,
-                    self.grid_size,
-                    outlier_prob,
-                    self.precision,
-                    min_clust_size,
-                )
+                data, actual_samples, _ = load_data(data_file_path, self.rng, high_loss_prob, assign_loss_prob,
+                                                    user_provided_loss_prob, cluster_file_path, self.density,
+                                                    self.grid_size, outlier_prob, self.precision, min_clust_size)
             return actual_samples, data
 
         def run_unclustered_load_data(self, assign_loss_prob, data_df, high_loss_prob, outlier_prob):
@@ -154,17 +145,9 @@ class BaseLoadDataTest(object):
                 data_file_path = os.path.join(tmp_dir, "data.tsv")
                 data_df.to_csv(data_file_path, sep="\t", index=False)
 
-                data, actual_samples, _ = load_data(
-                    data_file_path,
-                    self.rng,
-                    high_loss_prob,
-                    assign_loss_prob,
-                    None,
-                    self.density,
-                    self.grid_size,
-                    outlier_prob,
-                    self.precision,
-                )
+                data, actual_samples, _ = load_data(data_file_path, self.rng, high_loss_prob, assign_loss_prob,
+                                                    user_provided_loss_prob, None, self.density, self.grid_size,
+                                                    outlier_prob, self.precision)
             return actual_samples, data
 
         def run_unclustered_test(self, actual_samples, data, expected_samples, prob):
