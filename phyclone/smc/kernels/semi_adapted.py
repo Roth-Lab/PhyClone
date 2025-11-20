@@ -3,7 +3,6 @@ from functools import lru_cache
 import numpy as np
 
 from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_dp_added_to_new_node_tree_holder
-# from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.utils.math_utils import cached_log_binomial_coefficient
 
 
@@ -27,7 +26,6 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.log_half = kernel.log_half
         self.parent_is_empty_tree = False
         self._computed_prob = dict()
-        # self._tree_nodes = None
         self._init_dist()
 
     def log_p(self, tree):
@@ -81,17 +79,16 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         trees = []
 
-        # self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-
         if self._empty_tree():
             self.parent_is_empty_tree = True
 
-            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node([],
-                                                                                               self.data_point,)
+            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node(
+                [],
+                self.data_point,
+            )
 
             trees.append(tree_holder_builder.build())
         else:
-            # self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
 
         if self.outlier_modelling_active:

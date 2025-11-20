@@ -73,7 +73,6 @@ class ConditionalSMCSampler(AbstractSMCSampler):
 
         return constrained_path
 
-
     def _init_swarm(self):
         self.swarm = ParticleSwarm()
 
@@ -123,7 +122,6 @@ class ConditionalSMCSampler(AbstractSMCSampler):
                 )
 
             self.swarm = new_swarm
-
 
     def _update_swarm(self):
         new_swarm = ParticleSwarm()

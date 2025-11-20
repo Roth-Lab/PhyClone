@@ -1,7 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-# import numpy as np
 import rustworkx as rx
 
 from phyclone.data.base import DataPoint
@@ -82,7 +81,6 @@ class TreeHolderBuilder(object):
         self._number_of_nodes = 0
         self.roots_num_desc = None
         self.roots_num_children = None
-        # self._labels = None
         self._graph = None
         self._multiplicity = None
         self._roots = None
@@ -121,7 +119,6 @@ class TreeHolderBuilder(object):
 
     def with_node_data(self, node_data):
         self._data = node_data
-        # self.outliers = node_data
         return self
 
     def with_log_pdf(self, log_pdf):
@@ -222,10 +219,6 @@ class TreeHolderBuilder(object):
     def labels(self):
         return {dp.idx: k for k, l in self._data.items() for dp in l}
 
-    # @labels.setter
-    # def labels(self, node_data):
-    #     self._labels = {dp.idx: k for k, l in node_data.items() for dp in l}
-
     @property
     def multiplicity(self):
         return self._multiplicity
@@ -237,10 +230,6 @@ class TreeHolderBuilder(object):
     @property
     def outliers(self):
         return self._data[self._outlier_node_name]
-
-    # @outliers.setter
-    # def outliers(self, node_data):
-    #     self._outliers = list(node_data[self._outlier_node_name])
 
     @property
     def outlier_node_name(self):
@@ -271,7 +260,6 @@ class TreeShellNodeAdder(object):
         "perm_dist",
         "_perm_dist_dict",
         "_num_datapoints",
-        # "_root_clade_dict",
     )
 
     def __init__(self, tree: Tree, tree_dist: TreeJointDistribution, perm_dist: RootPermutationDistribution = None):
@@ -354,7 +342,6 @@ class TreeShellNodeAdder(object):
         return tree_holder_builder
 
     def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
-        # node_id = self._root_clade_dict[node_id]
         tree_holder_builder = self._add_num_children_and_node_id(node_id)
 
         node_obj = self._root_nodes_dict[node_id].copy()

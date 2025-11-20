@@ -293,8 +293,6 @@ def _run_main_sampler(
             for _ in range(num_samples_prune_regraph):
                 tree = prg_sampler.sample_tree(tree)
 
-            # tree.relabel_nodes()
-
             if i % thin == 0:
                 append_to_trace(i, timer, trace, tree, tree_dist)
 
@@ -376,8 +374,6 @@ def _run_burnin(
 
                 for _ in range(num_samples_prune_regraph):
                     tree = prg_sampler.sample_tree(tree)
-
-                # tree.relabel_nodes()
 
                 tree_score = tree_dist.log_p_one(tree)
                 if tree_score > best_score:

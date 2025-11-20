@@ -16,8 +16,16 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
 
         if minimal_cluster_df is not None:
             clusters_grp = fh.create_group("clusters")
-            clusters_grp.create_dataset("cluster_id", data=minimal_cluster_df["cluster_id"].to_numpy(), compression="gzip")
-            clusters_grp.create_dataset("mutation_id", data=minimal_cluster_df["mutation_id"].to_numpy(), compression="gzip")
+            clusters_grp.create_dataset(
+                "cluster_id",
+                data=minimal_cluster_df["cluster_id"].to_numpy(),
+                compression="gzip",
+            )
+            clusters_grp.create_dataset(
+                "mutation_id",
+                data=minimal_cluster_df["mutation_id"].to_numpy(),
+                compression="gzip",
+            )
 
         store_datapoints(fh, results)
 

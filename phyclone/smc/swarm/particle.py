@@ -19,23 +19,14 @@ class Particle(object):
 
     def __init__(self, log_w, parent_particle, tree_holder, tree_dist, perm_dist):
         self._built_tree = None
-
         self.log_w = log_w
-
         self.parent_particle = parent_particle
-
         self._tree_dist = tree_dist
-
         self._perm_dist = perm_dist
-
         self.log_p = 0
-
         self.log_pdf = 0
-
         self.log_p_one = 0
-
         self._hash_val = 0
-
         self.tree = tree_holder
 
     def __hash__(self):

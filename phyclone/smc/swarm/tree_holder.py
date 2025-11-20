@@ -78,8 +78,7 @@ class TreeHolder(object):
         self._hash_val = hash(tree)
         self._tree = tree.to_dict()
         self.labels = tree.labels
-        self._num_child_dict = {k:tree.get_number_of_children(k) for k in self.tree_roots}
-
+        self._num_child_dict = {k: tree.get_number_of_children(k) for k in self.tree_roots}
 
     @tree.getter
     def tree(self) -> Tree:

@@ -82,7 +82,7 @@ class FSCRPDistribution(object):
             num_sub_trees = (curr_num_nodes - 1) * np.log(curr_num_nodes)
             num_ways += num_sub_trees
 
-        log_p += (-num_ways + r_term)
+        log_p += -num_ways + r_term
 
         log_p -= tree.multiplicity
 
@@ -182,7 +182,6 @@ class TreeJointDistribution(object):
         log_p_one += outlier_marginal_prob
 
         return log_p, log_p_one
-
 
     def outlier_marginal_prob(self, tree):
         if self.outlier_modelling_active:
