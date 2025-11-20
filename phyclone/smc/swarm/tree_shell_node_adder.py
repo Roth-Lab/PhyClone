@@ -327,19 +327,20 @@ class TreeShellNodeAdder(object):
         root_node_obj = self._dummy_root_obj.copy()
         tree_holder_builder.with_root_node_object(root_node_obj)
 
-        roots_num_children = self.roots_num_children.copy()
-        roots_num_children[self._root_node_name] = len(graph.successors(self._root_idx))
-        tree_holder_builder.with_roots_num_children(roots_num_children)
-
-        roots_num_desc = self.roots_num_desc.copy()
-        roots_num_desc[self._root_node_name] = len(rx.descendants(graph, self._root_idx))
-        tree_holder_builder.with_roots_num_desc(roots_num_desc)
-
-        tree_holder_builder.with_roots(list(self._root_node_names_set))
+        self._add_num_children_and_num_descendants_no_new_node(graph, tree_holder_builder)
 
         self._compute_new_log_pdf_added_outlier(self._root_node_names_set, tree_holder_builder)
 
         return tree_holder_builder
+
+    def _add_num_children_and_num_descendants_no_new_node(self, graph, tree_holder_builder):
+        roots_num_children = self.roots_num_children.copy()
+        roots_num_children[self._root_node_name] = len(graph.successors(self._root_idx))
+        tree_holder_builder.with_roots_num_children(roots_num_children)
+        roots_num_desc = self.roots_num_desc.copy()
+        roots_num_desc[self._root_node_name] = len(rx.descendants(graph, self._root_idx))
+        tree_holder_builder.with_roots_num_desc(roots_num_desc)
+        tree_holder_builder.with_roots(list(self._root_node_names_set))
 
     def create_tree_holder_with_datapoint_added_to_node(self, node_id: int | str, datapoint: DataPoint):
         tree_holder_builder = self._add_num_children_and_node_id(node_id)
@@ -362,15 +363,7 @@ class TreeShellNodeAdder(object):
 
         self._update_likelihood_computations_added_datapoint(node_id, node_obj, tree_holder_builder)
 
-        roots_num_children = self.roots_num_children.copy()
-        roots_num_children[self._root_node_name] = len(graph.successors(self._root_idx))
-        tree_holder_builder.with_roots_num_children(roots_num_children)
-
-        roots_num_desc = self.roots_num_desc.copy()
-        roots_num_desc[self._root_node_name] = len(rx.descendants(graph, self._root_idx))
-        tree_holder_builder.with_roots_num_desc(roots_num_desc)
-
-        tree_holder_builder.with_roots(list(self._root_node_names_set))
+        self._add_num_children_and_num_descendants_no_new_node(graph, tree_holder_builder)
 
         self._compute_new_log_pdf_added_datapoint(node_id, self._root_node_names_set, tree_holder_builder, node_data)
 
