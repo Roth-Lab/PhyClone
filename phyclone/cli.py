@@ -161,7 +161,7 @@ def _validate_assign_loss_prob(ctx, param, value):
         if "user_provided_loss_prob" in ctx.params:
             user_provided_loss_prob = ctx.params['user_provided_loss_prob']
             if user_provided_loss_prob:
-                raise click.BadParameter("Cannot be used with --user-provided-loss-prob, as these options are mutually exclusive.")
+                raise click.BadParameter("Cannot be used with '--user-provided-loss-prob', as these options are mutually exclusive.")
     return value
 
 
@@ -196,6 +196,12 @@ def _validate_high_loss_prob(ctx, param, value):
             outlier_prob = ctx.params['outlier_prob']
             if value <= outlier_prob:
                 raise click.BadParameter("Value must be higher than '--outlier-prob'")
+    return value
+
+
+def _validate_positive_value(ctx, param, value):
+    if value < 0:
+        raise click.BadParameter("Value must be positive.")
     return value
 
 
@@ -289,6 +295,7 @@ def _validate_high_loss_prob(ctx, param, value):
     default=float("inf"),
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""Maximum running time in seconds.""",
 )
 @click.option(
@@ -302,6 +309,7 @@ def _validate_high_loss_prob(ctx, param, value):
     default=1.0,
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""The (initial) concentration of the Dirichlet process. Higher values will encourage more clusters, 
     lower values have the opposite effect.""",
 )
@@ -347,13 +355,14 @@ def _validate_high_loss_prob(ctx, param, value):
     default=400,
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""The (initial) precision parameter of the Beta-Binomial density. 
     The higher the value the more similar the Beta-Binomial is to a Binomial.""",
 )
 @click.option(
     "--print-freq",
     default=100,
-    type=int,
+    type=click.IntRange(1, clamp=True),
     show_default=True,
     help="""How frequently to print information about fitting.""",
 )
