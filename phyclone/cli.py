@@ -176,12 +176,26 @@ def _validate_user_provided_loss_prob(ctx, param, value):
 
 def _validate_outlier_prob(ctx, param, value):
     if value > 0:
+        if ctx.params['assign_loss_prob']:
+            if "high_loss_prob" in ctx.params:
+                high_loss_prob = ctx.params['high_loss_prob']
+                if value >= high_loss_prob:
+                    raise click.BadParameter("Value must be lower than '--high-loss-prob' when using '--assign-loss-prob'")
         return value
     if ctx.params['assign_loss_prob'] or ctx.params['user_provided_loss_prob']:
         min_val = 1e-4
         click.echo()
         click.echo(f"As outlier modelling is active, changing '--outlier-prob' from 0.0 to {min_val}.")
         return min_val
+    return value
+
+
+def _validate_high_loss_prob(ctx, param, value):
+    if ctx.params['assign_loss_prob']:
+        if "outlier_prob" in ctx.params:
+            outlier_prob = ctx.params['outlier_prob']
+            if value <= outlier_prob:
+                raise click.BadParameter("Value must be higher than '--outlier-prob'")
     return value
 
 
@@ -378,8 +392,9 @@ def _validate_outlier_prob(ctx, param, value):
 @click.option(
     "--high-loss-prob",
     default=0.4,
-    type=click.FloatRange(0.0001, 1.0, clamp=True),
+    type=click.FloatRange(0.0002, 1.0, clamp=True),
     show_default=True,
+    callback=_validate_high_loss_prob,
     help="""Higher loss probability setting. 
     Used when allowing PhyClone to assign loss prior probability from cluster data.
     Unless combined with the --assign-loss-prob option and a cluster input file, this does nothing.""",
