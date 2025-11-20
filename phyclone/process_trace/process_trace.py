@@ -31,6 +31,13 @@ def write_map_results(
     map_type="joint-likelihood",
 ):
 
+    print()
+    print("#" * 100)
+    print("PhyClone - Write MAP Tree Results")
+    print("#" * 100)
+
+    print("\nLoading MAP tree from trace.")
+
     chain_trace_df = load_chain_trace_data_df(in_file)
 
     if map_type == "frequency":
@@ -51,6 +58,8 @@ def write_map_results(
     table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
     _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
+    print("Finished.")
+    print("#" * 100)
 
 
 def write_consensus_results(
@@ -61,6 +70,11 @@ def write_consensus_results(
     consensus_threshold=0.5,
     weight_type="joint-likelihood",
 ):
+
+    print()
+    print("#" * 100)
+    print("PhyClone - Write Consensus Tree Results")
+    print("#" * 100)
 
     datapoints = build_datapoints_dict_from_trace(in_file)
     chain_trace_df = load_chain_trace_data_df(in_file)
@@ -90,6 +104,8 @@ def write_consensus_results(
         probs = np.asarray(probs)
         probs, _ = exp_normalize(probs)
 
+    print("\nBuilding consensus tree from trace.")
+
     graph = get_consensus_tree(
         trees,
         data=datapoints,
@@ -104,6 +120,8 @@ def write_consensus_results(
     table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
     _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
+    print("Finished.")
+    print("#" * 100)
 
 
 def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
@@ -124,7 +142,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
     topo_df_to_save.to_csv(out_file, index=False, sep="\t")
     num_unique_tree = len(topology_df)
 
-    print("Topology report created, saved as: {}".format(out_file))
+    print("Topology report created, saved as:\n{}".format(out_file))
 
     if topologies_archive is not None:
         print()
@@ -150,7 +168,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
             topology_df = topology_df.head(n=top_trees)
         build_df_trees_from_trace(in_file, topology_df, datapoints)
         create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, datapoints)
-        print("Topologies archive created, saved as: {}".format(topologies_archive))
+        print("Topologies archive created, saved as:\n{}".format(topologies_archive))
     print("\nFinished.")
     print("#" * 100)
 
@@ -287,6 +305,8 @@ def get_clone_table(data, samples, tree, clusters=None):
 
     res_df = pd.merge(labels, sample_prevs_df, on="clone_id")
 
+    sample_prevs_df = sample_prevs_df.loc[sample_prevs_df["clone_id"] != outlier_node_name]
+
     return res_df, sample_prevs_df
 
 
@@ -341,6 +361,6 @@ def get_labels_table(data, tree, clusters=None):
         df_records_list.extend(missing_muts_df.to_dict("records"))
 
         df = pd.DataFrame(df_records_list)
-        df = df.sort_values(by=["clone_id", "cluster_id", "mutation_id"])
+        df = df.sort_values(by=["clone_id", "cluster_id", "mutation_id"], ignore_index=True)
 
     return df
