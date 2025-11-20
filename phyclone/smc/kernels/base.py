@@ -97,8 +97,6 @@ class ProposalDistribution(object):
         "_curr_trees",
         "_tree_roots",
         "_num_roots",
-        # "_root_clade_dict",
-        # "_hashed_roots",
     )
 
     def __init__(
@@ -150,8 +148,6 @@ class ProposalDistribution(object):
             self.parent_tree = Tree(self.data_point.grid_size)
             self._tree_roots = []
             self._num_roots = 0
-        # self._root_clade_dict = {hash(self.parent_tree.get_node_clade(rt)): rt for rt in self._tree_roots}
-        # self._hashed_roots = np.array(list(self._root_clade_dict.keys()))
 
     def log_p(self, state):
         """Get the log probability of proposing a tree."""

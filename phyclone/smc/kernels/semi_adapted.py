@@ -14,7 +14,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob", "_tree_nodes")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob")
 
     def __init__(
         self,
@@ -27,7 +27,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         self.log_half = kernel.log_half
         self.parent_is_empty_tree = False
         self._computed_prob = dict()
-        self._tree_nodes = None
+        # self._tree_nodes = None
         self._init_dist()
 
     def log_p(self, tree):
@@ -91,7 +91,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
             trees.append(tree_holder_builder.build())
         else:
-            self._tree_nodes = set(self.parent_particle.tree_nodes)
+            # self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
 
         if self.outlier_modelling_active:
