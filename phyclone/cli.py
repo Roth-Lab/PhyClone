@@ -149,40 +149,49 @@ def topology_report(**kwargs):
 # Analysis
 # =========================================================================
 
+
 def _validate_thin(ctx, param, value):
-    num_iters = ctx.params['num_iters']
+    num_iters = ctx.params["num_iters"]
     if value >= num_iters:
-        raise click.BadParameter("Cannot be greater than or equal to number of iterations, as this will result in an empty trace.")
+        raise click.BadParameter(
+            "Cannot be greater than or equal to number of iterations, as this will result in an empty trace."
+        )
     return value
 
 
 def _validate_assign_loss_prob(ctx, param, value):
     if value:
         if "user_provided_loss_prob" in ctx.params:
-            user_provided_loss_prob = ctx.params['user_provided_loss_prob']
+            user_provided_loss_prob = ctx.params["user_provided_loss_prob"]
             if user_provided_loss_prob:
-                raise click.BadParameter("Cannot be used with '--user-provided-loss-prob', as these options are mutually exclusive.")
+                raise click.BadParameter(
+                    "Cannot be used with '--user-provided-loss-prob', as these options are mutually exclusive."
+                )
     return value
 
 
 def _validate_user_provided_loss_prob(ctx, param, value):
     if value:
         if "assign_loss_prob" in ctx.params:
-            assign_loss_prob = ctx.params['assign_loss_prob']
+            assign_loss_prob = ctx.params["assign_loss_prob"]
             if assign_loss_prob:
-                raise click.BadParameter("Cannot be used with '--assign-loss-prob', as these options are mutually exclusive.")
+                raise click.BadParameter(
+                    "Cannot be used with '--assign-loss-prob', as these options are mutually exclusive."
+                )
     return value
 
 
 def _validate_outlier_prob(ctx, param, value):
     if value > 0:
-        if ctx.params['assign_loss_prob']:
+        if ctx.params["assign_loss_prob"]:
             if "high_loss_prob" in ctx.params:
-                high_loss_prob = ctx.params['high_loss_prob']
+                high_loss_prob = ctx.params["high_loss_prob"]
                 if value >= high_loss_prob:
-                    raise click.BadParameter("Value must be lesser than '--high-loss-prob' when using '--assign-loss-prob'")
+                    raise click.BadParameter(
+                        "Value must be lesser than '--high-loss-prob' when using '--assign-loss-prob'"
+                    )
         return value
-    if ctx.params['assign_loss_prob'] or ctx.params['user_provided_loss_prob']:
+    if ctx.params["assign_loss_prob"] or ctx.params["user_provided_loss_prob"]:
         min_val = 1e-4
         click.echo()
         click.echo(f"As outlier modelling is active, changing '--outlier-prob' from 0.0 to {min_val}.")
@@ -191,9 +200,9 @@ def _validate_outlier_prob(ctx, param, value):
 
 
 def _validate_high_loss_prob(ctx, param, value):
-    if ctx.params['assign_loss_prob']:
+    if ctx.params["assign_loss_prob"]:
         if "outlier_prob" in ctx.params:
-            outlier_prob = ctx.params['outlier_prob']
+            outlier_prob = ctx.params["outlier_prob"]
             if value <= outlier_prob:
                 raise click.BadParameter("Value must be greater than '--outlier-prob'")
     return value

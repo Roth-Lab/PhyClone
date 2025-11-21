@@ -136,19 +136,40 @@ class BaseLoadDataTest(object):
                 cluster_file_path = os.path.join(tmp_dir, "clusters.tsv")
                 cluster_df.to_csv(cluster_file_path, sep="\t", index=False)
 
-                data, actual_samples, _ = load_data(data_file_path, self.rng, high_loss_prob, assign_loss_prob,
-                                                    user_provided_loss_prob, cluster_file_path, self.density,
-                                                    self.grid_size, outlier_prob, self.precision, min_clust_size)
+                data, actual_samples, _ = load_data(
+                    data_file_path,
+                    self.rng,
+                    high_loss_prob,
+                    assign_loss_prob,
+                    user_provided_loss_prob,
+                    cluster_file_path,
+                    self.density,
+                    self.grid_size,
+                    outlier_prob,
+                    self.precision,
+                    min_clust_size,
+                )
             return actual_samples, data
 
-        def run_unclustered_load_data(self, assign_loss_prob, data_df, high_loss_prob, outlier_prob, user_provided_loss_prob=False):
+        def run_unclustered_load_data(
+            self, assign_loss_prob, data_df, high_loss_prob, outlier_prob, user_provided_loss_prob=False
+        ):
             with tempfile.TemporaryDirectory() as tmp_dir:
                 data_file_path = os.path.join(tmp_dir, "data.tsv")
                 data_df.to_csv(data_file_path, sep="\t", index=False)
 
-                data, actual_samples, _ = load_data(data_file_path, self.rng, high_loss_prob, assign_loss_prob,
-                                                    user_provided_loss_prob, None, self.density, self.grid_size,
-                                                    outlier_prob, self.precision)
+                data, actual_samples, _ = load_data(
+                    data_file_path,
+                    self.rng,
+                    high_loss_prob,
+                    assign_loss_prob,
+                    user_provided_loss_prob,
+                    None,
+                    self.density,
+                    self.grid_size,
+                    outlier_prob,
+                    self.precision,
+                )
             return actual_samples, data
 
         def run_unclustered_test(self, actual_samples, data, expected_samples, prob):
@@ -191,7 +212,7 @@ class BaseLoadDataTest(object):
             high_loss_prob = 0.4
             outlier_prob = 0.001
             assign_loss_prob = False
-            user_provided_loss_prob=True
+            user_provided_loss_prob = True
             cluster_df = build_standard_cluster_df()
             emulate_assign_out_prob_output(cluster_df, self.rng, outlier_prob, high_loss_prob)
 
@@ -512,7 +533,7 @@ class TestSetupClusterDF(unittest.TestCase):
                 True,
                 self.min_clust_size,
                 data_df,
-                user_provided_loss_prob
+                user_provided_loss_prob,
             )
         self.assertTrue(np.all(actual_df["outlier_prob"] != 0))
 
@@ -584,7 +605,7 @@ class TestSetupClusterDF(unittest.TestCase):
         df = build_standard_cluster_df()
         data_df = build_standard_data_df()
         df = df.drop(columns=["cellular_prevalence", "chrom"])
-        user_provided_loss_prob=False
+        user_provided_loss_prob = False
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")

@@ -127,7 +127,7 @@ class InputValidator(object):
 
     def _validate_base_type(self, base_type, column):
         if base_type == "integer":
-            self.df[column] = self.df[column].astype('object').convert_dtypes()
+            self.df[column] = self.df[column].astype("object").convert_dtypes()
             return self._validate_int(self.df[column].dtype)
         elif base_type == "string":
             return self._validate_str(self.df[column].dtype)
