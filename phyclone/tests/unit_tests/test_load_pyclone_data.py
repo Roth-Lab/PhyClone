@@ -93,6 +93,7 @@ class TestLoadPyCloneData(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t", index=False)
             df = df.astype({"mutation_id": "string", "sample_id": "string"})
+            df = df.convert_dtypes()
             actual_df = _create_raw_data_df(file_path)
         pd.testing.assert_frame_equal(df, actual_df)
 
@@ -113,6 +114,7 @@ class TestLoadPyCloneData(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, index=False)
             df = df.astype({"mutation_id": "string", "sample_id": "string"})
+            df = df.convert_dtypes()
             actual_df = _create_raw_data_df(file_path)
         pd.testing.assert_frame_equal(df, actual_df)
 
