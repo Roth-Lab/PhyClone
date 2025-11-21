@@ -18,7 +18,7 @@ from importlib.resources import files, as_file
 
 class TesterInputValidator(InputValidator):
     def __init__(self, test_df, schema):
-        self.df = test_df
+        self.df = self.preprocess_loaded_df(test_df)
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
@@ -609,6 +609,11 @@ class BaseTest(object):
             input_validator = self.create_input_validator_instance(df)
             self.assertFalse(input_validator._validate_base_type("integer", self.integer_col))
 
+        def test_validate_base_type__integer_valid_input_float(self):
+            df = pd.DataFrame({self.integer_col: [1.0, 2.0, 3.0]})
+            input_validator = self.create_input_validator_instance(df)
+            self.assertTrue(input_validator._validate_base_type("integer", self.integer_col))
+
         def test_validate_base_type__integer_invalid_input_string(self):
             df = pd.DataFrame({self.integer_col: ["1.5", "2.5", "3.5"]})
             input_validator = self.create_input_validator_instance(df)
@@ -828,6 +833,7 @@ class BaseTest(object):
                         df = pd.DataFrame(df_dict)
                         input_validator = self.create_input_validator_instance(df)
                         self.assertFalse(input_validator._validate_all_columns())
+                        self._run_raise_error_on_validate_test(input_validator)
                         df_dict[col] = valid_col_val
 
         def test_validate__one_invalid_col(self):
@@ -857,6 +863,9 @@ class BaseTest(object):
                 min_val = col_rule["minimum"]
                 invalid_data = [min_val - i for i in range(3)]
                 invalid_data_list.append(("Min value invalid", invalid_data))
+                to_invalidate = [min_val for _ in range(3)]
+                to_invalidate[1] = None
+                invalid_data_list.append(("Contains NaNs", to_invalidate))
             elif "minLength" in col_rule:
                 min_val = col_rule["minLength"]
                 if min_val > 0:

@@ -180,7 +180,7 @@ def _validate_outlier_prob(ctx, param, value):
             if "high_loss_prob" in ctx.params:
                 high_loss_prob = ctx.params['high_loss_prob']
                 if value >= high_loss_prob:
-                    raise click.BadParameter("Value must be lower than '--high-loss-prob' when using '--assign-loss-prob'")
+                    raise click.BadParameter("Value must be lesser than '--high-loss-prob' when using '--assign-loss-prob'")
         return value
     if ctx.params['assign_loss_prob'] or ctx.params['user_provided_loss_prob']:
         min_val = 1e-4
@@ -195,7 +195,7 @@ def _validate_high_loss_prob(ctx, param, value):
         if "outlier_prob" in ctx.params:
             outlier_prob = ctx.params['outlier_prob']
             if value <= outlier_prob:
-                raise click.BadParameter("Value must be higher than '--outlier-prob'")
+                raise click.BadParameter("Value must be greater than '--outlier-prob'")
     return value
 
 
@@ -224,7 +224,7 @@ def _validate_positive_value(ctx, param, value):
 @click.option(
     "-b",
     "--burnin",
-    default=100,
+    default=1000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
     help="""Number of burnin iterations using unconditional SMC sampler.""",
@@ -232,7 +232,7 @@ def _validate_positive_value(ctx, param, value):
 @click.option(
     "-n",
     "--num-iters",
-    default=5000,
+    default=10000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
     is_eager=True,

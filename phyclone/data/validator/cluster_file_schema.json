@@ -6,7 +6,6 @@
   "properties": {
     "mutation_id": {
       "type": [
-        "number",
         "string",
         "integer"
       ],
@@ -14,7 +13,6 @@
     },
     "sample_id": {
       "type": [
-        "number",
         "string",
         "integer"
       ],
@@ -22,7 +20,6 @@
     },
     "cluster_id": {
       "type": [
-        "number",
         "string",
         "integer"
       ],
@@ -38,7 +35,6 @@
     },
     "chrom": {
       "type": [
-        "number",
         "string",
         "integer"
       ],

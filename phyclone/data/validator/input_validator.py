@@ -9,6 +9,7 @@ import zipfile
 from io import TextIOWrapper
 
 import pandas as pd
+from pandas.api.types import is_float_dtype, is_integer_dtype, is_string_dtype
 
 from phyclone.data.validator.schema_error_builder import SchemaErrors
 
@@ -16,12 +17,18 @@ from phyclone.data.validator.schema_error_builder import SchemaErrors
 class InputValidator(object):
 
     def __init__(self, file_path, schema_file):
-        self.df = self.load_df(file_path)
+        self.df = self.preprocess_loaded_df(self.load_df(file_path))
         schema = self.load_json_schema(schema_file)
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
         self.error_helper = SchemaErrors(file_path)
+
+    @staticmethod
+    def preprocess_loaded_df(df: pd.DataFrame) -> pd.DataFrame:
+        df = df.drop_duplicates()
+        df = df.convert_dtypes(convert_integer=False)
+        return df
 
     @staticmethod
     def load_json_schema(schema_file):
@@ -120,13 +127,10 @@ class InputValidator(object):
 
     def _validate_base_type(self, base_type, column):
         if base_type == "integer":
+            self.df[column] = self.df[column].astype('object').convert_dtypes()
             return self._validate_int(self.df[column].dtype)
         elif base_type == "string":
-            col_dtype = self.df[column].dtype
-            if col_dtype == object:
-                self.df[column] = self.df[column].astype("string")
-                col_dtype = self.df[column].dtype
-            return self._validate_str(col_dtype)
+            return self._validate_str(self.df[column].dtype)
         elif base_type == "number":
             return self._validate_num(self.df[column].dtype)
         else:
@@ -134,15 +138,15 @@ class InputValidator(object):
 
     @staticmethod
     def _validate_int(col_dtype):
-        return col_dtype == int
+        return is_integer_dtype(col_dtype)
 
     @staticmethod
     def _validate_str(col_dtype):
-        return col_dtype == pd.StringDtype()
+        return is_string_dtype(col_dtype)
 
     @staticmethod
     def _validate_num(col_dtype):
-        return col_dtype == float
+        return is_float_dtype(col_dtype)
 
     def _validate_column(self, column):
         col_rule = self.column_rules[column]
@@ -165,7 +169,7 @@ class InputValidator(object):
         if col_type != "string":
             is_min_valid = pd.notnull(self.df[column]).all()
             invalid_type_msg = "Column contains missing or NaN values"
-        if "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
+        if is_min_valid and "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
             min_value = col_rule["minimum"]
             is_min_valid = (self.df[column] >= min_value).all(skipna=False)
             invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(
