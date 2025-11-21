@@ -1,3 +1,5 @@
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/phyclone/README.html)
+
 PhyClone
 =========
 Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing.
@@ -18,11 +20,11 @@ Paper: [PhyClone: Accurate Bayesian Reconstruction of Cancer Phylogenies from Bu
    * [MAP Tree](#map-point-estimate-tree)
    * [Consensus Tree](#consensus-point-estimate-tree)
    * [Topology Report](#topology-report-and-sampled-topologies-archive)
+5. [Recommended PyClone-VI Settings](#running-pyclone-vi-for-phyclone)
+
 -------
 
 ## Installation
-
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/phyclone/README.html)
 
 The recommended way to install PhyClone is through [conda](https://github.com/conda-forge/miniforge) and the [Bioconda](https://bioconda.github.io/index.html) package channel.
 
@@ -113,6 +115,7 @@ Default value is 0.001 if column is not present.
 > While any mutation pre-clustering method can be used, we recommend 
 > [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi). Both due to its established 
 > strong performance, and its output format which can be fed directly into PhyClone *'as-is'*.
+> For recommended settings for pre-clustering using PyClone-VI, pleaser refer to: [Running PyClone-VI for PhyClone](#running-pyclone-vi-for-phyclone)
 
 The file should be in tab delimited tidy data frame format and have the following columns:
 
@@ -120,19 +123,20 @@ The file should be in tab delimited tidy data frame format and have the followin
 
     This is free form but should match across all samples and **must** match the identifiers provided
     in the [main input file](#main-input-format).
-
-2. `sample_id` - Unique identifier for the sample.
    
-3. `cluster_id` - Cluster that the mutation has been assigned to.
+2. `cluster_id` - Cluster that the mutation has been assigned to.
 
 You can include the following optional columns:
+
+3. `sample_id` - Unique identifier for the sample. **Must** match the identifiers provided
+    in the [main input file](#main-input-format).
 
 4. `chrom` - Chromosome on which `mutation_id` is found.
    
 5. `cellular_prevalence` - Cluster cellular prevalence estimate (included in all [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi) clustering results).
 
 > [!NOTE]
-> In order to make use of PhyClone's data informed loss probability prior assignment, columns 4 and 5 are required.
+> In order to make use of PhyClone's data informed loss probability prior assignment, columns 3, 4, and 5 are required.
 
 > [!TIP]
 > There is an example file in [examples/data/mixing_clusters.tsv](examples/data/mixing_clusters.tsv)
@@ -147,9 +151,9 @@ Second, the output trace from the sampling `run` can be summarised as either a p
 
 Sampling can be run as follows:
 ```
-phyclone run -i INPUT.tsv -c CLUSTERS.tsv -o TRACE.pkl.gz --num-chains 4
+phyclone run -i INPUT.tsv -c CLUSTERS.tsv -o TRACE.h5 --num-chains 4
 ``` 
-Which will take the [`INPUT.tsv`](#main-input-format) and (optionally) the [`CLUSTERS.tsv`](#cluster-file-format) file, as described above and write the trace file `TRACE.pkl.gz` in a compressed Python pickle format.
+Which will take the [`INPUT.tsv`](#main-input-format) and (optionally) the [`CLUSTERS.tsv`](#cluster-file-format) file, as described above and write the trace file `TRACE.h5` in the HDF5 binary data format.
 
 Relevant program options:
 * `--num-chains` command controls how many independent parallel PhyClone sampling chains to use. Though the default value is set to 1, PhyClone will benefit from running multiple chains; we recommend ≥4 chains, if the compute cores can be spared.
@@ -164,7 +168,7 @@ All samples from the burn-in are discarded as they will not target the posterior
   * As in PyClone, the `binomial` and `beta-binomial` densities are available.
 
 
-For more advanced options, run:
+For descriptions of all available options, run:
 ```
 phyclone run --help
 ``` 
@@ -204,13 +208,14 @@ Two of which produce a point-estimate (a single tree), and a third which reports
 
 To build the PhyClone MAP tree, you can run the `map` command as follows:
 ```
-phyclone map -i TRACE.pkl.gz -t TREE.nwk -o TABLE.tsv
+phyclone map -i TRACE.h5 -t TREE.nwk -o TABLE.tsv -s SAMPLE_PREVALENCE_TABLE.tsv
 ``` 
-Where `TRACE.pkl.gz` is the result from a PhyClone sampling run.
+Where `TRACE.h5` is the result from a PhyClone sampling run.
 
 Expected output:
 * `TREE.nwk` the inferred MAP clone tree topology in Newick format. 
-* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) estimates, and clonal prevalence estimates per sample.
+* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) and clonal prevalence estimates.
+* `SAMPLE_PREVALENCE_TABLE.tsv` a results table with the clonal CCF and clonal prevalence estimates per sample.
 
 For more advanced options, run:
 ```
@@ -221,13 +226,14 @@ phyclone map --help
 
 To build the PhyClone consensus tree, you can run the `consensus` command as follows:
 ```
-phyclone consensus -i TRACE.pkl.gz -t TREE.nwk -o TABLE.tsv
+phyclone consensus -i TRACE.h5 -t TREE.nwk -o TABLE.tsv -s SAMPLE_PREVALENCE_TABLE.tsv
 ``` 
-Where `TRACE.pkl.gz` is the result from a PhyClone sampling run.
+Where `TRACE.h5` is the result from a PhyClone sampling run.
 
 Expected output:
 * `TREE.nwk` the inferred consensus clone tree topology in Newick format. 
-* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) estimates, and clonal prevalence estimates per sample.
+* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) and clonal prevalence estimates.
+* `SAMPLE_PREVALENCE_TABLE.tsv` a results table with the clonal CCF and clonal prevalence estimates per sample.
 
 For more advanced options, run:
 ```
@@ -240,9 +246,9 @@ Additionally, PhyClone is able to produce a summary report and archive file of a
 
 To build the PhyClone topology report and full sampled topologies archive, run the `topology-report` command as follows:
 ```
-phyclone topology-report -i TRACE.pkl.gz -o TOPOLOGY_TABLE.tsv -t SAMPLED_TOPOLOGIES.tar.gz
+phyclone topology-report -i TRACE.h5 -o TOPOLOGY_TABLE.tsv -t SAMPLED_TOPOLOGIES.tar.gz
 ``` 
-Where `TRACE.pkl.gz` is the result from a PhyClone sampling run.
+Where `TRACE.h5` is the result from a PhyClone sampling run.
 
 Expected output:
 * `TOPOLOGY_TABLE.tsv`, a high-level report table detailing each topology's log-likelihood, number of times sampled, and topology identifier (which can be
@@ -251,12 +257,29 @@ used to identify the tree in the accompanying topologies archive).
 
 Expected output, for each sampled topology folder in the `SAMPLED_TOPOLOGIES.tar.gz` (sampled-topologies archive):
 * `TREE.nwk` the inferred clone tree topology in Newick format. 
-* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) estimates, and clonal prevalence estimates per sample.
+* `TABLE.tsv` a results table which contains: the assignment of mutations to clones, CCF (cellular prevalence) and clonal prevalence estimates.
+* `SAMPLE_PREVALENCE_TABLE.tsv` a results table with the clonal CCF and clonal prevalence estimates per sample.
 
 Additional options:
 * `--top-trees` can be used to define that only the top (user-defined-value) `x` trees should be built.
   * trees are ranked by their log-likelihood, such that the command `--top-trees 3`, would populate the archive with only the top 3 most likely trees.
 
+-----------------
+
+## Running PyClone-VI for PhyClone
+
+The following are recommended run settings for pre-clustering for PhyClone using [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi):
+
+* `--num-clusters 30`
+  * This will vary depending on the input data, but increasing this value away from PyClone-VI's default of 10 is recommended.
+  * Larger datasets should use higher values (the max I have personally run with is 100).
+* `--density binomial`
+* `--mix-weight-prior 100`
+* `--num-restarts 100`
+  * Feel free to increase this value to >100, but this is a recommended minimum.
+
+
+-----------------
 # License
 
 PhyClone is licensed under the GNU General Public License v3 or later (GPLv3+), see the [LICENSE](LICENSE.md) file for details.

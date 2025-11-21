@@ -236,7 +236,7 @@ def _validate_positive_value(ctx, param, value):
     default=1000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
-    help="""Number of burnin iterations using unconditional SMC sampler.""",
+    help="""Number of burn-in iterations using unconditional SMC sampler.""",
 )
 @click.option(
     "-n",
@@ -394,8 +394,8 @@ def _validate_positive_value(ctx, param, value):
     show_default=True,
     callback=_validate_assign_loss_prob,
     is_eager=True,
-    help="Whether to assign loss probability prior from the cluster data."
-    "Note: This option is incompatible with --user-provided-loss-prob",
+    help="""Whether to assign loss probability prior from the cluster data.
+    Note: This option is incompatible with --user-provided-loss-prob""",
 )
 @click.option(
     "--user-provided-loss-prob/--no-user-provided-loss-prob",
@@ -403,9 +403,9 @@ def _validate_positive_value(ctx, param, value):
     show_default=True,
     callback=_validate_user_provided_loss_prob,
     is_eager=True,
-    help="Whether to use user-provided cluster loss probability prior from the cluster file."
-    "Requires that the 'outlier_prob' column be present and populated in the cluster file."
-    "Note: This option is incompatible with --assign-loss-prob",
+    help="""Whether to use user-provided cluster loss probability prior from the cluster file.
+    Requires that the 'outlier_prob' column be present and populated in the cluster file.
+    Note: This option is incompatible with --assign-loss-prob""",
 )
 @click.option(
     "--high-loss-prob",
@@ -414,8 +414,7 @@ def _validate_positive_value(ctx, param, value):
     show_default=True,
     callback=_validate_high_loss_prob,
     help="""Higher loss probability setting. 
-    Used when allowing PhyClone to assign loss prior probability from cluster data.
-    Unless combined with the --assign-loss-prob option and a cluster input file, this does nothing.""",
+    Used when allowing PhyClone to assign loss prior probability from cluster data.""",
 )
 def run(**kwargs):
     """Run a new PhyClone analysis."""
