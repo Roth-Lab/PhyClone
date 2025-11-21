@@ -23,7 +23,7 @@ from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer
 from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
-from phyclone.utils.save_h5df import save_trace_to_h5df
+from phyclone.utils.save_hdf5 import save_trace_to_h5df
 
 
 def run(

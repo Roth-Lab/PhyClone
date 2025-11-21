@@ -11,7 +11,7 @@ from phyclone.process_trace.map import get_map_node_ccfs_and_clonal_prev_dicts
 from phyclone.process_trace.utils import print_string_to_file
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import exp_normalize
-from phyclone.utils.load_h5df import (
+from phyclone.utils.load_hdf5 import (
     load_chain_trace_data_df,
     load_clusters_df_from_trace,
     build_map_tree_from_trace,
