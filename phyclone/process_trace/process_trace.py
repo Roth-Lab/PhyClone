@@ -327,7 +327,7 @@ def get_labels_table(data, tree, clusters=None):
 
             clone_muts.add(data[idx].name)
 
-        for x in data:
+        for x in data.values():
             if x.name not in clone_muts:
                 df_records_list.append({"mutation_id": x.name, "clone_id": outlier_node_name})
 
