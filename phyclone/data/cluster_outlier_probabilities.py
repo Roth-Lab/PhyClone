@@ -8,7 +8,7 @@ import numpy as np
 def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
     truncal_cluster = _define_truncal_cluster(df)
 
-    print("Cluster {} identified as likely truncal.".format(truncal_cluster))
+    print("Cluster {} identified as likely truncal.".format(str(truncal_cluster)))
 
     cluster_info_dict = _build_cluster_info_dict(df)
 
@@ -88,7 +88,12 @@ def _finalize_loss_prob_on_cluster_df(cluster_df, high_loss_prob, lost_clusters,
                 prl=low_loss_prob,
             )
         )
-        print("Cluster{pl} identified as potentially lost/outlier{pl}: {lost}".format(pl=pluralize, lost=lost_clusters))
+        stringified_lost_clusts = [str(lost_clust) for lost_clust in lost_clusters]
+        print(
+            "Cluster{pl} identified as potentially lost/outlier{pl}: {lost}".format(
+                pl=pluralize, lost=stringified_lost_clusts
+            )
+        )
     else:
         print(
             "No potentially lost/outlier clusters identified,"
