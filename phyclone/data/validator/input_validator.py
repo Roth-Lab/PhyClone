@@ -171,7 +171,7 @@ class InputValidator(object):
             invalid_type_msg = "Column contains missing or NaN values"
         if is_min_valid and "minimum" in col_rule and (col_type == "integer" or col_type == "number"):
             min_value = col_rule["minimum"]
-            is_min_valid = (self.df[column] >= min_value).all(skipna=False)
+            is_min_valid = self.df[column].ge(min_value).all(skipna=False)
             invalid_type_msg = "Column contains elements that violate the required minimum value of {}".format(
                 min_value
             )

@@ -271,8 +271,7 @@ Additional options:
 The following are recommended run settings for pre-clustering for PhyClone using [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi):
 
 * `--num-clusters 30`
-  * This will vary depending on the input data, but increasing this value away from PyClone-VI's default of 10 is recommended.
-  * Larger datasets should use higher values (the max I have personally run with is 100).
+  * This will vary depending on the input data, but increasing this value away from PyClone-VI's default of 10 is recommended (the max I have personally run with is 100).
 * `--density binomial`
 * `--mix-weight-prior 100`
 * `--num-restarts 100`
