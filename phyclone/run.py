@@ -304,6 +304,7 @@ def _run_main_sampler(
                 update_concentration_value(conc_sampler, tree, tree_dist)
 
     results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
+    clear_all_caches()
     return results
 
 
