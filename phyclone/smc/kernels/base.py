@@ -188,7 +188,7 @@ class ProposalDistribution(object):
         self._q_dist = q
 
 
-@lru_cache(maxsize=2048)
+@lru_cache(maxsize=1024)
 def get_cached_dp_added_to_new_node_tree_holder(
     tree_shell_node_adder: TreeShellNodeAdder,
     data_point: DataPoint,

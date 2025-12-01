@@ -150,7 +150,7 @@ class SemiAdaptedKernel(Kernel):
         )
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=2048)
 def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
     ret = SemiAdaptedProposalDistribution(
         data_point,
