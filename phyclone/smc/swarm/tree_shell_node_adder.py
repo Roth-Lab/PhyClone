@@ -1,5 +1,5 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import rustworkx as rx
 
@@ -16,10 +16,13 @@ from phyclone.utils.math_utils import cached_log_factorial
 class TreeInfo:
     graph: rx.EdgeList
     node_idx: dict
-    node_idx_rev: dict
+    node_idx_rev: dict = field(init=False)
     node_data: defaultdict[list[DataPoint]]
     grid_size: tuple[int, int]
     log_prior: float
+
+    def __post_init__(self):
+        self.node_idx_rev = {v: k for k, v in self.node_idx.items()}
 
     def build_graph_shell(self):
         graph = rx.PyDiGraph(multigraph=False)
@@ -183,7 +186,6 @@ class TreeHolderBuilder(object):
         tree_dict = {
             "graph": self._graph.edge_list(),
             "node_idx": self._node_idx.copy(),
-            "node_idx_rev": self._node_idx_rev.copy(),
             "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
             "log_prior": self._log_prior,
@@ -415,7 +417,11 @@ class TreeShellNodeAdder(object):
         node_idx_rev_dict = self._tree_info.get_node_idx_rev_dict()
 
         new_node_obj, node_idx = self._attach_new_node_to_graph(
-            children, graph, node_id, node_idx_dict, node_idx_rev_dict
+            children,
+            graph,
+            node_id,
+            node_idx_dict,
+            node_idx_rev_dict,
         )
 
         _ = self._add_node_data_graph_and_index_dicts(

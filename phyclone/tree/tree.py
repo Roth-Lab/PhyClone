@@ -198,8 +198,9 @@ class Tree(object):
         new._log_prior = log_prior
         new._data = defaultdict(list)
 
-        new._node_indices_rev = tree_dict["node_idx_rev"].copy()
-        new._node_indices = tree_dict["node_idx"].copy()
+        node_idxs = tree_dict["node_idx"]
+        new._node_indices = node_idxs.copy()
+        new._node_indices_rev = {v: k for k, v in node_idxs.items()}
         new._data.update({k: v.copy() for k, v in tree_dict["node_data"].items()})
         new._root_node_name = cls._ROOT_NODE_NAME
         new._outlier_node_name = cls._OUTLIER_NODE_NAME
@@ -208,7 +209,6 @@ class Tree(object):
 
         if len(tree_dict["graph"]) > 0:
 
-            node_idxs = tree_dict["node_idx"]
             new_graph.extend_from_edge_list(tree_dict["graph"])
             root_name = cls._ROOT_NODE_NAME
             outlier_node_name = cls._OUTLIER_NODE_NAME
@@ -221,7 +221,7 @@ class Tree(object):
                 node_idx = node_idxs[node]
                 new_graph[node_idx] = node_obj
 
-            node_index_holes = [idx for idx in new_graph.node_indices() if idx not in tree_dict["node_idx_rev"]]
+            node_index_holes = [idx for idx in new_graph.node_indices() if idx not in new._node_indices_rev]
             if len(node_index_holes) > 0:
                 new_graph.remove_nodes_from(node_index_holes)
 
@@ -232,7 +232,6 @@ class Tree(object):
         tree_dict = {
             "graph": self._graph.edge_list(),
             "node_idx": self._node_indices.copy(),
-            "node_idx_rev": self._node_indices_rev.copy(),
             "node_data": {k: v.copy() for k, v in self._data.items()},
             "grid_size": self.grid_size,
             "log_prior": self._log_prior,
