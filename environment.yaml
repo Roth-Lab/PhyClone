@@ -1,14 +1,13 @@
 name: phyclone
 channels:
-  - numba
   - conda-forge
   - bioconda
 dependencies:
   - python>=3.12
+  - llvmdev
   - click>=8.0
-  - networkx
+  - networkx>=3.6.1
   - rustworkx>=0.15.1
-  - numba::llvmlite
   - numba>=0.61.2
   - numpy>=1.26.4
   - pandas>=2.2.2

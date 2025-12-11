@@ -18,12 +18,13 @@ license = "GPL-3.0-or-later"
 license-files = ["LICEN[CS]E.*"]
 requires-python = ">=3.12"
 dependencies = [
+    "llvmdev",
     "numba>=0.61.2",
     "numpy>=1.26.4",
     "scipy",
     "click>=8.0",
     "xxhash>=3.3.0",
-    "networkx",
+    "networkx>=3.6.1",
     "rustworkx>=0.15.1",
     "pandas>=2.2.2",
     "h5py",
