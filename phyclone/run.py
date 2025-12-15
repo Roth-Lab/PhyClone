@@ -333,12 +333,6 @@ def update_concentration_value(conc_sampler, tree, tree_dist):
     tree_dist.prior.alpha = conc_sampler.sample(tree_dist.prior.alpha, len(node_sizes), sum(node_sizes))
 
 
-def setup_trace(timer, tree, tree_dist):
-    trace = []
-    append_to_trace(-1, timer, trace, tree, tree_dist)
-    return trace
-
-
 def _run_burnin(
     burnin,
     max_time,
