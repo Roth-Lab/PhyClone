@@ -50,6 +50,7 @@ def store_trace(fh, num_chains, results):
         curr_chain_grp.attrs["num_iters"] = num_iters
         with click.progressbar(length=num_iters, label=f"Saving chain {chain_num} trace") as bar:
             store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar)
+    print(f"\nUnique trees sampled: {len(tree_obj_dict)}")
 
 
 def store_datapoints(fh, results):
