@@ -209,10 +209,10 @@ def _print_num_mutations_samples_message(df, samples):
     mutations = df["mutation_id"].unique()
     print("Num mutations: {}".format(len(mutations)))
     print("Num Samples: {}".format(len(samples)))
-    if len(samples) > 10:
-        print("Samples: {}...".format(" ".join(samples[:4])))
+    if len(samples) > 5:
+        print("Samples: {}...".format(", ".join(samples[:5])))
     else:
-        print("Samples: {}".format(" ".join(samples)))
+        print("Samples: {}".format(", ".join(samples)))
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
