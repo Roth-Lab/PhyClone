@@ -11,8 +11,11 @@ class NumpyArrayListHasher:
         self._hash_val = hash(self.h)
 
     def _create_hashable(self, list_of_np_arrays):
-        hashable = np.array([xxh3_128_hexdigest(arr) for arr in list_of_np_arrays], order="C")
-        hashable.sort(stable=False)
+        if len(list_of_np_arrays) == 1:
+            hashable = [xxh3_128_hexdigest(list_of_np_arrays[0])]
+        else:
+            hashable = np.array([xxh3_128_hexdigest(arr) for arr in list_of_np_arrays], order="C")
+            hashable.sort(stable=False)
         ret = tuple(hashable)
         return ret
 
