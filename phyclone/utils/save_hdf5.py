@@ -98,10 +98,10 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
         bar.update(1)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
-    chain_trace_data_grp.create_dataset("iter", data=iters)
-    chain_trace_data_grp.create_dataset("alpha", data=alpha)
-    chain_trace_data_grp.create_dataset("log_p_one", data=log_p_one)
-    chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash)
+    chain_trace_data_grp.create_dataset("iter", data=iters, compression="gzip")
+    chain_trace_data_grp.create_dataset("alpha", data=alpha, compression="gzip")
+    chain_trace_data_grp.create_dataset("log_p_one", data=log_p_one, compression="gzip")
+    chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
 
 
 def store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict):
