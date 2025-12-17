@@ -27,6 +27,12 @@ class MinimalTree:
         self.grid_size = grid_size
         self.log_prior = log_prior
 
+    def __getstate__(self):
+        return self.graph, self.node_idx, self.node_data, self.grid_size, self.log_prior
+
+    def __setstate__(self, state):
+        self.graph, self.node_idx, self.node_data, self.grid_size, self.log_prior = state
+
 
 class Tree(object):
     _ROOT_NODE_NAME = "root"

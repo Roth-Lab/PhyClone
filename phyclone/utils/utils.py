@@ -61,3 +61,9 @@ class TraceEntry:
         self.log_p_one = tree_dist.log_p_one(tree)
         self.tree = tree.to_storage_tree()
         self.tree_hash = tree.get_hash_id_obj()
+
+    def __getstate__(self):
+        return self.iter, self.time, self.alpha, self.log_p_one, self.tree, self.tree_hash
+
+    def __setstate__(self, state):
+        self.iter, self.time, self.alpha, self.log_p_one, self.tree, self.tree_hash = state
