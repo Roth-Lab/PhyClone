@@ -21,7 +21,7 @@ from phyclone.mcmc.particle_gibbs import (
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
-from phyclone.utils import Timer
+from phyclone.utils import Timer, TraceEntry
 from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
 from phyclone.utils.save_hdf5 import save_trace_to_h5df
 
@@ -300,16 +300,20 @@ def _run_main_sampler(
     return results
 
 
+# def append_to_trace(i, timer, trace, tree, tree_dist):
+#     trace.append(
+#         {
+#             "iter": i,
+#             "time": timer.elapsed,
+#             "alpha": tree_dist.prior.alpha,
+#             "log_p_one": tree_dist.log_p_one(tree),
+#             "tree": tree.to_dict(),
+#             "tree_hash": tree.get_hash_id_obj(),
+#         }
+#     )
 def append_to_trace(i, timer, trace, tree, tree_dist):
     trace.append(
-        {
-            "iter": i,
-            "time": timer.elapsed,
-            "alpha": tree_dist.prior.alpha,
-            "log_p_one": tree_dist.log_p_one(tree),
-            "tree": tree.to_dict(),
-            "tree_hash": tree.get_hash_id_obj(),
-        }
+        TraceEntry(i, timer, tree, tree_dist)
     )
 
 

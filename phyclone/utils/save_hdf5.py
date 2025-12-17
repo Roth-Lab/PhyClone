@@ -77,24 +77,24 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     tree_hash = np.empty(num_iters, dtype=int)
 
     trees_grp = curr_chain_grp.create_group("trees")
-    for i, iter_dict in enumerate(chain_trace):
-        tree_iter = iter_dict["iter"]
+    for i, iter_obj in enumerate(chain_trace):
+        tree_iter = iter_obj.iter
         curr_tree_grp = trees_grp.create_group(tree_template.format(tree_iter))
         curr_tree_grp.attrs["iter"] = tree_iter
-        curr_tree_grp.attrs["time"] = iter_dict["time"]
-        curr_tree_grp.attrs["alpha"] = iter_dict["alpha"]
-        curr_tree_grp.attrs["log_p_one"] = iter_dict["log_p_one"]
+        curr_tree_grp.attrs["time"] = iter_obj.time
+        curr_tree_grp.attrs["alpha"] = iter_obj.alpha
+        curr_tree_grp.attrs["log_p_one"] = iter_obj.log_p_one
 
-        tree_hash_val = hash(iter_dict["tree_hash"])
+        tree_hash_val = hash(iter_obj.tree_hash)
 
         curr_tree_grp.attrs["tree_hash"] = tree_hash_val
 
         iters[i] = tree_iter
-        alpha[i] = iter_dict["alpha"]
-        log_p_one[i] = iter_dict["log_p_one"]
+        alpha[i] = iter_obj.alpha
+        log_p_one[i] = iter_obj.log_p_one
         tree_hash[i] = tree_hash_val
 
-        tree_group_ref = store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict)
+        tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict)
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
         bar.update(1)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
@@ -104,13 +104,13 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
 
 
-def store_tree_dict(curr_tree_grp, iter_dict, tree_hash_val, tree_obj_dict):
+def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict):
     if tree_hash_val in tree_obj_dict:
         return tree_obj_dict[tree_hash_val]
     else:
         subtree_grp = curr_tree_grp.create_group("tree")
         tree_obj_dict[tree_hash_val] = subtree_grp.ref
-        tree_dict = iter_dict["tree"]
+        tree_dict = iter_obj.tree
         subtree_grp.create_dataset("graph", data=tree_dict["graph"])
         node_idx_grp = subtree_grp.create_group("node_idx")
         store_dict_mixed_type_keys(tree_dict["node_idx"], node_idx_grp)

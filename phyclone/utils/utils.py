@@ -49,3 +49,15 @@ class Timer:
 
     def __exit__(self, *args):
         self.stop()
+
+
+class TraceEntry(object):
+    __slots__ = "iter", "time", "alpha", "log_p_one", "tree", "tree_hash"
+
+    def __init__(self, i, timer, tree, tree_dist):
+        self.iter = i
+        self.time = timer.elapsed
+        self.alpha = tree_dist.prior.alpha
+        self.log_p_one = tree_dist.log_p_one(tree)
+        self.tree = tree.to_dict()
+        self.tree_hash = tree.get_hash_id_obj()
