@@ -23,6 +23,13 @@ from itertools import repeat
 import click
 
 
+def print_command_header(command_title):
+    print(flush=True)
+    print("#" * 100, flush=True)
+    print(f"PhyClone - {command_title}", flush=True)
+    print("#" * 100, flush=True)
+
+
 def write_map_results(
     in_file,
     out_table_file,
@@ -31,10 +38,7 @@ def write_map_results(
     map_type="joint-likelihood",
 ):
 
-    print()
-    print("#" * 100)
-    print("PhyClone - Write MAP Tree Results")
-    print("#" * 100)
+    print_command_header("Write MAP Tree Results")
 
     print("\nLoading MAP tree from trace.")
 
@@ -58,7 +62,11 @@ def write_map_results(
     table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
     _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
-    print("Finished.")
+    print_finished_command_footer()
+
+
+def print_finished_command_footer():
+    print("\nFinished.")
     print("#" * 100)
 
 
@@ -71,10 +79,7 @@ def write_consensus_results(
     weight_type="joint-likelihood",
 ):
 
-    print()
-    print("#" * 100)
-    print("PhyClone - Write Consensus Tree Results")
-    print("#" * 100)
+    print_command_header("Write Consensus Tree Results")
 
     datapoints = build_datapoints_dict_from_trace(in_file)
     chain_trace_df = load_chain_trace_data_df(in_file)
@@ -120,17 +125,15 @@ def write_consensus_results(
     table, sample_prevs_df = get_clone_table(datapoints, samples, tree, clusters=clusters)
 
     _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df)
-    print("Finished.")
-    print("#" * 100)
+
+    print_finished_command_footer()
 
 
 def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=float("inf")):
     if top_trees is None:
         top_trees = float("inf")
-    print()
-    print("#" * 100)
-    print("PhyClone - Topology Report")
-    print("#" * 100)
+
+    print_command_header("Topology Report")
 
     datapoints = build_datapoints_dict_from_trace(in_file)
     chain_trace_df = load_chain_trace_data_df(in_file)
@@ -169,8 +172,8 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
         build_df_trees_from_trace(in_file, topology_df, datapoints)
         create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, datapoints)
         print("Topologies archive created, saved as:\n{}".format(topologies_archive))
-    print("\nFinished.")
-    print("#" * 100)
+
+    print_finished_command_footer()
 
 
 def create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, data):
