@@ -3,7 +3,7 @@ import numpy as np
 import click
 
 
-def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples):
+def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples, data):
     num_chains = len(results)
     print()
     print("#" * 20)
@@ -27,7 +27,7 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples)
                 compression="gzip",
             )
 
-        store_datapoints(fh, results)
+        store_datapoints(fh, data)
 
         store_trace(fh, num_chains, results)
 
@@ -53,9 +53,9 @@ def store_trace(fh, num_chains, results):
     print(f"\nUnique trees sampled: {len(tree_obj_dict)}")
 
 
-def store_datapoints(fh, results):
+def store_datapoints(fh, data):
     data_grp = fh.create_group("data")
-    data = results[0]["data"]
+    # data = results[0]["data"]
     data_grp.attrs["num_datapoints"] = len(data)
     datapoints_grp = data_grp.create_group("datapoints")
     datapoint_template = "datapoint_{}"
@@ -139,9 +139,12 @@ def _store_node_data_typed_dict(dtype_to_use, dict_grp, dict_keys, dict_values):
         "values",
         shape=(num_vals,),
         dtype=h5py.vlen_dtype(np.dtype("int32")),
+        # data=dict_values,
     )
     for i, val in enumerate(dict_values):
-        val_dset[i] = list(map(lambda x: x.idx, val))
+        val_dset[i] = val
+    # for i, val in enumerate(dict_values):
+    #     val_dset[i] = list(map(lambda x: x.idx, val))
 
 
 def store_dict_mixed_type_keys(dict_to_store, parent_grp):

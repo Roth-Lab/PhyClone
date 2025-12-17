@@ -147,7 +147,7 @@ def run(
                     results[res_chain] = result
                     print("Finished chain", res_chain)
 
-    save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples)
+    save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples, data)
 
 
 def print_welcome_message(
@@ -295,7 +295,7 @@ def _run_main_sampler(
             if concentration_update:
                 update_concentration_value(conc_sampler, tree, tree_dist)
 
-    results = {"data": data, "trace": trace, "chain_num": chain_num}
+    results = {"trace": trace, "chain_num": chain_num}
     clear_all_caches()
     return results
 

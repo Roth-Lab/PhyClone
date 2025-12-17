@@ -252,7 +252,7 @@ class Tree(object):
     def to_storage_tree(self):
         ret = MinimalTree(graph=self._graph.edge_list(),
                           node_idx=self._node_indices.copy(),
-                          node_data={k: v.copy() for k, v in self._data.items()},
+                          node_data={k: [x.idx for x in v] for k, v in self._data.items()},
                           grid_size=self.grid_size,
                           log_prior=self._log_prior,)
         return ret
