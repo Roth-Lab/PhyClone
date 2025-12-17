@@ -5,6 +5,9 @@ from xxhash import xxh3_128_hexdigest
 
 
 class NumpyArrayListHasher:
+
+    __slots__ = "values", "h", "_hash_val"
+
     def __init__(self, x) -> None:
         self.values = x
         self.h = self._create_hashable(x)
@@ -51,6 +54,9 @@ def list_of_np_cache(*args, **kwargs):
 
 
 class NumpyTwoArraysHasher:
+
+    __slots__ = "input_1", "input_2", "h", "_hash_val"
+
     def __init__(self, arr_1, arr_2) -> None:
         self.input_1 = arr_1
         self.input_2 = arr_2
@@ -91,6 +97,9 @@ def two_np_arr_cache(*args, **kwargs):
 
 
 class NumpyArrayHasher:
+
+    __slots__ = "input", "h"
+
     def __init__(self, arr_1) -> None:
         self.input = arr_1
         self.h = xxh3_128_hexdigest(arr_1)

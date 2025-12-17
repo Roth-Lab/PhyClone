@@ -17,7 +17,7 @@ from phyclone.tree.visitors import (
 from phyclone.utils.math_utils import cached_log_factorial
 
 
-class MinimalTree(object):
+class MinimalTree:
     __slots__ = "graph", "node_idx", "node_data", "grid_size", "log_prior"
 
     def __init__(self, graph, node_idx, node_data, grid_size, log_prior):

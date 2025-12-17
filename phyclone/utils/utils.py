@@ -51,7 +51,7 @@ class Timer:
         self.stop()
 
 
-class TraceEntry(object):
+class TraceEntry:
     __slots__ = "iter", "time", "alpha", "log_p_one", "tree", "tree_hash"
 
     def __init__(self, i, timer, tree, tree_dist):
