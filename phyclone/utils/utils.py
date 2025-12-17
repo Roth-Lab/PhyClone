@@ -59,5 +59,5 @@ class TraceEntry(object):
         self.time = timer.elapsed
         self.alpha = tree_dist.prior.alpha
         self.log_p_one = tree_dist.log_p_one(tree)
-        self.tree = tree.to_dict()
+        self.tree = tree.to_storage_tree()
         self.tree_hash = tree.get_hash_id_obj()

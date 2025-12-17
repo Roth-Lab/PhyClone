@@ -110,19 +110,19 @@ def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict):
     else:
         subtree_grp = curr_tree_grp.create_group("tree")
         tree_obj_dict[tree_hash_val] = subtree_grp.ref
-        tree_dict = iter_obj.tree
-        subtree_grp.create_dataset("graph", data=tree_dict["graph"])
+        tree_storage_obj = iter_obj.tree
+        subtree_grp.create_dataset("graph", data=tree_storage_obj.graph)
         node_idx_grp = subtree_grp.create_group("node_idx")
-        store_dict_mixed_type_keys(tree_dict["node_idx"], node_idx_grp)
-        store_node_data(subtree_grp, tree_dict)
-        subtree_grp.attrs["grid_size"] = tree_dict["grid_size"]
-        subtree_grp.attrs["log_prior"] = tree_dict["log_prior"]
+        store_dict_mixed_type_keys(tree_storage_obj.node_idx, node_idx_grp)
+        store_node_data(subtree_grp, tree_storage_obj)
+        subtree_grp.attrs["grid_size"] = tree_storage_obj.grid_size
+        subtree_grp.attrs["log_prior"] = tree_storage_obj.log_prior
         return subtree_grp.ref
 
 
-def store_node_data(subtree_grp, tree_dict):
+def store_node_data(subtree_grp, tree_storage_obj):
     node_data_grp = subtree_grp.create_group("node_data")
-    node_data = tree_dict["node_data"]
+    node_data = tree_storage_obj.node_data
 
     int_nodes_keys, int_nodes_values, str_nodes_keys, str_nodes_values = _split_dict_by_key_type(node_data)
     str_nodes_grp = node_data_grp.create_group("str_nodes")

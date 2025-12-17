@@ -17,6 +17,17 @@ from phyclone.tree.visitors import (
 from phyclone.utils.math_utils import cached_log_factorial
 
 
+class MinimalTree(object):
+    __slots__ = "graph", "node_idx", "node_data", "grid_size", "log_prior"
+
+    def __init__(self, graph, node_idx, node_data, grid_size, log_prior):
+        self.graph = graph
+        self.node_idx = node_idx
+        self.node_data = node_data
+        self.grid_size = grid_size
+        self.log_prior = log_prior
+
+
 class Tree(object):
     _ROOT_NODE_NAME = "root"
     _OUTLIER_NODE_NAME = -1
@@ -237,6 +248,14 @@ class Tree(object):
             "log_prior": self._log_prior,
         }
         return tree_dict
+
+    def to_storage_tree(self):
+        ret = MinimalTree(graph=self._graph.edge_list(),
+                          node_idx=self._node_indices.copy(),
+                          node_data={k: v.copy() for k, v in self._data.items()},
+                          grid_size=self.grid_size,
+                          log_prior=self._log_prior,)
+        return ret
 
     def serialize_tree(self):
         serial = rx.node_link_json(self._graph, node_attrs=lambda x: x.serialize())
