@@ -224,7 +224,6 @@ def run_phyclone_chain(
     )
     results = _run_main_sampler(
         concentration_update,
-        data,
         max_time,
         num_iters,
         num_samples_data_point,
@@ -244,7 +243,6 @@ def run_phyclone_chain(
 
 def _run_main_sampler(
     concentration_update,
-    data,
     max_time,
     num_iters,
     num_samples_data_point,
@@ -300,21 +298,8 @@ def _run_main_sampler(
     return results
 
 
-# def append_to_trace(i, timer, trace, tree, tree_dist):
-#     trace.append(
-#         {
-#             "iter": i,
-#             "time": timer.elapsed,
-#             "alpha": tree_dist.prior.alpha,
-#             "log_p_one": tree_dist.log_p_one(tree),
-#             "tree": tree.to_dict(),
-#             "tree_hash": tree.get_hash_id_obj(),
-#         }
-#     )
 def append_to_trace(i, timer, trace, tree, tree_dist):
-    trace.append(
-        TraceEntry(i, timer, tree, tree_dist)
-    )
+    trace.append(TraceEntry(i, timer, tree, tree_dist))
 
 
 def update_concentration_value(conc_sampler, tree, tree_dist):
