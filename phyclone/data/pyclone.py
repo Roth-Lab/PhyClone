@@ -9,7 +9,7 @@ import pandas as pd
 from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
-from phyclone.utils.exceptions import MajorCopyNumberError
+from phyclone.utils.exceptions import MajorCopyNumberError, InputFormatError
 from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
@@ -164,7 +164,10 @@ def _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob):
 
 def _get_raw_cluster_df(cluster_file, data_df):
     cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
-    cluster_input_validator.validate()
+    try:
+        cluster_input_validator.validate()
+    except InputFormatError as e:
+        sys.exit(str(e))
     cluster_df = cluster_input_validator.df
     unprocessed_cluster_df = cluster_df[["mutation_id", "cluster_id"]].drop_duplicates(inplace=False)
     if "chrom" not in cluster_df.columns:
@@ -264,7 +267,10 @@ def _process_required_cols_on_df(df):
 
 def _create_raw_data_df(file_name):
     data_input_validator = create_data_input_validator_instance(file_name)
-    data_input_validator.validate()
+    try:
+        data_input_validator.validate()
+    except InputFormatError as e:
+        sys.exit(str(e))
     df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
     return df.drop_duplicates()
@@ -295,12 +301,15 @@ def create_sample_data_point(row_series):
     alt_count = row_series["alt_counts"]
     tumour_content = row_series["tumour_content"]
 
-    cn, mu, log_pi = get_major_cn_prior(
-        major_cn,
-        minor_cn,
-        normal_cn,
-        error_rate,
-    )
+    try:
+        cn, mu, log_pi = get_major_cn_prior(
+            major_cn,
+            minor_cn,
+            normal_cn,
+            error_rate,
+        )
+    except MajorCopyNumberError as e:
+        sys.exit(str(e))
 
     sample_dp = SampleDataPoint(ref_count, alt_count, cn, mu, log_pi, tumour_content)
 
