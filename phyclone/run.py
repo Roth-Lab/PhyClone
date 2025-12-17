@@ -68,7 +68,6 @@ def run(
         outlier_modelling_active,
         rng_main,
         proposal,
-        outlier_prob,
     )
 
     data, samples, minimal_cluster_df = load_data(
@@ -163,7 +162,6 @@ def print_welcome_message(
     outlier_modelling_active,
     rng_main,
     proposal_kernel,
-    outlier_prob,
 ):
     print()
     print("#" * 100)
@@ -184,7 +182,6 @@ def print_welcome_message(
         seed = rng_main.bit_generator.seed_seq.entropy
     print("Random seed: {} {}".format(seed, seed_msg))
     print("Outlier modelling allowed: {}".format(outlier_modelling_active))
-    print("Outlier prior probability setting: {}".format(outlier_prob))
     print()
     print("#" * 100)
     print()
