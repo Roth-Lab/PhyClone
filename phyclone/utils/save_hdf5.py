@@ -3,14 +3,14 @@ import numpy as np
 import click
 
 
-def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed):
+def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples):
     num_chains = len(results)
     print()
     print("#" * 20)
     print("\nWriting sample trace to disk.")
 
     with h5py.File(out_file, "w", track_order=True) as fh:
-        fh.create_dataset("samples", data=results[0]["samples"])
+        fh.create_dataset("samples", data=samples, compression="gzip")
         run_info_grp = fh.create_group("run_info")
         run_info_grp.attrs["rng_seed"] = str(rng_seed)
 

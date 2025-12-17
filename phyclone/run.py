@@ -101,7 +101,6 @@ def run(
             proposal,
             resample_threshold,
             rng_main,
-            samples,
             thin,
             0,
             subtree_update_prob,
@@ -131,7 +130,6 @@ def run(
                     proposal,
                     resample_threshold,
                     rng,
-                    samples,
                     thin,
                     chain_num,
                     subtree_update_prob,
@@ -149,7 +147,7 @@ def run(
                     results[res_chain] = result
                     print("Finished chain", res_chain)
 
-    save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed)
+    save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples)
 
 
 def print_welcome_message(
@@ -203,7 +201,6 @@ def run_phyclone_chain(
     proposal,
     resample_threshold,
     rng,
-    samples,
     thin,
     chain_num,
     subtree_update_prob,
@@ -234,7 +231,6 @@ def run_phyclone_chain(
         num_samples_prune_regraph,
         print_freq,
         samplers,
-        samples,
         thin,
         timer,
         tree,
@@ -255,7 +251,6 @@ def _run_main_sampler(
     num_samples_prune_regraph,
     print_freq,
     samplers,
-    samples,
     thin,
     timer,
     tree,
@@ -300,7 +295,7 @@ def _run_main_sampler(
             if concentration_update:
                 update_concentration_value(conc_sampler, tree, tree_dist)
 
-    results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
+    results = {"data": data, "trace": trace, "chain_num": chain_num}
     clear_all_caches()
     return results
 
