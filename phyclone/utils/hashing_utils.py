@@ -15,12 +15,11 @@ class NumpyArrayListHasher:
 
     def _create_hashable(self, list_of_np_arrays):
         if len(list_of_np_arrays) == 1:
-            hashable = [xxh3_128_hexdigest(list_of_np_arrays[0])]
+            return (xxh3_128_hexdigest(list_of_np_arrays[0]),)
         else:
-            hashable = np.array([xxh3_128_hexdigest(arr) for arr in list_of_np_arrays], order="C")
-            hashable.sort(stable=False)
-        ret = tuple(hashable)
-        return ret
+            hashable = [xxh3_128_hexdigest(arr) for arr in list_of_np_arrays]
+            hashable.sort()
+            return tuple(hashable)
 
     def __hash__(self) -> int:
         return self._hash_val
@@ -60,7 +59,7 @@ class NumpyTwoArraysHasher:
     def __init__(self, arr_1, arr_2) -> None:
         self.input_1 = arr_1
         self.input_2 = arr_2
-        self.h = frozenset([xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2)])
+        self.h = tuple(sorted((xxh3_128_hexdigest(arr_1), xxh3_128_hexdigest(arr_2))))
         self._hash_val = hash(self.h)
 
     def __hash__(self) -> int:
