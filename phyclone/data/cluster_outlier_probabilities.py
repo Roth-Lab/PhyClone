@@ -3,12 +3,13 @@ from collections import Counter
 from dataclasses import dataclass
 
 import numpy as np
+import click
 
 
 def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
     truncal_cluster = _define_truncal_cluster(df)
 
-    print("Cluster {} identified as likely truncal.".format(str(truncal_cluster)))
+    click.echo("Cluster {} identified as likely truncal.".format(str(truncal_cluster)))
 
     cluster_info_dict = _build_cluster_info_dict(df)
 
@@ -28,7 +29,7 @@ def _assign_out_prob(df, rng, low_loss_prob, high_loss_prob, min_clust_size):
 def _define_possibly_lost_clusters(cluster_info_dict, rng, truncal_cluster, truncal_dists, min_clust_size):
     truncal_dist_len = len(truncal_dists)
     lost_clusters = list()
-    # print("\nInferring lost clusters with minimum cluster size of {}.".format(min_clust_size))
+    # click.echo("\nInferring lost clusters with minimum cluster size of {}.".format(min_clust_size))
     test_iters = 10000
     for cluster, info_obj in cluster_info_dict.items():
         cluster_dist_len = info_obj.num_mutations
@@ -77,7 +78,7 @@ def _finalize_loss_prob_on_cluster_df(cluster_df, high_loss_prob, lost_clusters,
         else:
             pluralize = ""
             possessive = "its"
-        print(
+        click.echo(
             "{num} potentially lost/outlier cluster{pl} identified,"
             " setting {pos} prior loss prob to {pr}."
             "\nRemaining cluster(s) will use a prior loss prob of {prl}.".format(
@@ -89,13 +90,13 @@ def _finalize_loss_prob_on_cluster_df(cluster_df, high_loss_prob, lost_clusters,
             )
         )
         stringified_lost_clusts = [str(lost_clust) for lost_clust in lost_clusters]
-        print(
+        click.echo(
             "Cluster{pl} identified as potentially lost/outlier{pl}: {lost}".format(
                 pl=pluralize, lost=stringified_lost_clusts
             )
         )
     else:
-        print(
+        click.echo(
             "No potentially lost/outlier clusters identified,"
             " setting global prior loss prob to {}.".format(low_loss_prob)
         )

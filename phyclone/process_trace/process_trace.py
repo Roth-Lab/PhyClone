@@ -22,12 +22,7 @@ from phyclone.utils.load_hdf5 import (
 from itertools import repeat
 import click
 
-
-def print_command_header(command_title):
-    print(flush=True)
-    print("#" * 100, flush=True)
-    print(f"PhyClone - {command_title}", flush=True)
-    print("#" * 100, flush=True)
+from phyclone.utils.utils import print_command_header
 
 
 def write_map_results(
@@ -40,7 +35,7 @@ def write_map_results(
 
     print_command_header("Write MAP Tree Results")
 
-    print("\nLoading MAP tree from trace.")
+    click.echo("Loading MAP tree from trace.")
 
     chain_trace_df = load_chain_trace_data_df(in_file)
 
@@ -66,8 +61,8 @@ def write_map_results(
 
 
 def print_finished_command_footer():
-    print("\nFinished.")
-    print("#" * 100)
+    click.secho("\nFinished.", fg="green")
+    click.echo("#" * 100)
 
 
 def write_consensus_results(
@@ -109,7 +104,7 @@ def write_consensus_results(
         probs = np.asarray(probs)
         probs, _ = exp_normalize(probs)
 
-    print("\nBuilding consensus tree from trace.")
+    click.echo("\nBuilding consensus tree from trace.")
 
     graph = get_consensus_tree(
         trees,
@@ -138,31 +133,31 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
     datapoints = build_datapoints_dict_from_trace(in_file)
     chain_trace_df = load_chain_trace_data_df(in_file)
 
-    print("\nExtracting unique topologies from sample trace.")
+    click.echo("Extracting unique topologies from sample trace.")
 
     topology_df = create_topology_dataframe(chain_trace_df)
     topo_df_to_save = topology_df.drop(columns="tree_hash")
     topo_df_to_save.to_csv(out_file, index=False, sep="\t")
     num_unique_tree = len(topology_df)
 
-    print("Topology report created, saved as:\n{}".format(out_file))
+    click.echo("Topology report created, saved as:\n{}".format(out_file))
 
     if topologies_archive is not None:
-        print()
-        print("#" * 50)
+        click.echo()
+        click.echo("#" * 50)
 
         if top_trees == float("inf"):
             top_trees_statement = "for all {}".format(num_unique_tree)
         else:
             top_trees_statement = "for the top {}".format(top_trees)
             if top_trees > num_unique_tree:
-                print(
+                click.echo(
                     "Warning: Number of top trees requested ({}) "
                     "is greater than the total number of "
                     "uniquely sampled topologies ({}).".format(top_trees, num_unique_tree)
                 )
                 top_trees_statement = "for all {}".format(num_unique_tree)
-        print("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
+        click.echo("\nBuilding PhyClone topologies archive {} uniquely sampled topologies.".format(top_trees_statement))
         if top_trees >= num_unique_tree:
             topology_df = topology_df
             top_trees = int(num_unique_tree)
@@ -171,7 +166,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
             topology_df = topology_df.head(n=top_trees)
         build_df_trees_from_trace(in_file, topology_df, datapoints)
         create_topologies_archive(topology_df, in_file, top_trees, topologies_archive, datapoints)
-        print("Topologies archive created, saved as:\n{}".format(topologies_archive))
+        click.echo("Topologies archive created, saved as:\n{}".format(topologies_archive))
 
     print_finished_command_footer()
 

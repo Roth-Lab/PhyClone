@@ -5,9 +5,9 @@ import click
 
 def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples, data):
     num_chains = len(results)
-    print()
-    print("#" * 20)
-    print("\nWriting sample trace to disk.")
+    click.echo()
+    click.echo("#" * 20)
+    click.echo("\nWriting sample trace to disk.")
 
     with h5py.File(out_file, "w", track_order=True) as fh:
         fh.create_dataset("samples", data=samples, compression="gzip")
@@ -31,7 +31,7 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples,
 
         store_trace(fh, num_chains, results)
 
-    print("\nFinished.")
+    click.secho("\nFinished.", fg="green")
 
 
 def store_trace(fh, num_chains, results):
@@ -50,7 +50,7 @@ def store_trace(fh, num_chains, results):
         curr_chain_grp.attrs["num_iters"] = num_iters
         with click.progressbar(length=num_iters, label=f"Saving chain {chain_num} trace") as bar:
             store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar)
-    print(f"\nUnique trees sampled: {len(tree_obj_dict)}")
+    click.echo(f"\nUnique trees sampled: {len(tree_obj_dict)}")
 
 
 def store_datapoints(fh, data):

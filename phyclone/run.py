@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from multiprocessing import get_context
 
 import numpy as np
+import click
 
 from phyclone.data.pyclone import load_data
 from phyclone.mcmc.concentration import GammaPriorConcentrationSampler
@@ -24,6 +25,7 @@ from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.utils import Timer, TraceEntry
 from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
 from phyclone.utils.save_hdf5 import save_trace_to_h5df
+from phyclone.utils.utils import print_command_header
 
 
 def run(
@@ -106,7 +108,7 @@ def run(
             subtree_update_prob,
         )
 
-        print("Finished chain", 0)
+        click.echo("Finished chain 0")
 
     else:
 
@@ -145,7 +147,7 @@ def run(
                     result = future.result()
                     res_chain = result["chain_num"]
                     results[res_chain] = result
-                    print("Finished chain", res_chain)
+                    click.echo(f"Finished chain {res_chain}")
 
     save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples, data)
 
@@ -161,28 +163,24 @@ def print_welcome_message(
     rng_main,
     proposal_kernel,
 ):
-    print()
-    print("#" * 100)
-    print("PhyClone - Analysis Run")
-    print("#" * 100)
-    print()
-    print("Running with the following parameters:\n")
-    print("Number of independent chains: {}".format(num_chains))
-    print("Number of PG particles: {}".format(num_particles))
-    print("Density: {}".format(density))
-    print("Proposal distribution: {}".format(proposal_kernel))
-    print("Number of burn-in iterations: {}".format(burnin))
-    print("Number of MCMC iterations: {}".format(num_iters))
+    print_command_header("Analysis Run")
+    click.echo("Running with the following parameters:\n")
+    click.echo("Number of independent chains: {}".format(num_chains))
+    click.echo("Number of PG particles: {}".format(num_particles))
+    click.echo("Density: {}".format(density))
+    click.echo("Proposal distribution: {}".format(proposal_kernel))
+    click.echo("Number of burn-in iterations: {}".format(burnin))
+    click.echo("Number of MCMC iterations: {}".format(num_iters))
     if seed is not None:
         seed_msg = "(user-provided)"
     else:
         seed_msg = "(machine-entropy)"
         seed = rng_main.bit_generator.seed_seq.entropy
-    print("Random seed: {} {}".format(seed, seed_msg))
-    print("Outlier modelling allowed: {}".format(outlier_modelling_active))
-    print()
-    print("#" * 100)
-    print()
+    click.echo("Random seed: {} {}".format(seed, seed_msg))
+    click.echo("Outlier modelling allowed: {}".format(outlier_modelling_active))
+    click.echo()
+    click.echo("#" * 100)
+    click.echo()
     return seed
 
 
@@ -333,9 +331,9 @@ def _run_burnin(
 
     if burnin > 0:
         best_score = -np.inf
-        print("#" * 100, flush=True)
-        print(f"Burnin - Chain {chain_num}", flush=True)
-        print("#" * 100, flush=True)
+        click.echo("#" * 100)
+        click.echo(f"Burnin - Chain {chain_num}")
+        click.echo("#" * 100)
 
         for i in range(burnin):
             with timer:
@@ -360,11 +358,12 @@ def _run_burnin(
                 if timer.elapsed > max_time:
                     break
         print_stats(burnin, tree, tree_dist, chain_num)
-    print(flush=True)
-    print("#" * 100, flush=True)
-    print(f"Post-burnin - Chain {chain_num}", flush=True)
-    print("#" * 100, flush=True)
-    print(flush=True)
+
+    click.echo()
+    click.echo("#" * 100)
+    click.echo(f"Post-burnin - Chain {chain_num}")
+    click.echo("#" * 100)
+    click.echo()
 
     return best_tree
 
@@ -423,7 +422,7 @@ def instantiate_and_seed_RNG(seed):
 
 def print_stats(iter_id, tree, tree_dist, chain_num):
     string_template = "chain: {} || iter: {}, alpha: {}, log_p: {}, num_nodes: {}, num_outliers: {}, num_roots: {}"
-    print(
+    click.echo(
         string_template.format(
             chain_num,
             iter_id,
@@ -433,5 +432,4 @@ def print_stats(iter_id, tree, tree_dist, chain_num):
             len(tree.outliers),
             tree.get_number_of_children(tree.root_node_name),
         ),
-        flush=True,
     )

@@ -5,6 +5,7 @@ import sys
 import numba
 import numpy as np
 import pandas as pd
+import click
 
 from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
@@ -26,7 +27,7 @@ def load_data(
     precision=400,
     min_clust_size=4,
 ):
-    print("Parsing Input Data...\n")
+    click.echo("Parsing Input Data...\n")
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
@@ -69,10 +70,10 @@ def load_data(
             precision,
         )
 
-        print("\nUsing input clustering with {} clusters\n".format(cluster_df["cluster_id"].nunique()))
+        click.echo("\nUsing input clustering with {} clusters\n".format(cluster_df["cluster_id"].nunique()))
 
-    print("#" * 100)
-    print()
+    click.echo("#" * 100)
+    click.echo()
 
     return data, samples, unprocessed_cluster_df
 
@@ -124,16 +125,16 @@ def _setup_cluster_df(
     user_provided_loss_prob,
 ):
     cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df)
-    print()
+    click.echo()
     if assign_loss_prob:
         _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng)
     elif user_provided_loss_prob:
         if "outlier_prob" not in cluster_df.columns:
-            print("Cluster level outlier probability column not found.")
+            click.echo("Cluster level outlier probability column not found.")
             _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
         else:
-            print("Cluster level outlier probability column is present.")
-            print("Using user-supplied outlier probability prior values.")
+            click.echo("Cluster level outlier probability column is present.")
+            click.echo("Using user-supplied outlier probability prior values.")
             # cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
             cluster_df["outlier_prob"].fillna(outlier_prob, inplace=True)
     else:
@@ -150,15 +151,15 @@ def _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_siz
         and "sample_id" in cluster_df.columns
     )
     if column_checks:
-        print("Assigning outlier probability from data.")
+        click.echo("Assigning outlier probability from data.")
         _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
     else:
-        print("Outlier probability cannot be assigned from data, required columns are missing.")
+        click.echo("Outlier probability cannot be assigned from data, required columns are missing.")
         _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
 
 
 def _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob):
-    print("Setting outlier probability values to {p}".format(p=outlier_prob))
+    click.echo("Setting outlier probability values to {p}".format(p=outlier_prob))
     cluster_df.loc[:, "outlier_prob"] = outlier_prob
 
 
@@ -210,12 +211,12 @@ def load_pyclone_data(file_name):
 
 def _print_num_mutations_samples_message(df, samples):
     mutations = df["mutation_id"].unique()
-    print("Num mutations: {}".format(len(mutations)))
-    print("Num Samples: {}".format(len(samples)))
+    click.echo("Num mutations: {}".format(len(mutations)))
+    click.echo("Num Samples: {}".format(len(samples)))
     if len(samples) > 5:
-        print("Samples: {}...".format(", ".join(samples[:5])))
+        click.echo("Samples: {}...".format(", ".join(samples[:5])))
     else:
-        print("Samples: {}".format(", ".join(samples)))
+        click.echo("Samples: {}".format(", ".join(samples)))
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
@@ -228,13 +229,13 @@ def _remove_duplicated_and_partially_absent_mutations(df, samples):
             pl = ""
         else:
             pl = "s"
-        print("Removing {} duplicate mutation ID{}".format(num_duplicates, pl))
+        click.echo("Removing {} duplicate mutation ID{}".format(num_duplicates, pl))
     if num_not_present_in_all > 0:
         if num_not_present_in_all == 1:
             pl = ("", "is")
         else:
             pl = ("s", "are")
-        print(
+        click.echo(
             "Removing {} mutation{} that {} not present in all samples".format(
                 num_not_present_in_all,
                 pl[0],
@@ -252,7 +253,7 @@ def _remove_cn_zero_mutations(df):
             pl = ""
         else:
             pl = "s"
-        print("Removing {} mutation{} with major copy number zero".format(num_dels, pl))
+        click.echo("Removing {} mutation{} with major copy number zero".format(num_dels, pl))
     df = df.loc[df["major_cn"] > 0]
     return df
 
@@ -261,7 +262,7 @@ def _process_required_cols_on_df(df):
     if "error_rate" not in df.columns:
         df["error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
-        print("Tumour content column not found. Setting values to 1.0.")
+        click.echo("Tumour content column not found. Setting values to 1.0.")
         df["tumour_content"] = 1.0
 
 

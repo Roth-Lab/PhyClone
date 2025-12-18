@@ -1,6 +1,7 @@
 import time
 from collections import deque
 from itertools import count
+import click
 
 
 def get_iterator_length(iterable):
@@ -67,3 +68,11 @@ class TraceEntry:
 
     def __setstate__(self, state):
         self.iter, self.time, self.alpha, self.log_p_one, self.tree, self.tree_hash = state
+
+
+def print_command_header(command_title):
+    click.echo()
+    click.echo("#" * 100)
+    click.secho(f"PhyClone - {command_title}", fg="cyan")
+    click.echo("#" * 100)
+    click.echo()
