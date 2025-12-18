@@ -73,6 +73,6 @@ class TraceEntry:
 def print_command_header(command_title):
     click.echo()
     click.echo("#" * 100)
-    click.secho(f"PhyClone - {command_title}", fg="cyan")
+    click.secho(f"PhyClone - {command_title}", fg="bright_cyan")
     click.echo("#" * 100)
     click.echo()

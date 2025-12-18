@@ -168,7 +168,8 @@ def _get_raw_cluster_df(cluster_file, data_df):
     try:
         cluster_input_validator.validate()
     except InputFormatError as e:
-        sys.exit(str(e))
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
     cluster_df = cluster_input_validator.df
     unprocessed_cluster_df = cluster_df[["mutation_id", "cluster_id"]].drop_duplicates(inplace=False)
     if "chrom" not in cluster_df.columns:
@@ -271,7 +272,8 @@ def _create_raw_data_df(file_name):
     try:
         data_input_validator.validate()
     except InputFormatError as e:
-        sys.exit(str(e))
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
     df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
     return df.drop_duplicates()
@@ -310,7 +312,8 @@ def create_sample_data_point(row_series):
             error_rate,
         )
     except MajorCopyNumberError as e:
-        sys.exit(str(e))
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
 
     sample_dp = SampleDataPoint(ref_count, alt_count, cn, mu, log_pi, tumour_content)
 
