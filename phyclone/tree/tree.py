@@ -60,11 +60,11 @@ class Tree(object):
         self._add_node(self._root_node_name)
 
     def __hash__(self):
-        return hash((self.get_clades(), frozenset(self.outliers)))
+        return hash(self.get_hash_id_obj())
 
     def __eq__(self, other):
-        self_key = (self.get_clades(), frozenset(self.outliers))
-        other_key = (other.get_clades(), frozenset(other.outliers))
+        self_key = self.get_hash_id_obj()
+        other_key = other.get_hash_id_obj()
         return self_key == other_key
 
     def __copy__(self):
