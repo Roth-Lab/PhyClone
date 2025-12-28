@@ -87,7 +87,7 @@ class Tree(object):
         return new
 
     def get_hash_id_obj(self):
-        return self.get_clades(), frozenset(self.outliers)
+        return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
 
     def to_newick_string(self) -> str:
         visitor = GraphToNewickVisitor(self)
