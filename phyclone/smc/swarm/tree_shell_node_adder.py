@@ -111,8 +111,11 @@ class TreeHolderBuilder(object):
         hash_check = hash(self) == hash(other)
         return hash_check
 
+    def get_hash_id_obj(self):
+        return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
+
     def set_hash_val(self):
-        self._hash_val = hash((self.get_clades(), frozenset(self.outliers)))
+        self._hash_val = hash(self.get_hash_id_obj())
 
     def with_graph(self, graph):
         self._graph = graph
