@@ -70,8 +70,9 @@ def load_data(
             precision,
         )
 
-        click.echo("\nUsing input clustering with {} clusters\n".format(cluster_df["cluster_id"].nunique()))
+        click.echo("\nUsing input clustering with {} clusters".format(cluster_df["cluster_id"].nunique()))
 
+    click.echo()
     click.echo("#" * 100)
     click.echo()
 
