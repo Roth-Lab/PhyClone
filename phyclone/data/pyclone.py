@@ -213,7 +213,7 @@ def load_pyclone_data(file_name):
 
 def _print_num_mutations_samples_message(df, samples):
     mutations = df["mutation_id"].unique()
-    click.echo("Num mutations: {}".format(len(mutations)))
+    click.echo("Num Mutations: {}".format(len(mutations)))
     click.echo("Num Samples: {}".format(len(samples)))
     if len(samples) > 5:
         click.echo("Samples: {}...".format(", ".join(samples[:5])))

@@ -5,7 +5,7 @@ channels:
 dependencies:
   - python>=3.12
   - llvmdev
-  - click>=8.0
+  - click>=8.3
   - networkx>=3.6.1
   - rustworkx>=0.15.1
   - numba>=0.61.2

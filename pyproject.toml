@@ -21,7 +21,7 @@ dependencies = [
     "numba>=0.61.2",
     "numpy>=2.0.0",
     "scipy",
-    "click>=8.0",
+    "click>=8.3",
     "xxhash>=3.3.0",
     "networkx>=3.6.1",
     "rustworkx>=0.15.1",
