@@ -80,14 +80,6 @@ class TreeHolderBuilder(BaseTree):
         self._tree_dist = None
         self._log_pdf = 0.0
 
-    def __hash__(self):
-        if self._hash_val is None:
-            self.set_hash_val()
-        return self._hash_val
-
-    def set_hash_val(self):
-        self._hash_val = hash(self.get_hash_id_obj())
-
     def with_graph(self, graph):
         self._graph = graph
         self._multiplicity = self._compute_multiplicity()
