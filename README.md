@@ -156,10 +156,11 @@ phyclone run -i INPUT.tsv -c CLUSTERS.tsv -o TRACE.h5 --num-chains 4
 Which will take the [`INPUT.tsv`](#main-input-format) and (optionally) the [`CLUSTERS.tsv`](#cluster-file-format) file, as described above and write the trace file `TRACE.h5` in the HDF5 binary data format.
 
 Relevant program options:
-* `--num-chains` command controls how many independent parallel PhyClone sampling chains to use. Though the default value is set to 1, PhyClone will benefit from running multiple chains; we recommend ≥4 chains, if the compute cores can be spared.
+* `--num-chains` controls how many independent parallel PhyClone sampling chains to use. Though the default value is set to 1, PhyClone will benefit from running multiple chains; we recommend ≥4 chains, if the compute cores can be spared.
 * `-n` command can be used to control the number of iterations of sampling to perform.
 * `-b` command can be used to control the number of burn-in iterations to perform.
-* `--seed` command can be used to seed the random number generator for reproducible results.
+* `--seed` can be used to seed the random number generator for reproducible results.
+* `--num-particles` controls the number of particles to use during Particle-Gibbs sampling; higher values should produce improved results for a **relatively** minor computational (runtime/memory) cost. PhyClone defaults to using 100 particles, but those running more complex problems may want to consider increasing this value.
 
 > [!NOTE]
 > Burn-in is done using a heuristic strategy of unconditional SMC.
