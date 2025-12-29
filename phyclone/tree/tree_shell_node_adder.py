@@ -6,9 +6,9 @@ import rustworkx as rx
 from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.utils import RootPermutationDistribution
+from phyclone.tree.tree import BaseTree
 from phyclone.tree import Tree, TreeJointDistribution
 from phyclone.tree.tree_node import TreeNode
-from phyclone.tree.visitors import GraphToCladesVisitor
 from phyclone.utils.math_utils import cached_log_factorial
 
 
@@ -48,19 +48,11 @@ class TreeInfo:
         return count
 
 
-class TreeHolderBuilder(object):
+class TreeHolderBuilder(BaseTree):
     __slots__ = (
-        "_graph",
         "_multiplicity",
         "_roots",
-        "_outlier_node_name",
         "_nodes",
-        "_data",
-        "_node_idx",
-        "_node_idx_rev",
-        "grid_size",
-        "_log_prior",
-        "_root_node_name",
         "_labels",
         "_outliers",
         "roots_num_children",
@@ -73,27 +65,21 @@ class TreeHolderBuilder(object):
         "_log_pdf",
     )
 
-    def __init__(
-        self,
-        outlier_node_name: str | int,
-        root_node_name: str | int,
-        grid_size: tuple[int, int],
-        log_prior: float,
-        nodes: list[str | int],
-    ):
+    def __init__(self, grid_size: tuple[int, int], log_prior: float, nodes: list[str | int]):
+        super().__init__(grid_size)
         self._number_of_nodes = 0
         self.roots_num_desc = None
         self.roots_num_children = None
-        self._graph = None
+        # self._graph = None
         self._multiplicity = None
         self._roots = None
-        self._outlier_node_name = outlier_node_name
-        self._root_node_name = root_node_name
+        # self._outlier_node_name = outlier_node_name
+        # self._root_node_name = root_node_name
         self._nodes = set(nodes)
-        self._data = None
-        self._node_idx = None
-        self._node_idx_rev = None
-        self.grid_size = grid_size
+        # self._data = None
+        # self._node_indices = None
+        # self._node_indices_rev = None
+        # self.grid_size = grid_size
         self._log_prior = log_prior
         self._outliers = None
         self._data_log_likelihood = None
@@ -107,24 +93,24 @@ class TreeHolderBuilder(object):
             self.set_hash_val()
         return self._hash_val
 
-    def __eq__(self, other):
-        hash_check = hash(self) == hash(other)
-        return hash_check
+    # def __eq__(self, other):
+    #     hash_check = hash(self) == hash(other)
+    #     return hash_check
 
-    def get_hash_id_obj(self):
-        return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
+    # def get_hash_id_obj(self):
+    #     return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
 
     def set_hash_val(self):
         self._hash_val = hash(self.get_hash_id_obj())
 
     def with_graph(self, graph):
         self._graph = graph
-        self.multiplicity = graph
+        self._multiplicity = self._compute_multiplicity()
         self._number_of_nodes = graph.num_nodes() - 1
         return self
 
     def with_node_data(self, node_data):
-        self._data = node_data
+        self._data.update(node_data)
         return self
 
     def with_log_pdf(self, log_pdf):
@@ -153,11 +139,11 @@ class TreeHolderBuilder(object):
         return self
 
     def with_node_idx(self, node_idx):
-        self._node_idx = node_idx
+        self._node_indices.update(node_idx)
         return self
 
     def with_node_idx_rev(self, node_idx_rev):
-        self._node_idx_rev = node_idx_rev
+        self._node_indices_rev.update(node_idx_rev)
         return self
 
     def with_tree_dist(self, tree_dist: TreeJointDistribution):
@@ -169,12 +155,12 @@ class TreeHolderBuilder(object):
         ret.log_pdf = self._log_pdf
         return ret
 
-    def get_clades(self) -> frozenset:
-        visitor = GraphToCladesVisitor(self._node_idx_rev, self._data, self._root_node_name)
-        root_idx = self._node_idx[self._root_node_name]
-        rx.dfs_search(self._graph, [root_idx], visitor)
-        vis_clades = frozenset(visitor.clades)
-        return vis_clades
+    # def get_clades(self) -> frozenset:
+    #     visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, self._root_node_name)
+    #     root_idx = self._node_indices[self._root_node_name]
+    #     rx.dfs_search(self._graph, [root_idx], visitor)
+    #     vis_clades = frozenset(visitor.clades)
+    #     return vis_clades
 
     def get_number_of_descendants(self, node):
         return self.roots_num_desc[node]
@@ -185,15 +171,15 @@ class TreeHolderBuilder(object):
     def get_number_of_nodes(self):
         return self._number_of_nodes
 
-    def to_dict(self):
-        tree_dict = {
-            "graph": self._graph.edge_list(),
-            "node_idx": self._node_idx.copy(),
-            "node_data": {k: v.copy() for k, v in self._data.items()},
-            "grid_size": self.grid_size,
-            "log_prior": self._log_prior,
-        }
-        return tree_dict
+    # def to_dict(self):
+    #     tree_dict = {
+    #         "graph": self._graph.edge_list(),
+    #         "node_idx": self._node_indices.copy(),
+    #         "node_data": {k: v.copy() for k, v in self._data.items()},
+    #         "grid_size": self.grid_size,
+    #         "log_prior": self._log_prior,
+    #     }
+    #     return tree_dict
 
     @property
     def data_log_likelihood(self):
@@ -211,38 +197,34 @@ class TreeHolderBuilder(object):
     def roots(self):
         return list(self._roots)
 
-    @property
-    def node_data(self):
-        result = self._data.copy()
-
-        if self._root_node_name in result:
-            del result[self._root_node_name]
-
-        return result
-
-    @property
-    def labels(self):
-        return {dp.idx: k for k, l in self._data.items() for dp in l}
+    # @property
+    # def node_data(self):
+    #     result = self._data.copy()
+    #
+    #     if self._root_node_name in result:
+    #         del result[self._root_node_name]
+    #
+    #     return result
 
     @property
     def multiplicity(self):
         return self._multiplicity
 
-    @multiplicity.setter
-    def multiplicity(self, graph: rx.PyDiGraph):
-        self._multiplicity = Tree.compute_multiplicity_from_graph(graph)
+    # @multiplicity.setter
+    # def multiplicity(self, graph: rx.PyDiGraph):
+    #     self._multiplicity = Tree.compute_multiplicity_from_graph(graph)
 
-    @property
-    def outliers(self):
-        return self._data[self._outlier_node_name]
+    # @property
+    # def outliers(self):
+    #     return self._data[self._outlier_node_name]
 
-    @property
-    def outlier_node_name(self):
-        return self._outlier_node_name
-
-    @property
-    def root_node_name(self):
-        return self._root_node_name
+    # @property
+    # def outlier_node_name(self):
+    #     return self._outlier_node_name
+    #
+    # @property
+    # def root_node_name(self):
+    #     return self._root_node_name
 
 
 class TreeShellNodeAdder(object):
@@ -533,8 +515,6 @@ class TreeShellNodeAdder(object):
 
     def _get_initial_tree_holder_builder(self) -> TreeHolderBuilder:
         tree_holder_builder = TreeHolderBuilder(
-            self._outlier_node_name,
-            self._root_node_name,
             self._grid_size,
             self._log_prior,
             self._nodes,

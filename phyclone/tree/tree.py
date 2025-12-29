@@ -34,9 +34,7 @@ class MinimalTree:
         self.graph, self.node_idx, self.node_data, self.grid_size, self.log_prior = state
 
 
-class Tree(object):
-    _ROOT_NODE_NAME = "root"
-    _OUTLIER_NODE_NAME = -1
+class BaseTree(object):
     __slots__ = (
         "grid_size",
         "_data",
@@ -47,17 +45,18 @@ class Tree(object):
         "_root_node_name",
         "_outlier_node_name",
     )
+    _OUTLIER_NODE_NAME = -1
+    _ROOT_NODE_NAME = "root"
 
     def __init__(self, grid_size: tuple[int, int]):
-        self.grid_size = grid_size
-        self._data = defaultdict(list)
         self._log_prior = -np.log(grid_size[1])
-        self._graph = rx.PyDiGraph(multigraph=False)
-        self._node_indices = dict()
         self._node_indices_rev = dict()
-        self._root_node_name = self.__class__._ROOT_NODE_NAME
+        self._node_indices = dict()
+        self._graph = rx.PyDiGraph(multigraph=False)
         self._outlier_node_name = self.__class__._OUTLIER_NODE_NAME
-        self._add_node(self._root_node_name)
+        self.grid_size = grid_size
+        self._root_node_name = self.__class__._ROOT_NODE_NAME
+        self._data = defaultdict(list)
 
     def __hash__(self):
         return hash(self.get_hash_id_obj())
@@ -66,6 +65,68 @@ class Tree(object):
         self_key = self.get_hash_id_obj()
         other_key = other.get_hash_id_obj()
         return self_key == other_key
+
+    def get_hash_id_obj(self):
+        return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
+
+    @property
+    def outliers(self):
+        return list(self._data[self._outlier_node_name])
+
+    def get_clades(self) -> frozenset:
+        visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, self._root_node_name)
+        root_idx = self._node_indices[self._root_node_name]
+        rx.dfs_search(self._graph, [root_idx], visitor)
+        vis_clades = frozenset(visitor.clades)
+        return vis_clades
+
+    def to_dict(self):
+        tree_dict = {
+            "graph": self._graph.edge_list(),
+            "node_idx": self._node_indices.copy(),
+            "node_data": {k: v.copy() for k, v in self._data.items()},
+            "grid_size": self.grid_size,
+            "log_prior": self._log_prior,
+        }
+        return tree_dict
+
+    @property
+    def root_node_name(self):
+        return self._root_node_name
+
+    @property
+    def outlier_node_name(self):
+        return self._outlier_node_name
+
+    @property
+    def labels(self):
+        return {dp.idx: k for k, l in self._data.items() for dp in l}
+
+    @property
+    def node_data(self):
+        result = self._data.copy()
+
+        if self._root_node_name in result:
+            del result[self._root_node_name]
+
+        return result
+
+    def _compute_multiplicity(self):
+        mult = sum(
+            map(
+                cached_log_factorial,
+                map(self._graph.out_degree, self._graph.node_indices()),
+            )
+        )
+        return mult
+
+
+class Tree(BaseTree):
+    __slots__ = ()
+
+    def __init__(self, grid_size: tuple[int, int]):
+        super().__init__(grid_size)
+        self._add_node(self._root_node_name)
 
     def __copy__(self):
         cls = self.__class__
@@ -86,21 +147,11 @@ class Tree(object):
 
         return new
 
-    def get_hash_id_obj(self):
-        return self.get_clades(), frozenset([dp.idx for dp in self.outliers])
-
     def to_newick_string(self) -> str:
         visitor = GraphToNewickVisitor(self)
         root_idx = self._node_indices[self._root_node_name]
         rx.dfs_search(self._graph, [root_idx], visitor)
         return visitor.final_string
-
-    def get_clades(self) -> frozenset:
-        visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, self._root_node_name)
-        root_idx = self._node_indices[self._root_node_name]
-        rx.dfs_search(self._graph, [root_idx], visitor)
-        vis_clades = frozenset(visitor.clades)
-        return vis_clades
 
     @classmethod
     def get_single_node_tree(cls, data: list[DataPoint]) -> Tree:
@@ -114,14 +165,6 @@ class Tree(object):
         tree = cls(data[0].grid_size)
         tree.create_root_node(data=data)
         return tree
-
-    @property
-    def root_node_name(self):
-        return self._root_node_name
-
-    @property
-    def outlier_node_name(self):
-        return self._outlier_node_name
 
     @property
     def graph(self):
@@ -145,30 +188,25 @@ class Tree(object):
         node_idx = self._node_indices[node]
         return self._graph[node_idx].copy()
 
-    @property
-    def labels(self):
-        result = {dp.idx: k for k, l in self._data.items() for dp in l}
-        return result
+    # @property
+    # def labels(self):
+    #     result = {dp.idx: k for k, l in self._data.items() for dp in l}
+    #     return result
 
     @property
     def multiplicity(self):
-        mult = sum(
-            map(
-                cached_log_factorial,
-                map(self._graph.out_degree, self._graph.node_indices()),
-            )
-        )
+        mult = self._compute_multiplicity()
         return mult
 
-    @staticmethod
-    def compute_multiplicity_from_graph(graph):
-        mult = sum(
-            map(
-                cached_log_factorial,
-                map(graph.out_degree, graph.node_indices()),
-            )
-        )
-        return mult
+    # @staticmethod
+    # def compute_multiplicity_from_graph(graph):
+    #     mult = sum(
+    #         map(
+    #             cached_log_factorial,
+    #             map(graph.out_degree, graph.node_indices()),
+    #         )
+    #     )
+    #     return mult
 
     @property
     def nodes(self):
@@ -177,19 +215,6 @@ class Tree(object):
 
     def get_number_of_nodes(self):
         return self._graph.num_nodes() - 1
-
-    @property
-    def node_data(self):
-        result = self._data.copy()
-
-        if self._root_node_name in result:
-            del result[self._root_node_name]
-
-        return result
-
-    @property
-    def outliers(self):
-        return list(self._data[self._outlier_node_name])
 
     @property
     def roots(self):
@@ -244,16 +269,6 @@ class Tree(object):
 
         new.update()
         return new
-
-    def to_dict(self):
-        tree_dict = {
-            "graph": self._graph.edge_list(),
-            "node_idx": self._node_indices.copy(),
-            "node_data": {k: v.copy() for k, v in self._data.items()},
-            "grid_size": self.grid_size,
-            "log_prior": self._log_prior,
-        }
-        return tree_dict
 
     def to_storage_tree(self):
         ret = MinimalTree(
