@@ -4,7 +4,7 @@ import numpy as np
 
 from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import Particle
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import log_normalize
 

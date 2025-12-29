@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from phyclone.smc.swarm import TreeHolder
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tests.utilities.simulate import simulate_binomial_data
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
