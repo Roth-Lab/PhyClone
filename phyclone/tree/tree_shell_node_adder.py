@@ -6,7 +6,7 @@ import rustworkx as rx
 from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import TreeHolder
 from phyclone.smc.utils import RootPermutationDistribution
-from phyclone.tree.tree import BaseTree
+from phyclone.tree.base import BaseTree
 from phyclone.tree import Tree, TreeJointDistribution
 from phyclone.tree.tree_node import TreeNode
 from phyclone.utils.math_utils import cached_log_factorial
