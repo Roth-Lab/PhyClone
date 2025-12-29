@@ -230,6 +230,14 @@ def _validate_positive_value(ctx, param, value):
     return value
 
 
+def _validate_nullable_positive_value(ctx, param, value):
+    if value is None:
+        return value
+    if value < 0:
+        raise click.BadParameter("Value must be positive.")
+    return value
+
+
 @click.command(context_settings={"max_content_width": 120}, name="run")
 @click.option(
     "-i",
@@ -403,6 +411,8 @@ def _validate_positive_value(ctx, param, value):
     "--seed",
     default=None,
     type=int,
+    callback=_validate_nullable_positive_value,
+    show_default=True,
     help="""Set random seed so results can be reproduced. By default, a random seed is chosen.""",
 )
 @click.option(
