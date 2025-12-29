@@ -188,25 +188,10 @@ class Tree(BaseTree):
         node_idx = self._node_indices[node]
         return self._graph[node_idx].copy()
 
-    # @property
-    # def labels(self):
-    #     result = {dp.idx: k for k, l in self._data.items() for dp in l}
-    #     return result
-
     @property
     def multiplicity(self):
         mult = self._compute_multiplicity()
         return mult
-
-    # @staticmethod
-    # def compute_multiplicity_from_graph(graph):
-    #     mult = sum(
-    #         map(
-    #             cached_log_factorial,
-    #             map(graph.out_degree, graph.node_indices()),
-    #         )
-    #     )
-    #     return mult
 
     @property
     def nodes(self):
