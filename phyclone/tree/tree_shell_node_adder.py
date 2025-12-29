@@ -65,7 +65,7 @@ class TreeHolderBuilder(BaseTree):
         "_log_pdf",
     )
 
-    def __init__(self, grid_size: tuple[int, int], log_prior: float, nodes: list[str | int]):
+    def __init__(self, grid_size: tuple[int, int], nodes: list[str | int]):
         super().__init__(grid_size)
         self._number_of_nodes = 0
         self.roots_num_desc = None
@@ -80,7 +80,7 @@ class TreeHolderBuilder(BaseTree):
         # self._node_indices = None
         # self._node_indices_rev = None
         # self.grid_size = grid_size
-        self._log_prior = log_prior
+        # self._log_prior = log_prior
         self._outliers = None
         self._data_log_likelihood = None
         self._roots = None
@@ -516,7 +516,6 @@ class TreeShellNodeAdder(object):
     def _get_initial_tree_holder_builder(self) -> TreeHolderBuilder:
         tree_holder_builder = TreeHolderBuilder(
             self._grid_size,
-            self._log_prior,
             self._nodes,
         )
         return tree_holder_builder
