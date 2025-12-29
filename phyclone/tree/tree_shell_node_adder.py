@@ -53,12 +53,9 @@ class TreeHolderBuilder(BaseTree):
         "_multiplicity",
         "_roots",
         "_nodes",
-        "_labels",
-        "_outliers",
         "roots_num_children",
         "roots_num_desc",
         "_data_log_likelihood",
-        "_roots",
         "_hash_val",
         "_tree_dist",
         "_number_of_nodes",
@@ -73,9 +70,7 @@ class TreeHolderBuilder(BaseTree):
         self._multiplicity = None
         self._roots = None
         self._nodes = set(nodes)
-        self._outliers = None
         self._data_log_likelihood = None
-        self._roots = None
         self._hash_val = None
         self._tree_dist = None
         self._log_pdf = 0.0
