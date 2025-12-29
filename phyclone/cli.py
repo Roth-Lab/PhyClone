@@ -6,6 +6,14 @@ from phyclone.process_trace import (
     write_topology_report,
 )
 from phyclone.run import run as run_prog
+import pathlib
+
+
+def _validate_out_file(ctx, param, value):
+    parent_dir = pathlib.Path(value).parent
+    checker = click.Path(exists=True, file_okay=False, dir_okay=True, writable=True)
+    checker.convert(parent_dir, param, ctx)
+    return value
 
 
 # =========================================================================
@@ -18,19 +26,21 @@ from phyclone.run import run as run_prog
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where tree will be written in minimal newick format.""",
 )
@@ -38,6 +48,7 @@ from phyclone.run import run as run_prog
     "-s",
     "--out-sample-prev-table",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
@@ -71,19 +82,21 @@ def consensus(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where tree will be written in minimal newick format.""",
 )
@@ -91,6 +104,7 @@ def consensus(**kwargs):
     "-s",
     "--out-sample-prev-table",
     required=True,
+    callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
@@ -116,7 +130,7 @@ def map(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
     help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
@@ -124,6 +138,7 @@ def map(**kwargs):
     "--out-file",
     required=True,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
     help="""Path/filename to where topology report will be written in .tsv format""",
 )
 @click.option(
@@ -131,6 +146,7 @@ def map(**kwargs):
     "--topologies-archive",
     default=None,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
     help="""To produce the results tables and newick trees for each uniquely sampled topology in the report, provide a
     path to where the archive file will be written in tar.gz compressed format.""",
 )
@@ -228,6 +244,7 @@ def _validate_positive_value(ctx, param, value):
     "--out-file",
     required=True,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
     help="""Path to where trace file will be written in HDF5 format.""",
 )
 @click.option(
