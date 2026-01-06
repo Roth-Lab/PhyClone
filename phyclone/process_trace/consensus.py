@@ -2,8 +2,6 @@ from collections import defaultdict
 
 import networkx as nx
 
-from phyclone.tree.utils import get_clades
-
 
 def get_consensus_tree(trees, counts, data=None, threshold=0.5, weighted=False, tree_probs=None):
 
@@ -83,6 +81,8 @@ def clean_tree(tree, data=None):
 def clade_probabilities(trees, counts, weighted=False, tree_probs=None):
     """Return a clade probabilities."""
     clades_counter = defaultdict(float)
+
+    weighted = weighted and (tree_probs is not None)
 
     for i, tree in enumerate(trees):
         tree_clades = tree.get_clades()
