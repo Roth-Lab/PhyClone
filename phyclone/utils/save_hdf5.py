@@ -27,14 +27,14 @@ def save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples,
                 compression="gzip",
             )
 
-        store_datapoints(fh, data)
+        idx_dtype = store_datapoints(fh, data)
 
-        store_trace(fh, num_chains, results)
+        store_trace(fh, num_chains, results, idx_dtype)
 
     click.secho("\nFinished.", fg="green")
 
 
-def store_trace(fh, num_chains, results):
+def store_trace(fh, num_chains, results, idx_dtype):
     trace_grp = fh.create_group("trace")
     trace_grp.attrs["num_chains"] = num_chains
     chains_grp = trace_grp.create_group("chains")
@@ -49,7 +49,7 @@ def store_trace(fh, num_chains, results):
         curr_chain_grp.attrs["chain_idx"] = chain_num
         curr_chain_grp.attrs["num_iters"] = num_iters
         with click.progressbar(length=num_iters, label=f"Saving chain {chain_num} trace") as bar:
-            store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar)
+            store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar, idx_dtype)
     click.echo(f"\nUnique trees sampled: {len(tree_obj_dict)}")
 
 
@@ -58,6 +58,8 @@ def store_datapoints(fh, data):
     data_grp.attrs["num_datapoints"] = len(data)
     datapoints_grp = data_grp.create_group("datapoints")
     datapoint_template = "datapoint_{}"
+    min_idx = np.inf
+    max_idx = -np.inf
     for datapoint in data:
         idx = datapoint.idx
         curr_dp_grp = datapoints_grp.create_group(datapoint_template.format(idx))
@@ -67,9 +69,13 @@ def store_datapoints(fh, data):
         curr_dp_grp.attrs["outlier_prob_not"] = datapoint.outlier_prob_not
         curr_dp_grp.attrs["outlier_marginal_prob"] = datapoint.outlier_marginal_prob
         curr_dp_grp.create_dataset("value", data=datapoint.value, compression="gzip")
+        min_idx = min(idx, min_idx)
+        max_idx = max(idx, max_idx)
+    idx_dtype = np.result_type(np.min_scalar_type(max_idx), np.min_scalar_type(min_idx))
+    return idx_dtype
 
 
-def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar):
+def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar, idx_dtype):
     iters = np.empty(num_iters, dtype=np.int32)
     time = np.empty(num_iters)
     alpha = np.empty(num_iters)
@@ -95,7 +101,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
         log_p_one[i] = iter_obj.log_p_one
         tree_hash[i] = tree_hash_val
 
-        tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict)
+        tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype)
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
         bar.update(1)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
@@ -106,7 +112,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
 
 
-def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict):
+def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype):
     if tree_hash_val in tree_obj_dict:
         return tree_obj_dict[tree_hash_val]
     else:
@@ -116,13 +122,13 @@ def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict):
         subtree_grp.create_dataset("graph", data=tree_storage_obj.graph)
         node_idx_grp = subtree_grp.create_group("node_idx")
         store_dict_mixed_type_keys(tree_storage_obj.node_idx, node_idx_grp)
-        store_node_data(subtree_grp, tree_storage_obj)
+        store_node_data(subtree_grp, tree_storage_obj, idx_dtype)
         subtree_grp.attrs["grid_size"] = tree_storage_obj.grid_size
         subtree_grp.attrs["log_prior"] = tree_storage_obj.log_prior
         return subtree_grp.ref
 
 
-def store_node_data(subtree_grp, tree_storage_obj):
+def store_node_data(subtree_grp, tree_storage_obj, idx_dtype):
     node_data_grp = subtree_grp.create_group("node_data")
     node_data = tree_storage_obj.node_data
 
@@ -130,17 +136,17 @@ def store_node_data(subtree_grp, tree_storage_obj):
     str_nodes_grp = node_data_grp.create_group("str_nodes")
     int_nodes_grp = node_data_grp.create_group("int_nodes")
 
-    _store_node_data_typed_dict(h5py.string_dtype(), str_nodes_grp, str_nodes_keys, str_nodes_values)
-    _store_node_data_typed_dict(None, int_nodes_grp, int_nodes_keys, int_nodes_values)
+    _store_node_data_typed_dict(h5py.string_dtype(), str_nodes_grp, str_nodes_keys, str_nodes_values, idx_dtype)
+    _store_node_data_typed_dict(None, int_nodes_grp, int_nodes_keys, int_nodes_values, idx_dtype)
 
 
-def _store_node_data_typed_dict(dtype_to_use, dict_grp, dict_keys, dict_values):
+def _store_node_data_typed_dict(dtype_to_use, dict_grp, dict_keys, dict_values, idx_dtype):
     num_vals = len(dict_keys)
     dict_grp.create_dataset("keys", data=dict_keys, dtype=dtype_to_use)
     val_dset = dict_grp.create_dataset(
         "values",
         shape=(num_vals,),
-        dtype=h5py.vlen_dtype(np.dtype("int32")),
+        dtype=h5py.vlen_dtype(np.dtype(idx_dtype)),
     )
     for i, val in enumerate(dict_values):
         val_dset[i] = val
