@@ -119,13 +119,23 @@ def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_d
         subtree_grp = curr_tree_grp.create_group("tree")
         tree_obj_dict[tree_hash_val] = subtree_grp.ref
         tree_storage_obj = iter_obj.tree
-        subtree_grp.create_dataset("graph", data=tree_storage_obj.graph)
+        subtree_grp.create_dataset("graph", data=_downcast_edge_list(tree_storage_obj.graph))
         node_idx_grp = subtree_grp.create_group("node_idx")
         store_dict_mixed_type_keys(tree_storage_obj.node_idx, node_idx_grp)
         store_node_data(subtree_grp, tree_storage_obj, idx_dtype)
         subtree_grp.attrs["grid_size"] = tree_storage_obj.grid_size
         subtree_grp.attrs["log_prior"] = tree_storage_obj.log_prior
         return subtree_grp.ref
+
+
+def _downcast_edge_list(edge_list):
+    arr = np.asarray(edge_list)
+    if len(arr) > 0:
+        smallest_dtype_max_val = np.min_scalar_type(np.nanmax(arr))
+        smallest_dtype_min_val = np.min_scalar_type(np.nanmin(arr))
+        new_dtype = np.result_type(smallest_dtype_max_val, smallest_dtype_min_val)
+        arr = arr.astype(new_dtype)
+    return arr
 
 
 def store_node_data(subtree_grp, tree_storage_obj, idx_dtype):
