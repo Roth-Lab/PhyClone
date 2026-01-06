@@ -5,9 +5,9 @@ import networkx as nx
 from phyclone.tree.utils import get_clades
 
 
-def get_consensus_tree(trees, data=None, threshold=0.5, weighted=False, log_p_list=None):
+def get_consensus_tree(trees, counts, data=None, threshold=0.5, weighted=False, tree_probs=None):
 
-    clades_counter = clade_probabilities(trees, weighted=weighted, log_p_list=log_p_list)
+    clades_counter = clade_probabilities(trees, counts, weighted=weighted, tree_probs=tree_probs)
 
     consensus_clades = key_above_threshold(clades_counter, threshold)
 
@@ -80,22 +80,28 @@ def clean_tree(tree, data=None):
     return new_tree
 
 
-def clade_probabilities(trees, weighted=False, log_p_list=None):
+def clade_probabilities(trees, counts, weighted=False, tree_probs=None):
     """Return a clade probabilities."""
     clades_counter = defaultdict(float)
 
     for i, tree in enumerate(trees):
-        tree_clades = get_clades(tree)
+        tree_clades = tree.get_clades()
+        if weighted:
+            val_to_add = tree_probs[i] * counts[i]
+        else:
+            val_to_add = counts[i]
+
         for clade in tree_clades:
-            if weighted:
-                clades_counter[clade] += log_p_list[i]
+            clades_counter[clade] += val_to_add
 
-            else:
-                clades_counter[clade] += 1
+    if weighted:
+        weighted_counts = tree_probs * counts
+        num_trees = weighted_counts.sum()
+    else:
+        num_trees = counts.sum()
 
-    if not weighted:
-        for clade in clades_counter:
-            clades_counter[clade] = clades_counter[clade] / len(trees)
+    for clade in clades_counter:
+        clades_counter[clade] = clades_counter[clade] / num_trees
 
     return clades_counter
 

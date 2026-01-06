@@ -19,7 +19,6 @@ from phyclone.utils.load_hdf5 import (
     load_samples_from_trace,
     build_df_trees_from_trace,
 )
-from itertools import repeat
 import click
 
 from phyclone.utils.utils import print_command_header
@@ -76,42 +75,37 @@ def write_consensus_results(
 
     print_command_header("Write Consensus Tree Results")
 
+    click.echo(f"Weight type: {weight_type}")
+
     datapoints = build_datapoints_dict_from_trace(in_file)
     chain_trace_df = load_chain_trace_data_df(in_file)
 
     df = create_topology_dataframe(chain_trace_df)
     build_df_trees_from_trace(in_file, df, datapoints)
 
-    trees = []
     probs = None
 
     if weight_type == "counts":
         weighted_consensus = False
-
-        for idx, row in df.iterrows():
-            tree = row["tree_obj"]
-            count = row["count"]
-            trees.extend(repeat(tree, count))
     else:
         weighted_consensus = True
 
-        df["log_count"] = np.log(df["count"])
-        df["weighted_prob"] = df["log_p_one"] + df["log_count"]
-        trees = df["tree_obj"].tolist()
-        probs = df["weighted_prob"].to_numpy()
+    trees = df["tree_obj"].to_numpy()
+    counts = df["count"].to_numpy()
 
     if weighted_consensus:
-        probs = np.asarray(probs)
+        probs = df["log_p_one"].to_numpy()
         probs, _ = exp_normalize(probs)
 
     click.echo("\nBuilding consensus tree from trace.")
 
     graph = get_consensus_tree(
         trees,
+        counts,
         data=datapoints,
         threshold=consensus_threshold,
         weighted=weighted_consensus,
-        log_p_list=probs,
+        tree_probs=probs,
     )
 
     tree = get_tree_from_consensus_graph(datapoints, graph)
