@@ -71,6 +71,7 @@ def store_datapoints(fh, data):
 
 def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar):
     iters = np.empty(num_iters, dtype=np.int32)
+    time = np.empty(num_iters)
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
     tree_hash = np.empty(num_iters, dtype=int)
@@ -90,6 +91,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
 
         iters[i] = tree_iter
         alpha[i] = iter_obj.alpha
+        time[i] = iter_obj.time
         log_p_one[i] = iter_obj.log_p_one
         tree_hash[i] = tree_hash_val
 
@@ -98,6 +100,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
         bar.update(1)
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
     chain_trace_data_grp.create_dataset("iter", data=iters, compression="gzip")
+    chain_trace_data_grp.create_dataset("time", data=time, compression="gzip")
     chain_trace_data_grp.create_dataset("alpha", data=alpha, compression="gzip")
     chain_trace_data_grp.create_dataset("log_p_one", data=log_p_one, compression="gzip")
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
