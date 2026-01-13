@@ -13,8 +13,7 @@ class DataPoint(object):
     )
 
     def __init__(self, idx, value, name=None, outlier_prob=0, outlier_prob_not=1, outlier_marginal_prob=None):
-        min_dtype = np.min_scalar_type(idx)
-        self.idx = min_dtype.type(idx)
+        self.idx = idx
 
         self.value = np.ascontiguousarray(value)
 
