@@ -76,7 +76,7 @@ def store_datapoints(fh, data):
 
 
 def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar, idx_dtype):
-    iters = np.empty(num_iters, dtype=np.int32)
+    iters = np.empty(num_iters, dtype=np.uint32)
     time = np.empty(num_iters)
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
@@ -86,14 +86,14 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     for i, iter_obj in enumerate(chain_trace):
         tree_iter = iter_obj.iter
         curr_tree_grp = trees_grp.create_group(tree_template.format(tree_iter))
-        curr_tree_grp.attrs["iter"] = tree_iter
-        curr_tree_grp.attrs["time"] = iter_obj.time
-        curr_tree_grp.attrs["alpha"] = iter_obj.alpha
-        curr_tree_grp.attrs["log_p_one"] = iter_obj.log_p_one
+        # curr_tree_grp.attrs["iter"] = tree_iter
+        # curr_tree_grp.attrs["time"] = iter_obj.time
+        # curr_tree_grp.attrs["alpha"] = iter_obj.alpha
+        # curr_tree_grp.attrs["log_p_one"] = iter_obj.log_p_one
 
         tree_hash_val = hash(iter_obj.tree_hash)
 
-        curr_tree_grp.attrs["tree_hash"] = tree_hash_val
+        # curr_tree_grp.attrs["tree_hash"] = tree_hash_val
 
         iters[i] = tree_iter
         alpha[i] = iter_obj.alpha
