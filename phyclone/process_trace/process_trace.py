@@ -130,7 +130,7 @@ def write_topology_report(in_file, out_file, topologies_archive=None, top_trees=
     click.echo("Extracting unique topologies from sample trace.")
 
     topology_df = create_topology_dataframe(chain_trace_df)
-    topo_df_to_save = topology_df.drop(columns="tree_hash")
+    topo_df_to_save = topology_df.drop(columns=["tree_hash", "time"], errors="ignore")
     topo_df_to_save.to_csv(out_file, index=False, sep="\t")
     num_unique_tree = len(topology_df)
 
