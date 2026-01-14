@@ -10,6 +10,8 @@ import pathlib
 
 
 def _validate_out_file(ctx, param, value):
+    if value is None:
+        return value
     parent_dir = pathlib.Path(value).parent
     checker = click.Path(exists=True, file_okay=False, dir_okay=True, writable=True)
     checker.convert(parent_dir, param, ctx)
@@ -144,7 +146,7 @@ def map(**kwargs):
 @click.option(
     "-t",
     "--topologies-archive",
-    default=None,
+    # default=None,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     callback=_validate_out_file,
     help="""To produce the results tables and newick trees for each uniquely sampled topology in the report, provide a
