@@ -49,7 +49,7 @@ def store_trace(fh, num_chains, results, idx_dtype):
         curr_chain_grp.attrs["chain_idx"] = chain_num
         curr_chain_grp.attrs["num_iters"] = num_iters
         with click.progressbar(length=num_iters, label=f"Saving chain {chain_num} trace") as bar:
-            store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar, idx_dtype)
+            store_chain_trace(chain_trace, curr_chain_grp, tree_template, tree_obj_dict, bar, idx_dtype)
     click.echo(f"\nUnique trees sampled: {len(tree_obj_dict)}")
 
 
@@ -75,8 +75,9 @@ def store_datapoints(fh, data):
     return idx_dtype
 
 
-def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tree_obj_dict, bar, idx_dtype):
-    iters = np.empty(num_iters, dtype=np.uint32)
+def store_chain_trace(chain_trace, curr_chain_grp, tree_template, tree_obj_dict, bar, idx_dtype):
+    iters = _setup_chain_iters_array(chain_trace)
+    num_iters = len(chain_trace)
     time = np.empty(num_iters)
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
@@ -113,6 +114,14 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     chain_trace_data_grp.create_dataset("num_nodes", data=downcast_array_dtype(num_nodes), compression="gzip")
     chain_trace_data_grp.create_dataset("num_outliers", data=downcast_array_dtype(num_outliers), compression="gzip")
     chain_trace_data_grp.create_dataset("num_roots", data=downcast_array_dtype(num_roots), compression="gzip")
+
+
+def _setup_chain_iters_array(chain_trace):
+    first_entry = chain_trace[0].iter
+    last_entry = chain_trace[-1].iter
+    iters_dtype = np.result_type(np.min_scalar_type(last_entry), np.min_scalar_type(first_entry))
+    iters = np.empty(len(chain_trace), dtype=iters_dtype)
+    return iters
 
 
 def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype):
