@@ -81,6 +81,9 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     alpha = np.empty(num_iters)
     log_p_one = np.empty(num_iters)
     tree_hash = np.empty(num_iters, dtype=int)
+    num_nodes = np.empty(num_iters, dtype=np.uint32)
+    num_outliers = np.empty(num_iters, dtype=np.uint32)
+    num_roots = np.empty(num_iters, dtype=np.uint32)
 
     trees_grp = curr_chain_grp.create_group("trees")
     for i, iter_obj in enumerate(chain_trace):
@@ -94,6 +97,9 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
         time[i] = iter_obj.time
         log_p_one[i] = iter_obj.log_p_one
         tree_hash[i] = tree_hash_val
+        num_nodes[i] = iter_obj.num_nodes
+        num_outliers[i] = iter_obj.num_outliers
+        num_roots[i] = iter_obj.num_roots
 
         tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype)
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
@@ -104,6 +110,9 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     chain_trace_data_grp.create_dataset("alpha", data=alpha, compression="gzip")
     chain_trace_data_grp.create_dataset("log_p", data=log_p_one, compression="gzip")
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
+    chain_trace_data_grp.create_dataset("num_nodes", data=downcast_array_dtype(num_nodes), compression="gzip")
+    chain_trace_data_grp.create_dataset("num_outliers", data=downcast_array_dtype(num_outliers), compression="gzip")
+    chain_trace_data_grp.create_dataset("num_roots", data=downcast_array_dtype(num_roots), compression="gzip")
 
 
 def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype):
@@ -125,10 +134,15 @@ def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_d
 def _downcast_edge_list(edge_list):
     arr = np.asarray(edge_list)
     if len(arr) > 0:
-        smallest_dtype_max_val = np.min_scalar_type(np.nanmax(arr))
-        smallest_dtype_min_val = np.min_scalar_type(np.nanmin(arr))
-        new_dtype = np.result_type(smallest_dtype_max_val, smallest_dtype_min_val)
-        arr = arr.astype(new_dtype)
+        arr = downcast_array_dtype(arr)
+    return arr
+
+
+def downcast_array_dtype(arr):
+    smallest_dtype_max_val = np.min_scalar_type(np.nanmax(arr))
+    smallest_dtype_min_val = np.min_scalar_type(np.nanmin(arr))
+    new_dtype = np.result_type(smallest_dtype_max_val, smallest_dtype_min_val)
+    arr = arr.astype(new_dtype)
     return arr
 
 
