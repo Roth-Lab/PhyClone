@@ -49,6 +49,9 @@ class BaseTree(object):
     def outliers(self):
         return list(self._data[self._outlier_node_name])
 
+    def get_number_of_outliers(self):
+        return len(self._data[self._outlier_node_name])
+
     def get_clades(self) -> frozenset:
         visitor = GraphToCladesVisitor(self._node_indices_rev, self._data, self._root_node_name)
         root_idx = self._node_indices[self._root_node_name]

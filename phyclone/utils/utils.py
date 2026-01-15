@@ -63,7 +63,7 @@ class TraceEntry:
         self.tree = tree.to_storage_tree()
         self.tree_hash = tree.get_hash_id_obj()
         self.num_nodes = tree.get_number_of_nodes()
-        self.num_outliers = len(tree.outliers)
+        self.num_outliers = tree.get_number_of_outliers()
         self.num_roots = tree.get_number_of_children(tree.root_node_name)
 
     def __getstate__(self):
