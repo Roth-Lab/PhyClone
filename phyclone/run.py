@@ -257,6 +257,7 @@ def _run_main_sampler(
 ):
     clear_all_caches()
     trace = []
+    tree_obj_dict = {}
 
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
@@ -283,7 +284,7 @@ def _run_main_sampler(
                 tree = prg_sampler.sample_tree(tree)
 
             if i % thin == 0:
-                append_to_trace(i, timer, trace, tree, tree_dist)
+                append_to_trace(i, timer, trace, tree, tree_dist, tree_obj_dict)
 
             if timer.elapsed >= max_time:
                 break
@@ -296,8 +297,8 @@ def _run_main_sampler(
     return results
 
 
-def append_to_trace(i, timer, trace, tree, tree_dist):
-    trace.append(TraceEntry(i, timer, tree, tree_dist))
+def append_to_trace(i, timer, trace, tree, tree_dist, tree_obj_dict):
+    trace.append(TraceEntry(i, timer, tree, tree_dist, tree_obj_dict))
 
 
 def update_concentration_value(conc_sampler, tree, tree_dist):

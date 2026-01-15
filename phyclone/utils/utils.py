@@ -55,16 +55,19 @@ class Timer:
 class TraceEntry:
     __slots__ = "iter", "time", "alpha", "log_p_one", "tree", "tree_hash", "num_nodes", "num_outliers", "num_roots"
 
-    def __init__(self, i, timer, tree, tree_dist):
+    def __init__(self, i, timer, tree, tree_dist, tree_obj_dict):
         self.iter = i
         self.time = timer.elapsed
         self.alpha = tree_dist.prior.alpha
         self.log_p_one = tree_dist.log_p_one(tree)
-        self.tree = tree.to_storage_tree()
-        self.tree_hash = tree.get_hash_id_obj()
         self.num_nodes = tree.get_number_of_nodes()
         self.num_outliers = tree.get_number_of_outliers()
         self.num_roots = tree.get_number_of_children(tree.root_node_name)
+        # self.tree = tree.to_storage_tree()
+        # self.tree_hash = tree.get_hash_id_obj()
+        self.tree = None
+        self.tree_hash = None
+        self._set_tree_objects(tree_obj_dict, tree)
 
     def __getstate__(self):
         return (
@@ -91,6 +94,17 @@ class TraceEntry:
             self.num_outliers,
             self.num_roots,
         ) = state
+
+    def _set_tree_objects(self, tree_obj_dict, tree):
+        tree_hash_obj = tree.get_hash_id_obj()
+        if tree_hash_obj in tree_obj_dict:
+            obj_tuple = tree_obj_dict[tree_hash_obj]
+        else:
+            obj_tuple = (tree.to_storage_tree(), tree_hash_obj)
+            tree_obj_dict[tree_hash_obj] = obj_tuple
+
+        self.tree = obj_tuple[0]
+        self.tree_hash = obj_tuple[1]
 
 
 def print_command_header(command_title):
