@@ -44,7 +44,7 @@ def write_map_results(
         map_iter = df.loc[max_idx, "iter"]
         chain_num = df.loc[max_idx, "chain_num"]
     else:
-        max_idx = chain_trace_df["log_p_one"].idxmax()
+        max_idx = chain_trace_df["log_p"].idxmax()
         map_iter = chain_trace_df.loc[max_idx, "iter"]
         chain_num = chain_trace_df.loc[max_idx, "chain_num"]
 
@@ -94,7 +94,7 @@ def write_consensus_results(
     counts = df["count"].to_numpy()
 
     if weighted_consensus:
-        probs = df["log_p_one"].to_numpy()
+        probs = df["log_p"].to_numpy()
         probs, _ = exp_normalize(probs)
 
     click.echo("\nBuilding consensus tree from trace.")
@@ -201,12 +201,12 @@ def create_topology_dataframe(chain_trace_df):
     df_list = []
     for grp_name, grp in grouped:
         count = len(grp)
-        best_one = grp.loc[grp["log_p_one"].idxmax()].copy()
+        best_one = grp.loc[grp["log_p"].idxmax()].copy()
         best_one["count"] = count
         df_list.append(best_one)
     df = pd.concat(df_list, axis=1, ignore_index=True).T
     df = df.convert_dtypes()
-    df = df.sort_values(by="log_p_one", ascending=False, ignore_index=True)
+    df = df.sort_values(by="log_p", ascending=False, ignore_index=True)
     df.insert(0, "topology_id", "t_" + df.index.astype(str))
     return df
 

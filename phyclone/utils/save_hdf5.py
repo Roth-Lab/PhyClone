@@ -102,7 +102,7 @@ def store_chain_trace(chain_trace, curr_chain_grp, num_iters, tree_template, tre
     chain_trace_data_grp.create_dataset("iter", data=iters, compression="gzip")
     chain_trace_data_grp.create_dataset("time", data=time, compression="gzip")
     chain_trace_data_grp.create_dataset("alpha", data=alpha, compression="gzip")
-    chain_trace_data_grp.create_dataset("log_p_one", data=log_p_one, compression="gzip")
+    chain_trace_data_grp.create_dataset("log_p", data=log_p_one, compression="gzip")
     chain_trace_data_grp.create_dataset("tree_hash", data=tree_hash, compression="gzip")
 
 
