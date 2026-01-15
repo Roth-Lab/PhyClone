@@ -67,10 +67,30 @@ class TraceEntry:
         self.num_roots = tree.get_number_of_children(tree.root_node_name)
 
     def __getstate__(self):
-        return self.iter, self.time, self.alpha, self.log_p_one, self.tree, self.tree_hash, self.num_nodes, self.num_outliers, self.num_roots
+        return (
+            self.iter,
+            self.time,
+            self.alpha,
+            self.log_p_one,
+            self.tree,
+            self.tree_hash,
+            self.num_nodes,
+            self.num_outliers,
+            self.num_roots,
+        )
 
     def __setstate__(self, state):
-        self.iter, self.time, self.alpha, self.log_p_one, self.tree, self.tree_hash, self.num_nodes, self.num_outliers, self.num_roots = state
+        (
+            self.iter,
+            self.time,
+            self.alpha,
+            self.log_p_one,
+            self.tree,
+            self.tree_hash,
+            self.num_nodes,
+            self.num_outliers,
+            self.num_roots,
+        ) = state
 
 
 def print_command_header(command_title):
