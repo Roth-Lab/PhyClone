@@ -65,7 +65,14 @@ def build_datapoints_dict_from_trace(in_file):
             outlier_prob_not = attrs_dict["outlier_prob_not"]
             outlier_marginal_prob = attrs_dict["outlier_marginal_prob"]
             value = dp_grp["value"][()]
-            datapoints[idx] = DataPoint(idx, value, name, outlier_prob, outlier_prob_not, outlier_marginal_prob)
+            datapoints[idx] = DataPoint(
+                idx,
+                value,
+                name=name,
+                outlier_prob=outlier_prob,
+                outlier_prob_not=outlier_prob_not,
+                outlier_marginal_prob=outlier_marginal_prob,
+            )
     return datapoints
 
 
