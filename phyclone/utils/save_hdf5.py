@@ -91,20 +91,19 @@ def store_chain_trace(chain_trace, curr_chain_grp, tree_template, tree_obj_dict,
         tree_iter = iter_obj.iter
         curr_tree_grp = trees_grp.create_group(tree_template.format(tree_iter))
 
-        tree_hash_val = hash(iter_obj.tree_hash)
-
         iters[i] = tree_iter
         alpha[i] = iter_obj.alpha
         time[i] = iter_obj.time
         log_p_one[i] = iter_obj.log_p_one
-        tree_hash[i] = tree_hash_val
+        tree_hash[i] = hash(iter_obj.tree_hash)
         num_nodes[i] = iter_obj.num_nodes
         num_outliers[i] = iter_obj.num_outliers
         num_roots[i] = iter_obj.num_roots
 
-        tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype)
+        tree_group_ref = store_tree_dict(curr_tree_grp, iter_obj, tree_obj_dict, idx_dtype)
         curr_tree_grp.attrs["tree_group"] = tree_group_ref
         bar.update(1)
+
     chain_trace_data_grp = curr_chain_grp.create_group("trace_data")
     chain_trace_data_grp.create_dataset("iter", data=iters, compression="gzip")
     chain_trace_data_grp.create_dataset("time", data=time, compression="gzip")
@@ -124,12 +123,13 @@ def _setup_chain_iters_array(chain_trace):
     return iters
 
 
-def store_tree_dict(curr_tree_grp, iter_obj, tree_hash_val, tree_obj_dict, idx_dtype):
-    if tree_hash_val in tree_obj_dict:
-        return tree_obj_dict[tree_hash_val]
+def store_tree_dict(curr_tree_grp, iter_obj, tree_obj_dict, idx_dtype):
+    tree_hash_obj = iter_obj.tree_hash
+    if tree_hash_obj in tree_obj_dict:
+        return tree_obj_dict[tree_hash_obj]
     else:
         subtree_grp = curr_tree_grp.create_group("tree")
-        tree_obj_dict[tree_hash_val] = subtree_grp.ref
+        tree_obj_dict[tree_hash_obj] = subtree_grp.ref
         tree_storage_obj = iter_obj.tree
         subtree_grp.create_dataset("graph", data=_downcast_edge_list(tree_storage_obj.graph))
         node_idx_grp = subtree_grp.create_group("node_idx")
