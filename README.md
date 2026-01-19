@@ -271,11 +271,15 @@ Additional options:
 
 The following are recommended run settings for pre-clustering for PhyClone using [PyClone-VI](https://github.com/Roth-Lab/pyclone-vi):
 
-* `--num-clusters 30`
+* `--num-clusters 40`
   * This will vary depending on the input data, but increasing this value away from PyClone-VI's default of 10 is recommended (the max I have personally run with is 100).
-* `--mix-weight-prior 100`
+* `--mix-weight-prior 1000`
+  * This value may also vary based on dataset size, but generally 100 (for smaller datasets) or 1000 performs well.
 * `--num-restarts 100`
   * Feel free to increase this value to >100, but this is a recommended minimum.
+
+> [!TIP]
+> A Snakemake workflow that combines the running of PyClone-VI and PhyClone can be found here: [PhyClone-Workflow](https://github.com/Roth-Lab/PhyClone-Workflow)
 
 
 -----------------
