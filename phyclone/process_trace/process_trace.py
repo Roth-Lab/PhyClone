@@ -28,7 +28,7 @@ def write_map_results(
     in_file,
     out_table_file,
     out_tree_file,
-    out_sample_prev_table,
+    out_sample_prev_table=None,
     map_type="joint-likelihood",
 ):
 
@@ -68,7 +68,7 @@ def write_consensus_results(
     in_file,
     out_table_file,
     out_tree_file,
-    out_sample_prev_table,
+    out_sample_prev_table=None,
     consensus_threshold=0.5,
     weight_type="joint-likelihood",
 ):
@@ -214,7 +214,8 @@ def create_topology_dataframe(chain_trace_df):
 def _create_results_output_files(out_table_file, out_tree_file, out_sample_prev_table, table, tree, sample_prevs_df):
     table.to_csv(out_table_file, index=False, sep="\t")
     print_string_to_file(tree.to_newick_string(), out_tree_file)
-    sample_prevs_df.to_csv(out_sample_prev_table, index=False, sep="\t")
+    if out_sample_prev_table is not None:
+        sample_prevs_df.to_csv(out_sample_prev_table, index=False, sep="\t")
 
 
 def get_tree_from_consensus_graph(data, graph):

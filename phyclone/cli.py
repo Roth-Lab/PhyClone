@@ -49,7 +49,7 @@ def _validate_out_file(ctx, param, value):
 @click.option(
     "-s",
     "--out-sample-prev-table",
-    required=True,
+    default=None,
     callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
@@ -105,7 +105,7 @@ def consensus(**kwargs):
 @click.option(
     "-s",
     "--out-sample-prev-table",
-    required=True,
+    default=None,
     callback=_validate_out_file,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     help="""Path to where sample prevalence table will be written in .tsv format.""",
@@ -146,7 +146,7 @@ def map(**kwargs):
 @click.option(
     "-t",
     "--topologies-archive",
-    # default=None,
+    default=None,
     type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
     callback=_validate_out_file,
     help="""To produce the results tables and newick trees for each uniquely sampled topology in the report, provide a
