@@ -13,4 +13,4 @@ dependencies:
   - pandas>=2.2.2
   - scipy
   - python-xxhash>=3.3.0
-  - h5py
+  - h5py>=3.15
