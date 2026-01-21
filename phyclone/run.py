@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from multiprocessing import get_context
 
 import numpy as np
+import click
 
 from phyclone.data.pyclone import load_data
 from phyclone.mcmc.concentration import GammaPriorConcentrationSampler
@@ -17,12 +18,14 @@ from phyclone.mcmc.particle_gibbs import (
     ParticleGibbsTreeSampler,
     ParticleGibbsSubtreeSampler,
 )
-from phyclone.process_trace import create_main_run_output
+
 from phyclone.smc.kernels import BootstrapKernel, FullyAdaptedKernel, SemiAdaptedKernel
 from phyclone.smc.samplers import UnconditionalSMCSampler
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
-from phyclone.utils import Timer
-from phyclone.utils.cache import clear_proposal_dist_caches, clear_convolution_caches
+from phyclone.utils import Timer, TraceEntry
+from phyclone.utils.cache import clear_proposal_dist_caches, clear_all_caches
+from phyclone.utils.save_hdf5 import save_trace_to_h5df
+from phyclone.utils.utils import print_command_header
 
 
 def run(
@@ -48,7 +51,6 @@ def run(
     thin=1,
     num_chains=1,
     subtree_update_prob=0.0,
-    low_loss_prob=0.0001,
     high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
@@ -56,29 +58,26 @@ def run(
 
     rng_main = instantiate_and_seed_RNG(seed)
 
-    if assign_loss_prob and user_provided_loss_prob:
-        raise Exception(
-            "Cannot use both --assign-loss-prob and --user-provided-loss-prob, these options are mutually exclusive."
-        )
-
-    if assign_loss_prob and outlier_prob == 0:
-        outlier_prob = 0.0001
-
-    if user_provided_loss_prob and outlier_prob == 0:
-        outlier_prob = 0.0001
-
     outlier_modelling_active = outlier_prob > 0
 
-    print_welcome_message(
-        burnin, density, num_chains, num_iters, num_particles, seed, outlier_modelling_active, rng_main, proposal
+    rng_seed = print_welcome_message(
+        burnin,
+        density,
+        num_chains,
+        num_iters,
+        num_particles,
+        seed,
+        outlier_modelling_active,
+        rng_main,
+        proposal,
     )
 
-    data, samples = load_data(
+    data, samples, minimal_cluster_df = load_data(
         in_file,
         rng_main,
-        low_loss_prob,
         high_loss_prob,
         assign_loss_prob,
+        user_provided_loss_prob,
         cluster_file=cluster_file,
         density=density,
         grid_size=grid_size,
@@ -104,13 +103,12 @@ def run(
             proposal,
             resample_threshold,
             rng_main,
-            samples,
             thin,
             0,
             subtree_update_prob,
         )
 
-        print("Finished chain", 0)
+        click.echo("Finished chain 0")
 
     else:
 
@@ -134,7 +132,6 @@ def run(
                     proposal,
                     resample_threshold,
                     rng,
-                    samples,
                     thin,
                     chain_num,
                     subtree_update_prob,
@@ -150,9 +147,9 @@ def run(
                     result = future.result()
                     res_chain = result["chain_num"]
                     results[res_chain] = result
-                    print("Finished chain", res_chain)
+                    click.echo(f"Finished chain {res_chain}")
 
-    create_main_run_output(cluster_file, out_file, results)
+    save_trace_to_h5df(results, out_file, minimal_cluster_df, rng_seed, samples, data)
 
 
 def print_welcome_message(
@@ -166,27 +163,25 @@ def print_welcome_message(
     rng_main,
     proposal_kernel,
 ):
-    print()
-    print("#" * 100)
-    print("PhyClone - Analysis Run")
-    print("#" * 100)
-    print()
-    print("Running with the following parameters:\n")
-    print("Number of independent chains: {}".format(num_chains))
-    print("Number of PG particles: {}".format(num_particles))
-    print("Density: {}".format(density))
-    print("Proposal distribution: {}".format(proposal_kernel))
-    print("Number of burn-in iterations: {}".format(burnin))
-    print("Number of MCMC iterations: {}".format(num_iters))
+    print_command_header("Analysis Run")
+    click.echo("Running with the following parameters:\n")
+    click.echo("Number of independent chains: {}".format(num_chains))
+    click.echo("Number of PG particles: {}".format(num_particles))
+    click.echo("Density: {}".format(density))
+    click.echo("Proposal distribution: {}".format(proposal_kernel))
+    click.echo("Number of burn-in iterations: {}".format(burnin))
+    click.echo("Number of MCMC iterations: {}".format(num_iters))
     if seed is not None:
         seed_msg = "(user-provided)"
     else:
         seed_msg = "(machine-entropy)"
-    print("Random seed: {} {}".format(rng_main.bit_generator.seed_seq.entropy, seed_msg))
-    print("Outlier modelling allowed: {}".format(outlier_modelling_active))
-    print()
-    print("#" * 100)
-    print()
+        seed = rng_main.bit_generator.seed_seq.entropy
+    click.echo("Random seed: {} {}".format(seed, seed_msg))
+    click.echo("Outlier modelling allowed: {}".format(outlier_modelling_active))
+    click.echo()
+    click.echo("#" * 100)
+    click.echo()
+    return seed
 
 
 def run_phyclone_chain(
@@ -204,7 +199,6 @@ def run_phyclone_chain(
     proposal,
     resample_threshold,
     rng,
-    samples,
     thin,
     chain_num,
     subtree_update_prob,
@@ -228,14 +222,12 @@ def run_phyclone_chain(
     )
     results = _run_main_sampler(
         concentration_update,
-        data,
         max_time,
         num_iters,
         num_samples_data_point,
         num_samples_prune_regraph,
         print_freq,
         samplers,
-        samples,
         thin,
         timer,
         tree,
@@ -249,14 +241,12 @@ def run_phyclone_chain(
 
 def _run_main_sampler(
     concentration_update,
-    data,
     max_time,
     num_iters,
     num_samples_data_point,
     num_samples_prune_regraph,
     print_freq,
     samplers,
-    samples,
     thin,
     timer,
     tree,
@@ -265,8 +255,9 @@ def _run_main_sampler(
     rng,
     subtree_update_prob,
 ):
-    clear_convolution_caches()
-    trace = setup_trace(timer, tree, tree_dist)
+    clear_all_caches()
+    trace = []
+    tree_obj_dict = {}
 
     dp_sampler = samplers.dp_sampler
     prg_sampler = samplers.prg_sampler
@@ -292,10 +283,8 @@ def _run_main_sampler(
             for _ in range(num_samples_prune_regraph):
                 tree = prg_sampler.sample_tree(tree)
 
-            tree.relabel_nodes()
-
             if i % thin == 0:
-                append_to_trace(i, timer, trace, tree, tree_dist)
+                append_to_trace(i, timer, trace, tree, tree_dist, tree_obj_dict)
 
             if timer.elapsed >= max_time:
                 break
@@ -303,20 +292,13 @@ def _run_main_sampler(
             if concentration_update:
                 update_concentration_value(conc_sampler, tree, tree_dist)
 
-    results = {"data": data, "samples": samples, "trace": trace, "chain_num": chain_num}
+    results = {"trace": trace, "chain_num": chain_num}
+    clear_all_caches()
     return results
 
 
-def append_to_trace(i, timer, trace, tree, tree_dist):
-    trace.append(
-        {
-            "iter": i,
-            "time": timer.elapsed,
-            "alpha": tree_dist.prior.alpha,
-            "log_p_one": tree_dist.log_p_one(tree),
-            "tree": tree.to_dict(),
-        }
-    )
+def append_to_trace(i, timer, trace, tree, tree_dist, tree_obj_dict):
+    trace.append(TraceEntry(i, timer, tree, tree_dist, tree_obj_dict))
 
 
 def update_concentration_value(conc_sampler, tree, tree_dist):
@@ -329,12 +311,6 @@ def update_concentration_value(conc_sampler, tree, tree_dist):
         node_sizes.append(len(node_data))
 
     tree_dist.prior.alpha = conc_sampler.sample(tree_dist.prior.alpha, len(node_sizes), sum(node_sizes))
-
-
-def setup_trace(timer, tree, tree_dist):
-    trace = []
-    append_to_trace(0, timer, trace, tree, tree_dist)
-    return trace
 
 
 def _run_burnin(
@@ -356,9 +332,9 @@ def _run_burnin(
 
     if burnin > 0:
         best_score = -np.inf
-        print("#" * 100)
-        print("Burnin")
-        print("#" * 100)
+        click.echo("#" * 100)
+        click.echo(f"Burnin - Chain {chain_num}")
+        click.echo("#" * 100)
 
         for i in range(burnin):
             with timer:
@@ -375,8 +351,6 @@ def _run_burnin(
                 for _ in range(num_samples_prune_regraph):
                     tree = prg_sampler.sample_tree(tree)
 
-                tree.relabel_nodes()
-
                 tree_score = tree_dist.log_p_one(tree)
                 if tree_score > best_score:
                     best_score = tree_score
@@ -385,11 +359,12 @@ def _run_burnin(
                 if timer.elapsed > max_time:
                     break
         print_stats(burnin, tree, tree_dist, chain_num)
-    print()
-    print("#" * 100)
-    print("Post-burnin")
-    print("#" * 100)
-    print()
+
+    click.echo()
+    click.echo("#" * 100)
+    click.echo(f"Post-burnin - Chain {chain_num}")
+    click.echo("#" * 100)
+    click.echo()
 
     return best_tree
 
@@ -448,14 +423,14 @@ def instantiate_and_seed_RNG(seed):
 
 def print_stats(iter_id, tree, tree_dist, chain_num):
     string_template = "chain: {} || iter: {}, alpha: {}, log_p: {}, num_nodes: {}, num_outliers: {}, num_roots: {}"
-    print(
+    click.echo(
         string_template.format(
             chain_num,
             iter_id,
             round(tree_dist.prior.alpha, 3),
             round(tree_dist.log_p_one(tree), 3),
             tree.get_number_of_nodes(),
-            len(tree.outliers),
+            tree.get_number_of_outliers(),
             tree.get_number_of_children(tree.root_node_name),
-        )
+        ),
     )

@@ -4,6 +4,7 @@ import tarfile
 import tempfile
 import unittest
 from unittest.mock import MagicMock
+import json
 
 import numpy as np
 import pandas as pd
@@ -12,11 +13,12 @@ from phyclone.data.validator import create_cluster_input_validator_instance, cre
 from phyclone.data.validator.input_validator import InputValidator
 from phyclone.data.validator.schema_error_builder import SchemaErrors
 from phyclone.utils.exceptions import InputFormatError
+from importlib.resources import files, as_file
 
 
 class TesterInputValidator(InputValidator):
     def __init__(self, test_df, schema):
-        self.df = test_df
+        self.df = self.preprocess_loaded_df(test_df)
         self.required_columns = set(schema["required"])
         self.optional_columns = set(schema["properties"]) - self.required_columns
         self.column_rules = schema["properties"]
@@ -607,6 +609,11 @@ class BaseTest(object):
             input_validator = self.create_input_validator_instance(df)
             self.assertFalse(input_validator._validate_base_type("integer", self.integer_col))
 
+        def test_validate_base_type__integer_valid_input_float(self):
+            df = pd.DataFrame({self.integer_col: [1.0, 2.0, 3.0]})
+            input_validator = self.create_input_validator_instance(df)
+            self.assertTrue(input_validator._validate_base_type("integer", self.integer_col))
+
         def test_validate_base_type__integer_invalid_input_string(self):
             df = pd.DataFrame({self.integer_col: ["1.5", "2.5", "3.5"]})
             input_validator = self.create_input_validator_instance(df)
@@ -826,6 +833,7 @@ class BaseTest(object):
                         df = pd.DataFrame(df_dict)
                         input_validator = self.create_input_validator_instance(df)
                         self.assertFalse(input_validator._validate_all_columns())
+                        self._run_raise_error_on_validate_test(input_validator)
                         df_dict[col] = valid_col_val
 
         def test_validate__one_invalid_col(self):
@@ -855,6 +863,9 @@ class BaseTest(object):
                 min_val = col_rule["minimum"]
                 invalid_data = [min_val - i for i in range(3)]
                 invalid_data_list.append(("Min value invalid", invalid_data))
+                to_invalidate = [min_val for _ in range(3)]
+                to_invalidate[1] = None
+                invalid_data_list.append(("Contains NaNs", to_invalidate))
             elif "minLength" in col_rule:
                 min_val = col_rule["minLength"]
                 if min_val > 0:
@@ -879,21 +890,11 @@ class BaseTest(object):
 class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
 
     def set_schema(self):
-        self.schema = {
-            "properties": {
-                "mutation_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "sample_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "ref_counts": {"type": "integer", "minimum": 0},
-                "alt_counts": {"type": "integer", "minimum": 0},
-                "major_cn": {"type": "integer", "minimum": 0},
-                "minor_cn": {"type": "integer", "minimum": 0},
-                "normal_cn": {"type": "integer", "minimum": 0},
-                "tumour_content": {"type": "number", "minimum": 0.0, "default": 1.0},
-                "error_rate": {"type": "number", "minimum": 0.0, "default": 0.001},
-                "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
-            },
-            "required": ["mutation_id", "sample_id", "ref_counts", "alt_counts", "major_cn", "minor_cn", "normal_cn"],
-        }
+        source = files("phyclone.data.validator").joinpath("PhyClone_schema.json")
+        with as_file(source) as fspath:
+            with open(fspath) as f:
+                schema = json.load(f)
+        self.schema = schema
 
     def test_validate__all_invalid_cols(self):
         df_dict = {
@@ -930,16 +931,11 @@ class TestDataInputValidator(BaseTest.TestInputValidatorMethods):
 class TestClusterInputValidator(BaseTest.TestInputValidatorMethods):
 
     def set_schema(self):
-        self.schema = {
-            "properties": {
-                "mutation_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "sample_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "cluster_id": {"type": ["number", "string", "integer"], "minLength": 1},
-                "cellular_prevalence": {"type": "number"},
-                "chrom": {"type": ["number", "string", "integer"], "minLength": 1},
-            },
-            "required": ["mutation_id", "sample_id", "cluster_id"],
-        }
+        source = files("phyclone.data.validator").joinpath("cluster_file_schema.json")
+        with as_file(source) as fspath:
+            with open(fspath) as f:
+                schema = json.load(f)
+        self.schema = schema
 
     def test_validate__all_invalid_cols(self):
         df_dict = {

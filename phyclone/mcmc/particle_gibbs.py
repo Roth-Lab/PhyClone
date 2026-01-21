@@ -2,6 +2,7 @@ from phyclone.smc.samplers import ConditionalSMCSampler
 from phyclone.smc.swarm import ParticleSwarm
 from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.utils.math_utils import discrete_rvs
+import itertools
 
 
 class ParticleGibbsTreeSampler(object):
@@ -52,30 +53,33 @@ class ParticleGibbsSubtreeSampler(ParticleGibbsTreeSampler):
     """Particle Gibbs sampler which resamples a sub-tree."""
 
     def sample_tree(self, tree):
+
+        if len(tree.nodes) <= 1:
+            swarm = self.sample_swarm(tree)
+            return self._sample_tree_from_swarm(swarm)
+
         nodes = []
 
         outlier_node_name = tree.outlier_node_name
-        for label in tree.labels.values():
-            if label != outlier_node_name:
-                nodes.append(label)
+
+        for node, dp_list in tree.node_data.items():
+            if node == outlier_node_name:
+                continue
+            nodes.extend(itertools.repeat(node, len(dp_list)))
 
         subtree_root_child = self._rng.choice(nodes)
-
         subtree_root = tree.get_parent(subtree_root_child)
+        subtree = tree.get_subtree(subtree_root)
 
         parent = tree.get_parent(subtree_root)
-
-        subtree = tree.get_subtree(subtree_root)
 
         tree.remove_subtree(subtree)
 
         for data_point in tree.outliers:
             tree.remove_data_point_from_outliers(data_point)
-
             subtree.add_data_point_to_outliers(data_point)
 
         swarm = self.sample_swarm(subtree)
-
         swarm = self._correct_weights(parent, swarm, tree)
 
         return self._sample_tree_from_swarm(swarm)
@@ -92,16 +96,13 @@ class ParticleGibbsSubtreeSampler(ParticleGibbsTreeSampler):
             w -= p.log_p_one
 
             new_tree = tree.copy()
-
             new_tree.add_subtree(subtree, parent=parent)
 
-            for data_point in subtree.outliers:
-                new_tree.add_data_point_to_outliers(data_point)
+            # for data_point in subtree.outliers:
+            #     new_tree.add_data_point_to_outliers(data_point)
 
-            new_tree.update()
-
+            # new_tree.update()
             p.tree = new_tree
-
             w += p.log_p_one
 
             new_swarm.add_particle(w, p)

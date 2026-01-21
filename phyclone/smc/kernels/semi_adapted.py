@@ -2,8 +2,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_new_tree_adder
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.smc.kernels.base import Kernel, ProposalDistribution, get_cached_dp_added_to_new_node_tree_holder
 from phyclone.utils.math_utils import cached_log_binomial_coefficient
 
 
@@ -14,7 +13,7 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
     should provide a computational advantage over the fully adapted proposal.
     """
 
-    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob", "_tree_nodes")
+    __slots__ = ("log_half", "parent_is_empty_tree", "_cached_log_old_num_roots", "_computed_prob")
 
     def __init__(
         self,
@@ -24,15 +23,9 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
         outlier_modelling_active=False,
     ):
         super().__init__(data_point, kernel, parent_particle, outlier_modelling_active)
-
         self.log_half = kernel.log_half
-
         self.parent_is_empty_tree = False
-
         self._computed_prob = dict()
-
-        self._tree_nodes = None
-
         self._init_dist()
 
     def log_p(self, tree):
@@ -43,12 +36,8 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         else:
 
-            # node = tree.labels[self.data_point.idx]
-            # assert node == tree.node_last_added_to
-            node = tree.node_last_added_to
-
-            # Existing node
-            if node in self._tree_nodes or node == tree.outlier_node_name:
+            # Existing node or outlier node
+            if tree in self._log_p:
                 log_p = self.log_half + self._log_p[tree]
 
             # New node
@@ -56,11 +45,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
                 if tree in self._computed_prob:
                     log_p = self._computed_prob[tree]
                 else:
+                    node = tree.labels[self.data_point.idx]
+
                     old_num_roots = self._num_roots
 
                     log_p = self.log_half
 
-                    num_children = tree.num_children_on_node_that_matters
+                    num_children = tree.get_number_of_children(node)
 
                     log_p -= self._cached_log_old_num_roots + cached_log_binomial_coefficient(
                         old_num_roots, num_children
@@ -88,20 +79,16 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         trees = []
 
-        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
-
         if self._empty_tree():
             self.parent_is_empty_tree = True
 
-            tree_holder = get_cached_new_tree_adder(
-                self._tree_shell_node_adder,
+            tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_new_node(
+                [],
                 self.data_point,
-                frozenset([]),
             )
 
-            trees.append(tree_holder)
+            trees.append(tree_holder_builder.build())
         else:
-            self._tree_nodes = set(self.parent_particle.tree_nodes)
             self._cached_log_old_num_roots = np.log(self._num_roots + 1)
 
         if self.outlier_modelling_active:
@@ -134,13 +121,13 @@ class SemiAdaptedProposalDistribution(ProposalDistribution):
 
         frozen_children = frozenset(children)
 
-        tree_container = get_cached_new_tree_adder(
+        tree_holder = get_cached_dp_added_to_new_node_tree_holder(
             self._tree_shell_node_adder,
             self.data_point,
             frozen_children,
         )
 
-        return tree_container
+        return tree_holder
 
 
 class SemiAdaptedKernel(Kernel):
@@ -163,7 +150,7 @@ class SemiAdaptedKernel(Kernel):
         )
 
 
-@lru_cache(maxsize=4096)
+@lru_cache(maxsize=2048)
 def _get_cached_semi_proposal_dist(data_point, kernel, parent_particle, outlier_modelling_active, alpha):
     ret = SemiAdaptedProposalDistribution(
         data_point,

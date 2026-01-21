@@ -1,7 +1,7 @@
 import numpy as np
 
 from phyclone.tree import Tree, TreeJointDistribution
-from phyclone.utils.math_utils import exp_normalize, log_normalize
+from phyclone.utils.math_utils import exp_normalize
 
 
 class DataPointSampler(object):
@@ -59,11 +59,7 @@ class DataPointSampler(object):
 
         log_q = np.array([self.tree_dist.log_p_one(x) for x in new_trees])
 
-        log_q = log_normalize(log_q)
-
-        q = np.exp(log_q)
-
-        q = q / sum(q)
+        q, _ = exp_normalize(log_q)
 
         tree_idx = self._rng.multinomial(1, q).argmax()
 

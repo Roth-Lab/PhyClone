@@ -20,7 +20,9 @@ def compute_log_S(child_log_R_values):
     log_S = np.empty_like(log_D)
     log_S = np.logaddexp.accumulate(log_D, out=log_S, axis=-1)
 
-    return np.ascontiguousarray(log_S)
+    retval = np.ascontiguousarray(log_S)
+    retval.setflags(write=False)
+    return retval
 
 
 def compute_log_D(child_log_R_values):
@@ -31,6 +33,8 @@ def compute_log_D(child_log_R_values):
 
     if num_children == 1:
         return child_log_R_values[0]
+
+    child_log_R_values = np.ascontiguousarray(child_log_R_values)
 
     all_maxes = np.max(child_log_R_values, axis=-1, keepdims=True)
     normed_children = np.empty_like(child_log_R_values, order="C")
@@ -43,7 +47,7 @@ def compute_log_D(child_log_R_values):
     for j in range(2, num_children):
         conv_res = _convolve_two_children(normed_children[j], conv_res)
 
-    log_d = conv_res.copy() # conv_res is a cached result, so it must be copied to avoid corrupting the cache
+    log_d = conv_res.copy()  # conv_res is a cached result, so it must be copied to avoid corrupting the cache
     log_d[log_d <= 0] = 1e-100
 
     np.log(log_d, order="C", dtype=np.float64, out=log_d)
@@ -60,6 +64,7 @@ def _convolve_two_children(child_1, child_2):
         res_arr = np_conv_dims(child_1, child_2)
     else:
         res_arr = np.ascontiguousarray(fft_convolve_two_children(child_1, child_2))
+    res_arr.setflags(write=False)
     return res_arr
 
 

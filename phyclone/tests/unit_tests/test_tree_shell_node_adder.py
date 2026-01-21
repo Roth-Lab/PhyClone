@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from phyclone.smc.swarm import TreeHolder
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tests.utilities.simulate import simulate_binomial_data
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
@@ -303,6 +303,8 @@ class TestTreeShellNodeAdder(unittest.TestCase):
 
         actual_tree_built_roots = expected_tree.roots
 
+        # root_clade_hash = {rt: hash(expected_tree.get_node_clade(rt)) for rt in actual_tree_built_roots}
+
         actual_tree_builder = tree_shell.create_tree_holder_with_new_node(
             children=[actual_tree_built_roots[0]], datapoint=data[-1]
         )
@@ -328,6 +330,8 @@ class TestTreeShellNodeAdder(unittest.TestCase):
         tree_shell = TreeShellNodeAdder(actual_tree_built, self.tree_dist)
 
         actual_tree_built_roots = actual_tree_built.roots
+
+        # root_clade_hash = {rt:hash(actual_tree_built.get_node_clade(rt)) for rt in actual_tree_built_roots}
 
         actual_tree_builder = tree_shell.create_tree_holder_with_datapoint_added_to_node(
             actual_tree_built_roots[0], datapoint=data[-1]

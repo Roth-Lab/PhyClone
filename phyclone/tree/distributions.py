@@ -1,5 +1,4 @@
-from math import ulp
-
+import sys
 import numpy as np
 
 from phyclone.utils.math_utils import cached_log_factorial, log_sum_exp_over_dims
@@ -13,7 +12,7 @@ class FSCRPDistribution(object):
     def __init__(self, alpha, c_const=1000):
         self.alpha = alpha
         self.c_const = c_const
-        self._smallest_alpha = ulp(0.0)
+        self._smallest_alpha = sys.float_info.min
 
     def __eq__(self, other):
         alpha_check = self.alpha == other.alpha
@@ -41,23 +40,21 @@ class FSCRPDistribution(object):
     def c_const(self, c_const):
         self._c_const = np.log(c_const)
 
-    def log_p(self, tree, tree_node_data=None, log_p=None, num_nodes=None, multiplicity=None):
-        if not log_p or not num_nodes:
-            log_p, num_nodes = self._alpha_and_CRP_prior_log_p_compute(tree, tree_node_data)
+    def log_p(self, tree, crp_prior=None):
+        if crp_prior is None:
+            log_p, num_nodes = self.compute_CRP_prior(tree)
+        else:
+            log_p = crp_prior
+            num_nodes = tree.get_number_of_nodes()
 
-        if not multiplicity:
-            multiplicity = tree.multiplicity
-
-        # Uniform prior on toplogies
         log_p -= (num_nodes - 1) * np.log(num_nodes + 1)
 
-        log_p -= multiplicity
+        log_p -= tree.multiplicity
 
         return log_p
 
-    def _alpha_and_CRP_prior_log_p_compute(self, tree, tree_node_data):
-        if tree_node_data is None:
-            tree_node_data = tree.node_data
+    def compute_CRP_prior(self, tree):
+        tree_node_data = tree.node_data
 
         outlier_node_name = tree.outlier_node_name
         log_p = 0.0
@@ -67,22 +64,18 @@ class FSCRPDistribution(object):
         log_p += sum(cached_log_factorial(len(v) - 1) for k, v in tree_node_data.items() if k != outlier_node_name)
         return log_p, num_nodes
 
-    @staticmethod
-    def compute_CRP_prior(outlier_node_name, tree_node_data):
-        return sum(cached_log_factorial(len(v) - 1) for k, v in tree_node_data.items() if k != outlier_node_name)
-
-    def log_p_one(self, tree, tree_node_data=None, log_p=None, num_nodes=None, multiplicity=None):
-        if not log_p or not num_nodes:
-            log_p, num_nodes = self._alpha_and_CRP_prior_log_p_compute(tree, tree_node_data)
-
-        if not multiplicity:
-            multiplicity = tree.multiplicity
+    def log_p_one(self, tree, crp_prior=None):
+        if crp_prior is None:
+            log_p, num_nodes = self.compute_CRP_prior(tree)
+        else:
+            log_p = crp_prior
+            num_nodes = tree.get_number_of_nodes()
 
         tree_roots = tree.roots
 
-        num_ways = 0
-
         r_term = self._compute_r_term(len(tree_roots), num_nodes)
+
+        num_ways = 0
 
         for root in tree_roots:
             curr_num_nodes = tree.get_number_of_descendants(root) + 1
@@ -91,23 +84,9 @@ class FSCRPDistribution(object):
 
         log_p += -num_ways + r_term
 
-        log_p -= multiplicity
+        log_p -= tree.multiplicity
 
         return log_p
-
-    def compute_both_log_p_and_log_p_one_priors(self, tree, tree_node_data=None):
-        log_p_start, num_nodes = self._alpha_and_CRP_prior_log_p_compute(tree, tree_node_data)
-
-        multiplicity = tree.multiplicity
-
-        log_p_one = log_p_start
-        log_p = log_p_start
-
-        log_p = self.log_p(tree, tree_node_data, log_p, num_nodes, multiplicity)
-
-        log_p_one = self.log_p_one(tree, tree_node_data, log_p_one, num_nodes, multiplicity)
-
-        return log_p, log_p_one
 
     def _compute_z_term(self, num_roots, num_nodes):
         log_one = 0.0
@@ -158,60 +137,65 @@ class TreeJointDistribution(object):
     def log_p(self, tree):
         """The log likelihood of the data marginalized over root node parameters."""
 
-        tree_node_data = tree.node_data
+        log_p = self.prior.log_p(tree)
 
-        log_p = self.prior.log_p(tree, tree_node_data)
-
-        log_p += self.outlier_prior(tree_node_data, tree.outlier_node_name)
+        log_p += self.outlier_prior(tree)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
             log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
 
-        log_p += sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        log_p += self.outlier_marginal_prob(tree)
 
         return log_p
 
     def log_p_one(self, tree):
         """The log likelihood of the data conditioned on the root having value 1.0 in all dimensions."""
 
-        tree_node_data = tree.node_data
+        log_p_one = self.prior.log_p_one(tree)
 
-        log_p_one = self.prior.log_p_one(tree, tree_node_data)
-
-        log_p_one += self.outlier_prior(tree_node_data, tree.outlier_node_name)
+        log_p_one += self.outlier_prior(tree)
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
             log_p_one += tree.data_log_likelihood[:, -1].sum()
 
-        log_p_one += sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        log_p_one += self.outlier_marginal_prob(tree)
 
         return log_p_one
 
-    def compute_both_log_p_and_log_p_one(self, tree):
-        tree_node_data = tree.node_data
+    def compute_log_p_and_log_p_one(self, tree):
+        crp_prior, _ = self.prior.compute_CRP_prior(tree)
+        log_p = self.prior.log_p(tree, crp_prior=crp_prior)
+        log_p_one = self.prior.log_p_one(tree, crp_prior=crp_prior)
 
-        log_p, log_p_one = self.prior.compute_both_log_p_and_log_p_one_priors(tree, tree_node_data)
+        outlier_prior = self.outlier_prior(tree)
 
-        log_outlier_prior = self.outlier_prior(tree_node_data, tree.outlier_node_name)
-
-        log_p += log_outlier_prior
-
-        log_p_one += log_outlier_prior
+        log_p += outlier_prior
+        log_p_one += outlier_prior
 
         if tree.get_number_of_children(tree.root_node_name) > 0:
             log_p += log_sum_exp_over_dims(tree.data_log_likelihood)
             log_p_one += tree.data_log_likelihood[:, -1].sum()
 
-        outliers_marginal_prob = sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        outlier_marginal_prob = self.outlier_marginal_prob(tree)
 
-        log_p += outliers_marginal_prob
-        log_p_one += outliers_marginal_prob
+        log_p += outlier_marginal_prob
+        log_p_one += outlier_marginal_prob
 
         return log_p, log_p_one
 
-    def outlier_prior(self, tree_node_data, outlier_node_name):
-        log_p = 0.0
+    def outlier_marginal_prob(self, tree):
         if self.outlier_modelling_active:
+            outliers_marginal_prob = sum(data_point.outlier_marginal_prob for data_point in tree.outliers)
+        else:
+            outliers_marginal_prob = 0.0
+        return outliers_marginal_prob
+
+    def outlier_prior(self, tree):
+        log_p = 0.0
+
+        if self.outlier_modelling_active:
+            outlier_node_name = tree.outlier_node_name
+            tree_node_data = tree.node_data
             for node, node_data in tree_node_data.items():
                 if node == outlier_node_name:
                     log_p += sum(data_point.outlier_prob for data_point in node_data)

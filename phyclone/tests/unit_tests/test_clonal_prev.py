@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from phyclone.process_trace.map import get_map_node_clonal_prevs_dict
+from phyclone.process_trace.map import get_map_clonal_prev_dict
 from phyclone.tests.utilities.fscrp import add_clonal_prev, add_cellular_prev
 
 
@@ -45,7 +45,7 @@ class TestClonalPrevOutput(unittest.TestCase):
         np.testing.assert_allclose(df["sum"], df["expected_sum"], verbose=True)
 
     def _run_test(self, test_tree):
-        actual_dict = get_map_node_clonal_prevs_dict(test_tree, test_tree.graph["root"])
+        actual_dict = get_map_clonal_prev_dict(test_tree, test_tree.graph["root"])
         with self.subTest(msg="Actual Clonal prev values are float-close to expected"):
             self.expected_tree_vs_actual_dict(test_tree, actual_dict)
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "PhyClone"
-version = "0.7.1"
+version = "0.8.0"
 description="Accurate Bayesian reconstruction of cancer phylogenies from bulk sequencing."
 authors = [
     {name = "Andrew Roth", email = "aroth@bccrc.ca"},
@@ -18,15 +18,15 @@ license = "GPL-3.0-or-later"
 license-files = ["LICEN[CS]E.*"]
 requires-python = ">=3.12"
 dependencies = [
-    "llvmlite",
     "numba>=0.61.2",
-    "numpy>=1.26.4",
+    "numpy>=2.0.0",
     "scipy",
-    "click>=8.0",
+    "click>=8.3",
     "xxhash>=3.3.0",
-    "networkx",
+    "networkx>=3.6.1",
     "rustworkx>=0.15.1",
-    "pandas>=2.2.2"
+    "pandas>=2.2.2",
+    "h5py>=3.15",
 ]
 classifiers = [
     "Private :: Do Not Upload",

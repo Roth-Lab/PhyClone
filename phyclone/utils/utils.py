@@ -1,10 +1,7 @@
 import time
 from collections import deque
-from functools import wraps, lru_cache
 from itertools import count
-
-import numpy as np
-from xxhash import xxh3_64_hexdigest
+import click
 
 
 def get_iterator_length(iterable):
@@ -55,83 +52,64 @@ class Timer:
         self.stop()
 
 
-class NumpyArrayListHasher:
-    def __init__(self, x) -> None:
-        self.values = x
-        self.h = NumpyArrayListHasher._create_hashable(x)
+class TraceEntry:
+    __slots__ = "iter", "time", "alpha", "log_p_one", "tree", "tree_hash", "num_nodes", "num_outliers", "num_roots"
 
-    @staticmethod
-    def _create_hashable(list_of_np_arrays):
-        hashable = np.array([xxh3_64_hexdigest(arr) for arr in list_of_np_arrays], order="C")
-        hashable.sort()
-        ret = tuple(hashable)
-        return ret
+    def __init__(self, i, timer, tree, tree_dist, tree_obj_dict):
+        self.iter = i
+        self.time = timer.elapsed
+        self.alpha = tree_dist.prior.alpha
+        self.log_p_one = tree_dist.log_p_one(tree)
+        self.num_nodes = tree.get_number_of_nodes()
+        self.num_outliers = tree.get_number_of_outliers()
+        self.num_roots = tree.get_number_of_children(tree.root_node_name)
+        # self.tree = tree.to_storage_tree()
+        # self.tree_hash = tree.get_hash_id_obj()
+        self.tree = None
+        self.tree_hash = None
+        self._set_tree_objects(tree_obj_dict, tree)
 
-    def __hash__(self) -> int:
-        return hash(self.h)
+    def __getstate__(self):
+        return (
+            self.iter,
+            self.time,
+            self.alpha,
+            self.log_p_one,
+            self.tree,
+            self.tree_hash,
+            self.num_nodes,
+            self.num_outliers,
+            self.num_roots,
+        )
 
-    def __eq__(self, __value: object) -> bool:
-        return __value.h == self.h
+    def __setstate__(self, state):
+        (
+            self.iter,
+            self.time,
+            self.alpha,
+            self.log_p_one,
+            self.tree,
+            self.tree_hash,
+            self.num_nodes,
+            self.num_outliers,
+            self.num_roots,
+        ) = state
 
-    def clear_inputs(self):
-        self.values = None
+    def _set_tree_objects(self, tree_obj_dict, tree):
+        tree_hash_obj = tree.get_hash_id_obj()
+        if tree_hash_obj in tree_obj_dict:
+            obj_tuple = tree_obj_dict[tree_hash_obj]
+        else:
+            obj_tuple = (tree.to_storage_tree(), tree_hash_obj)
+            tree_obj_dict[tree_hash_obj] = obj_tuple
 
-
-def list_of_np_cache(*args, **kwargs):
-    def decorator(function):
-        @wraps(function)
-        def wrapper(list_of_np_array, *args, **kwargs):
-            wrapped_obj = NumpyArrayListHasher(list_of_np_array)
-            return cached_wrapper(wrapped_obj, *args, **kwargs)
-
-        @lru_cache(*args, **kwargs)
-        def cached_wrapper(hashable_set, *args, **kwargs):
-            array = np.array(hashable_set.values, order="C")
-            hashable_set.clear_inputs()
-            return function(array, *args, **kwargs)
-
-        wrapper.cache_info = cached_wrapper.cache_info
-        wrapper.cache_clear = cached_wrapper.cache_clear
-
-        return wrapper
-
-    return decorator
-
-
-class NumpyTwoArraysHasher:
-    def __init__(self, arr_1, arr_2) -> None:
-        self.input_1 = arr_1
-        self.input_2 = arr_2
-        self.h = frozenset([xxh3_64_hexdigest(arr_1), xxh3_64_hexdigest(arr_2)])
-
-    def __hash__(self) -> int:
-        return hash(self.h)
-
-    def __eq__(self, __value: object) -> bool:
-        return __value.h == self.h
-
-    def clear_inputs(self):
-        self.input_1 = None
-        self.input_2 = None
+        self.tree = obj_tuple[0]
+        self.tree_hash = obj_tuple[1]
 
 
-def two_np_arr_cache(*args, **kwargs):
-    def decorator(function):
-        @wraps(function)
-        def wrapper(arr_1, arr_2, *args, **kwargs):
-            wrapped_obj = NumpyTwoArraysHasher(arr_1, arr_2)
-            return cached_wrapper(wrapped_obj, *args, **kwargs)
-
-        @lru_cache(*args, **kwargs)
-        def cached_wrapper(hashable_obj, *args, **kwargs):
-            arr_1 = hashable_obj.input_1
-            arr_2 = hashable_obj.input_2
-            hashable_obj.clear_inputs()
-            return function(arr_1, arr_2, *args, **kwargs)
-
-        wrapper.cache_info = cached_wrapper.cache_info
-        wrapper.cache_clear = cached_wrapper.cache_clear
-
-        return wrapper
-
-    return decorator
+def print_command_header(command_title):
+    click.echo()
+    click.echo("#" * 100)
+    click.secho(f"PhyClone: {command_title}", fg="bright_cyan")
+    click.echo("#" * 100)
+    click.echo()

@@ -10,7 +10,7 @@ from phyclone.smc.utils import RootPermutationDistribution
 from phyclone.tests.utilities.exact_posterior import get_exact_posterior
 from phyclone.tree import FSCRPDistribution, Tree, TreeJointDistribution
 from phyclone.tree.utils import get_clades
-from phyclone.utils.cache import clear_proposal_dist_caches
+from phyclone.utils.cache import clear_all_caches
 
 
 class BaseTest(object):
@@ -118,14 +118,14 @@ class BaseTest(object):
             print()
             print(sorted(true_probs.items(), key=lambda x: x[1], reverse=True))
             for key in true_probs:
-                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.03)
+                self.assertAlmostEqual(pred_probs[key], true_probs[key], delta=0.02)
 
 
 class BootstrapAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
         self._rng = np.random.default_rng(242643578967193853558243570818064774262)
-        clear_proposal_dist_caches()
+        clear_all_caches()
         self.sampler = self._get_sampler(BootstrapKernel)
         self.run_scale = 1
 
@@ -134,7 +134,7 @@ class FullyAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
         self._rng = np.random.default_rng(242643578967193853558243570818064774262)
-        clear_proposal_dist_caches()
+        clear_all_caches()
         self.sampler = self._get_sampler(FullyAdaptedKernel)
         self.run_scale = 1
 
@@ -143,7 +143,7 @@ class SemiAdaptedTest(BaseTest.BaseTest):
 
     def setUp(self):
         self._rng = np.random.default_rng(242643578967193853558243570818064774262)
-        clear_proposal_dist_caches()
+        clear_all_caches()
         self.sampler = self._get_sampler(SemiAdaptedKernel)
         self.run_scale = 1
 

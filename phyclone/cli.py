@@ -1,5 +1,3 @@
-from sys import maxsize
-
 import click
 
 from phyclone.process_trace import (
@@ -8,6 +6,16 @@ from phyclone.process_trace import (
     write_topology_report,
 )
 from phyclone.run import run as run_prog
+import pathlib
+
+
+def _validate_out_file(ctx, param, value):
+    if value is None:
+        return value
+    parent_dir = pathlib.Path(value).parent
+    checker = click.Path(exists=True, file_okay=False, dir_okay=True, writable=True)
+    checker.convert(parent_dir, param, ctx)
+    return value
 
 
 # =========================================================================
@@ -20,20 +28,31 @@ from phyclone.run import run as run_prog
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    help="""Path to where tree will be written in minimal newick format.""",
+)
+@click.option(
+    "-s",
+    "--out-sample-prev-table",
+    default=None,
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
     "--consensus-threshold",
@@ -65,20 +84,31 @@ def consensus(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-table-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     "-t",
     "--out-tree-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    help="""Path to where tree will be written in minimal newick format.""",
+)
+@click.option(
+    "-s",
+    "--out-sample-prev-table",
+    default=None,
+    callback=_validate_out_file,
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    help="""Path to where sample prevalence table will be written in .tsv format.""",
 )
 @click.option(
     "--map-type",
@@ -102,27 +132,28 @@ def map(**kwargs):
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(resolve_path=True, exists=True),
-    help="""Path to trace file from MCMC analysis. Format is gzip compressed Python pickle file.""",
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False, readable=True),
+    help="""Path to trace file from MCMC analysis. Format is HDF5.""",
 )
 @click.option(
     "-o",
     "--out-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
     help="""Path/filename to where topology report will be written in .tsv format""",
 )
 @click.option(
     "-t",
     "--topologies-archive",
     default=None,
-    type=click.Path(resolve_path=True, writable=True),
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
     help="""To produce the results tables and newick trees for each uniquely sampled topology in the report, provide a
     path to where the archive file will be written in tar.gz compressed format.""",
 )
 @click.option(
     "--top-trees",
-    default=maxsize,
     type=click.IntRange(1, clamp=True),
     help="""Number of uniquely sampled topologies to archive. Default is to produce an archive of all unique 
     topologies.""",
@@ -135,12 +166,86 @@ def topology_report(**kwargs):
 # =========================================================================
 # Analysis
 # =========================================================================
+
+
+def _validate_thin(ctx, param, value):
+    num_iters = ctx.params["num_iters"]
+    if value >= num_iters:
+        raise click.BadParameter(
+            "Cannot be greater than or equal to number of iterations, as this will result in an empty trace."
+        )
+    return value
+
+
+def _validate_assign_loss_prob(ctx, param, value):
+    if value:
+        if "user_provided_loss_prob" in ctx.params:
+            user_provided_loss_prob = ctx.params["user_provided_loss_prob"]
+            if user_provided_loss_prob:
+                raise click.BadParameter(
+                    "Cannot be used with '--user-provided-loss-prob', as these options are mutually exclusive."
+                )
+    return value
+
+
+def _validate_user_provided_loss_prob(ctx, param, value):
+    if value:
+        if "assign_loss_prob" in ctx.params:
+            assign_loss_prob = ctx.params["assign_loss_prob"]
+            if assign_loss_prob:
+                raise click.BadParameter(
+                    "Cannot be used with '--assign-loss-prob', as these options are mutually exclusive."
+                )
+    return value
+
+
+def _validate_outlier_prob(ctx, param, value):
+    if value > 0:
+        if ctx.params["assign_loss_prob"]:
+            if "high_loss_prob" in ctx.params:
+                high_loss_prob = ctx.params["high_loss_prob"]
+                if value >= high_loss_prob:
+                    raise click.BadParameter(
+                        "Value must be lesser than '--high-loss-prob' when using '--assign-loss-prob'"
+                    )
+        return value
+    if ctx.params["assign_loss_prob"] or ctx.params["user_provided_loss_prob"]:
+        min_val = 1e-4
+        click.echo()
+        click.echo(f"As outlier modelling is active, changing '--outlier-prob' from 0.0 to {min_val}.")
+        return min_val
+    return value
+
+
+def _validate_high_loss_prob(ctx, param, value):
+    if ctx.params["assign_loss_prob"]:
+        if "outlier_prob" in ctx.params:
+            outlier_prob = ctx.params["outlier_prob"]
+            if value <= outlier_prob:
+                raise click.BadParameter("Value must be greater than '--outlier-prob'")
+    return value
+
+
+def _validate_positive_value(ctx, param, value):
+    if value < 0:
+        raise click.BadParameter("Value must be positive.")
+    return value
+
+
+def _validate_nullable_positive_value(ctx, param, value):
+    if value is None:
+        return value
+    if value < 0:
+        raise click.BadParameter("Value must be positive.")
+    return value
+
+
 @click.command(context_settings={"max_content_width": 120}, name="run")
 @click.option(
     "-i",
     "--in-file",
     required=True,
-    type=click.Path(exists=True, resolve_path=True),
+    type=click.Path(exists=True, resolve_path=True, readable=True, file_okay=True, dir_okay=False),
     help="""Path to TSV format file with copy number and allele count information for all samples. 
     See the examples directory in the GitHub repository for format.""",
 )
@@ -148,23 +253,25 @@ def topology_report(**kwargs):
     "-o",
     "--out-file",
     required=True,
-    type=click.Path(resolve_path=True, writable=True),
-    help="""Path to where trace file will be written in gzip compressed pickle format.""",
+    type=click.Path(resolve_path=True, writable=True, file_okay=True, dir_okay=False),
+    callback=_validate_out_file,
+    help="""Path to where trace file will be written in HDF5 format.""",
 )
 @click.option(
     "-b",
     "--burnin",
-    default=100,
+    default=1000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
-    help="""Number of burnin iterations using unconditional SMC sampler.""",
+    help="""Number of burn-in iterations using unconditional SMC sampler.""",
 )
 @click.option(
     "-n",
     "--num-iters",
-    default=5000,
+    default=10000,
     type=click.IntRange(1, clamp=True),
     show_default=True,
+    is_eager=True,
     help="""Number of iterations of the MCMC sampler to perform.""",
 )
 @click.option(
@@ -172,6 +279,7 @@ def topology_report(**kwargs):
     default=1,
     type=click.IntRange(1, clamp=True),
     show_default=True,
+    callback=_validate_thin,
     help="""Thinning parameter for storing entries in trace.""",
 )
 @click.option(
@@ -185,7 +293,7 @@ def topology_report(**kwargs):
     "-c",
     "--cluster-file",
     default=None,
-    type=click.Path(resolve_path=True, exists=True),
+    type=click.Path(resolve_path=True, exists=True, readable=True, file_okay=True, dir_okay=False),
     help="""Path to file with pre-computed cluster assignments of mutations.""",
 )
 @click.option(
@@ -202,7 +310,8 @@ def topology_report(**kwargs):
     default=0,
     type=click.FloatRange(0.0, 1.0, clamp=True),
     show_default=True,
-    help="""Global prior probability that data points are outliers and don't fit tree.""",
+    callback=_validate_outlier_prob,
+    help="""Prior probability that data points are outliers and don't fit tree.""",
 )
 @click.option(
     "-p",
@@ -222,6 +331,7 @@ def topology_report(**kwargs):
     default=float("inf"),
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""Maximum running time in seconds.""",
 )
 @click.option(
@@ -235,6 +345,7 @@ def topology_report(**kwargs):
     default=1.0,
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""The (initial) concentration of the Dirichlet process. Higher values will encourage more clusters, 
     lower values have the opposite effect.""",
 )
@@ -256,14 +367,14 @@ def topology_report(**kwargs):
 @click.option(
     "--num-samples-data-point",
     default=1,
-    type=int,
+    type=click.IntRange(0, clamp=True),
     show_default=True,
     help="""Number of Gibbs updates to reassign data points per SMC iteration.""",
 )
 @click.option(
     "--num-samples-prune-regraph",
     default=1,
-    type=int,
+    type=click.IntRange(0, clamp=True),
     show_default=True,
     help="""Number of prune-regraph updates per SMC iteration.""",
 )
@@ -280,13 +391,14 @@ def topology_report(**kwargs):
     default=400,
     type=float,
     show_default=True,
+    callback=_validate_positive_value,
     help="""The (initial) precision parameter of the Beta-Binomial density. 
     The higher the value the more similar the Beta-Binomial is to a Binomial.""",
 )
 @click.option(
     "--print-freq",
     default=100,
-    type=int,
+    type=click.IntRange(1, clamp=True),
     show_default=True,
     help="""How frequently to print information about fitting.""",
 )
@@ -301,40 +413,37 @@ def topology_report(**kwargs):
     "--seed",
     default=None,
     type=int,
+    callback=_validate_nullable_positive_value,
+    show_default=True,
     help="""Set random seed so results can be reproduced. By default, a random seed is chosen.""",
 )
 @click.option(
     "--assign-loss-prob/--no-assign-loss-prob",
     default=False,
     show_default=True,
-    help="Whether to assign loss probability prior from the cluster data."
-    "Note: This option is incompatible with --user-provided-loss-prob",
+    callback=_validate_assign_loss_prob,
+    is_eager=True,
+    help="""Whether to assign loss probability prior from the cluster data.
+    Note: This option is incompatible with --user-provided-loss-prob""",
 )
 @click.option(
     "--user-provided-loss-prob/--no-user-provided-loss-prob",
     default=False,
     show_default=True,
-    help="Whether to use user-provided cluster loss probability prior from the cluster file."
-    "Requires that the 'outlier_prob' column be present and populated in the cluster file."
-    "Note: This option is incompatible with --assign-loss-prob",
-)
-@click.option(
-    "--low-loss-prob",
-    default=0.0001,
-    type=click.FloatRange(0.0001, 1.0, clamp=True),
-    show_default=True,
-    help="""Lower loss probability setting. 
-    Used when allowing PhyClone to assign loss prior probability from cluster data.
-    Unless combined with the --assign-loss-prob option and a cluster input file, this does nothing.""",
+    callback=_validate_user_provided_loss_prob,
+    is_eager=True,
+    help="""Whether to use user-provided cluster loss probability prior from the cluster file.
+    Requires that the 'outlier_prob' column be present and populated in the cluster file.
+    Note: This option is incompatible with --assign-loss-prob""",
 )
 @click.option(
     "--high-loss-prob",
     default=0.4,
-    type=click.FloatRange(0.0001, 1.0, clamp=True),
+    type=click.FloatRange(0.0002, 1.0, clamp=True),
     show_default=True,
+    callback=_validate_high_loss_prob,
     help="""Higher loss probability setting. 
-    Used when allowing PhyClone to assign loss prior probability from cluster data.
-    Unless combined with the --assign-loss-prob option and a cluster input file, this does nothing.""",
+    Used when allowing PhyClone to assign loss prior probability from cluster data.""",
 )
 def run(**kwargs):
     """Run a new PhyClone analysis."""

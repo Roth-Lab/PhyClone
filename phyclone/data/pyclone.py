@@ -1,24 +1,25 @@
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from functools import lru_cache
-from math import ulp
+import sys
 
 import numba
 import numpy as np
 import pandas as pd
+import click
 
 from phyclone.data.base import DataPoint
 from phyclone.data.cluster_outlier_probabilities import _assign_out_prob
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
-from phyclone.utils.exceptions import MajorCopyNumberError
+from phyclone.utils.exceptions import MajorCopyNumberError, InputFormatError
 from phyclone.utils.math_utils import log_pyclone_beta_binomial_pdf, log_pyclone_binomial_pdf
 
 
 def load_data(
     file_name,
     rng,
-    low_loss_prob,
     high_loss_prob,
     assign_loss_prob,
+    user_provided_loss_prob,
     cluster_file=None,
     density="beta-binomial",
     grid_size=101,
@@ -26,88 +27,91 @@ def load_data(
     precision=400,
     min_clust_size=4,
 ):
-    print("Parsing Input Data...\n")
+    click.echo("Parsing Input Data...\n")
 
     pyclone_data, samples, data_df = load_pyclone_data(file_name)
 
     if cluster_file is None:
-        data = []
+        unprocessed_cluster_df = None
 
-        for idx, (mut, val) in enumerate(pyclone_data.items()):
-            out_probs = compute_outlier_prob(outlier_prob, 1)
-            data_point = DataPoint(
+        out_prob_is, out_prob_is_not = compute_outlier_prob(outlier_prob, 1)
+
+        data = [
+            DataPoint(
                 idx,
                 val.to_likelihood_grid(density, grid_size, precision=precision),
                 name=mut,
-                outlier_prob=out_probs[0],
-                outlier_prob_not=out_probs[1],
+                outlier_prob=out_prob_is,
+                outlier_prob_not=out_prob_is_not,
             )
-
-            data.append(data_point)
+            for idx, (mut, val) in enumerate(pyclone_data.items())
+        ]
 
     else:
-        cluster_df = _setup_cluster_df(
+        cluster_df, unprocessed_cluster_df = _setup_cluster_df(
             cluster_file,
             outlier_prob,
             rng,
-            low_loss_prob,
             high_loss_prob,
             assign_loss_prob,
             min_clust_size,
             data_df,
+            user_provided_loss_prob,
         )
 
-        cluster_sizes = cluster_df["cluster_id"].value_counts().to_dict()
+        num_samples = len(samples)
 
-        clusters = cluster_df.set_index("mutation_id")["cluster_id"].to_dict()
-
-        cluster_outlier_probs = cluster_df.set_index("cluster_id")["outlier_prob"].to_dict()
-
-        print("\nUsing input clustering with {} clusters\n".format(cluster_df["cluster_id"].nunique()))
-
-        data = _create_clustered_data_arr(
-            cluster_outlier_probs,
-            cluster_sizes,
-            clusters,
-            density,
-            grid_size,
-            precision,
+        data = _create_clustered_data_point_list(
+            cluster_df,
             pyclone_data,
+            num_samples,
+            grid_size,
+            density,
+            precision,
         )
 
-    print("#" * 100)
-    print()
+        click.echo("\nUsing input clustering with {} clusters".format(cluster_df["cluster_id"].nunique()))
 
-    return data, samples
+    click.echo()
+    click.echo("#" * 100)
+    click.echo()
+
+    return data, samples, unprocessed_cluster_df
 
 
-def _create_clustered_data_arr(
-    cluster_outlier_probs,
-    cluster_sizes,
-    clusters,
-    density,
-    grid_size,
-    precision,
-    pyclone_data,
-):
-    raw_data = defaultdict(list)
-    for mut, val in pyclone_data.items():
-        raw_data[clusters[mut]].append(val.to_likelihood_grid(density, grid_size, precision=precision))
+def _create_clustered_data_point_list(cluster_df, pyclone_data, num_samples, grid_size, density, precision):
+    pyclone_data.rename("pyclone_datapoint", inplace=True)
+    new_df = pd.merge(cluster_df, pyclone_data, how="outer", left_on="mutation_id", right_index=True)
+    grouped = new_df.groupby("cluster_id")
     data = []
-    for idx, cluster_id in enumerate(sorted(raw_data.keys())):
-        val = np.sum(np.array(raw_data[cluster_id]), axis=0)
-        cluster_outlier_prob = cluster_outlier_probs[cluster_id]
-        out_probs = compute_outlier_prob(cluster_outlier_prob, cluster_sizes[cluster_id])
+    for idx, (cluster_id, sub_df) in enumerate(grouped):
+        cluster_size = len(sub_df)
+        cluster_outlier_prob = sub_df["outlier_prob"].iloc[0]
+        vals = np.fromiter(
+            (
+                dp.to_likelihood_grid(
+                    density,
+                    grid_size,
+                    precision=precision,
+                )
+                for dp in sub_df["pyclone_datapoint"].array
+            ),
+            dtype=np.dtype((np.float64, (num_samples, grid_size))),
+            count=cluster_size,
+        )
+
+        out_prob_is, out_prob_is_not = compute_outlier_prob(cluster_outlier_prob, cluster_size)
 
         data_point = DataPoint(
             idx,
-            val,
-            name="{}".format(cluster_id),
-            outlier_prob=out_probs[0],
-            outlier_prob_not=out_probs[1],
+            vals.sum(axis=0),
+            name=cluster_id,
+            outlier_prob=out_prob_is,
+            outlier_prob_not=out_prob_is_not,
         )
 
         data.append(data_point)
+
     return data
 
 
@@ -115,61 +119,70 @@ def _setup_cluster_df(
     cluster_file,
     outlier_prob,
     rng,
-    low_loss_prob,
     high_loss_prob,
     assign_loss_prob,
     min_clust_size,
     data_df,
+    user_provided_loss_prob,
 ):
-    cluster_df = _get_raw_cluster_df(cluster_file, data_df)
-    cluster_prob_status_msg = ""
-    if "outlier_prob" not in cluster_df.columns:
-        cluster_prob_status_msg += "\nCluster level outlier probability column not found. "
-        if assign_loss_prob:
-            column_checks = "chrom" in cluster_df.columns and "cellular_prevalence" in cluster_df.columns
-            if column_checks:
-                cluster_prob_status_msg += "Assigning from data.\n"
-                print(cluster_prob_status_msg)
-                _assign_out_prob(cluster_df, rng, low_loss_prob, high_loss_prob, min_clust_size)
-            else:
-                cluster_prob_status_msg += "\nMutation chrom position column also not found."
-                cluster_prob_status_msg += "\nOutlier probability cannot be assigned from data."
-                cluster_prob_status_msg += " Setting values to {p}.\n".format(p=low_loss_prob)
-                print(cluster_prob_status_msg)
-                cluster_df.loc[:, "outlier_prob"] = low_loss_prob
+    cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df)
+    click.echo()
+    if assign_loss_prob:
+        _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng)
+    elif user_provided_loss_prob:
+        if "outlier_prob" not in cluster_df.columns:
+            click.echo("Cluster level outlier probability column not found.")
+            _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
         else:
-            cluster_prob_status_msg += "Setting values to {p}\n".format(p=outlier_prob)
-            print(cluster_prob_status_msg)
-            cluster_df.loc[:, "outlier_prob"] = outlier_prob
+            click.echo("Cluster level outlier probability column is present.")
+            click.echo("Using user-supplied outlier probability prior values.")
+            # cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+            cluster_df["outlier_prob"].fillna(outlier_prob, inplace=True)
     else:
-        cluster_prob_status_msg += "\nCluster level outlier probability column is present.\n"
-        cluster_prob_status_msg += "Using user-supplied outlier probability prior values.\n"
-        print(cluster_prob_status_msg)
-
-    if not assign_loss_prob:
-        if outlier_prob == 0:
-            cluster_df.loc[:, "outlier_prob"] = outlier_prob
-        else:
-            cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
+        _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
 
     cluster_df = cluster_df[["mutation_id", "cluster_id", "outlier_prob"]].drop_duplicates()
-    return cluster_df
+    return cluster_df, unprocessed_cluster_df
+
+
+def _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng):
+    column_checks = (
+        "chrom" in cluster_df.columns
+        and "cellular_prevalence" in cluster_df.columns
+        and "sample_id" in cluster_df.columns
+    )
+    if column_checks:
+        click.echo("Assigning outlier probability from data.")
+        _assign_out_prob(cluster_df, rng, outlier_prob, high_loss_prob, min_clust_size)
+    else:
+        click.echo("Outlier probability cannot be assigned from data, required columns are missing.")
+        _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
+
+
+def _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob):
+    click.echo("Setting outlier probability values to {p}".format(p=outlier_prob))
+    cluster_df.loc[:, "outlier_prob"] = outlier_prob
 
 
 def _get_raw_cluster_df(cluster_file, data_df):
     cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
-    cluster_input_validator.validate()
+    try:
+        cluster_input_validator.validate()
+    except InputFormatError as e:
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
     cluster_df = cluster_input_validator.df
+    unprocessed_cluster_df = cluster_df[["mutation_id", "cluster_id"]].drop_duplicates(inplace=False)
     if "chrom" not in cluster_df.columns:
         if "chrom" in data_df.columns:
             data_df_filtered = data_df[["mutation_id", "chrom"]].drop_duplicates()
             cluster_df = pd.merge(cluster_df, data_df_filtered, how="inner", on=["mutation_id"])
             cluster_df = cluster_df.drop_duplicates()
-    return cluster_df.drop_duplicates()
+    return cluster_df.drop_duplicates(), unprocessed_cluster_df
 
 
 def compute_outlier_prob(outlier_prob, cluster_size):
-    eps = ulp(0.0)
+    eps = sys.float_info.min
     if outlier_prob == 0:
         return np.log(eps) * cluster_size, np.log(1.0)
     else:
@@ -183,15 +196,12 @@ def compute_outlier_prob(outlier_prob, cluster_size):
 
 def load_pyclone_data(file_name):
     df = _create_raw_data_df(file_name)
-
     df = _remove_cn_zero_mutations(df)
 
     samples = sorted(df["sample_id"].unique())
 
     df = _remove_duplicated_and_partially_absent_mutations(df, samples)
-
     _process_required_cols_on_df(df)
-
     _print_num_mutations_samples_message(df, samples)
 
     data = _create_loaded_pyclone_data_dict(df, samples)
@@ -203,12 +213,12 @@ def load_pyclone_data(file_name):
 
 def _print_num_mutations_samples_message(df, samples):
     mutations = df["mutation_id"].unique()
-    print("Num mutations: {}".format(len(mutations)))
-    print("Num Samples: {}".format(len(samples)))
-    if len(samples) > 10:
-        print("Samples: {}...".format(" ".join(samples[:4])))
+    click.echo("Num Mutations: {}".format(len(mutations)))
+    click.echo("Num Samples: {}".format(len(samples)))
+    if len(samples) > 5:
+        click.echo("Samples: {}...".format(", ".join(samples[:5])))
     else:
-        print("Samples: {}".format(" ".join(samples)))
+        click.echo("Samples: {}".format(", ".join(samples)))
 
 
 def _remove_duplicated_and_partially_absent_mutations(df, samples):
@@ -221,13 +231,13 @@ def _remove_duplicated_and_partially_absent_mutations(df, samples):
             pl = ""
         else:
             pl = "s"
-        print("Removing {} duplicate mutation ID{}".format(num_duplicates, pl))
+        click.echo("Removing {} duplicate mutation ID{}".format(num_duplicates, pl))
     if num_not_present_in_all > 0:
         if num_not_present_in_all == 1:
             pl = ("", "is")
         else:
             pl = ("s", "are")
-        print(
+        click.echo(
             "Removing {} mutation{} that {} not present in all samples".format(
                 num_not_present_in_all,
                 pl[0],
@@ -245,7 +255,7 @@ def _remove_cn_zero_mutations(df):
             pl = ""
         else:
             pl = "s"
-        print("Removing {} mutation{} with major copy number zero".format(num_dels, pl))
+        click.echo("Removing {} mutation{} with major copy number zero".format(num_dels, pl))
     df = df.loc[df["major_cn"] > 0]
     return df
 
@@ -254,13 +264,17 @@ def _process_required_cols_on_df(df):
     if "error_rate" not in df.columns:
         df["error_rate"] = 1e-3
     if "tumour_content" not in df.columns:
-        print("Tumour content column not found. Setting values to 1.0.")
+        click.echo("Tumour content column not found. Setting values to 1.0.")
         df["tumour_content"] = 1.0
 
 
 def _create_raw_data_df(file_name):
     data_input_validator = create_data_input_validator_instance(file_name)
-    data_input_validator.validate()
+    try:
+        data_input_validator.validate()
+    except InputFormatError as e:
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
     df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
     return df.drop_duplicates()
@@ -274,9 +288,7 @@ def _create_loaded_pyclone_data_dict(df, samples):
 
     data_df = grouped.apply(make_datapoint_from_group, samples=samples, include_groups=False)
 
-    data = data_df.to_dict(into=OrderedDict)
-
-    return data
+    return data_df
 
 
 def make_datapoint_from_group(group, samples):
@@ -293,12 +305,16 @@ def create_sample_data_point(row_series):
     alt_count = row_series["alt_counts"]
     tumour_content = row_series["tumour_content"]
 
-    cn, mu, log_pi = get_major_cn_prior(
-        major_cn,
-        minor_cn,
-        normal_cn,
-        error_rate,
-    )
+    try:
+        cn, mu, log_pi = get_major_cn_prior(
+            major_cn,
+            minor_cn,
+            normal_cn,
+            error_rate,
+        )
+    except MajorCopyNumberError as e:
+        click.secho(str(e), err=True, fg="red")
+        sys.exit(1)
 
     sample_dp = SampleDataPoint(ref_count, alt_count, cn, mu, log_pi, tumour_content)
 
@@ -328,6 +344,10 @@ def get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
 
     log_pi_val = -np.log(len(cn))
     log_pi = np.full(len(cn), log_pi_val)
+
+    cn.setflags(write=False)
+    mu.setflags(write=False)
+    log_pi.setflags(write=False)
 
     return cn, mu, log_pi
 

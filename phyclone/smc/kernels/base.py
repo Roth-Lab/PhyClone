@@ -4,7 +4,7 @@ import numpy as np
 
 from phyclone.data.base import DataPoint
 from phyclone.smc.swarm import Particle
-from phyclone.smc.swarm.tree_shell_node_adder import TreeShellNodeAdder
+from phyclone.tree.tree_shell_node_adder import TreeShellNodeAdder
 from phyclone.tree import Tree
 from phyclone.utils.math_utils import log_normalize
 
@@ -111,11 +111,8 @@ class ProposalDistribution(object):
         self._log_p = {}
         self._curr_trees = None
         self.data_point = data_point
-
         self.tree_dist = kernel.tree_dist
-
         self.perm_dist = kernel.perm_dist
-
         self.outlier_modelling_active = outlier_modelling_active
 
         if outlier_modelling_active:
@@ -124,10 +121,9 @@ class ProposalDistribution(object):
             self.outlier_proposal_prob = 0.0
 
         self.parent_particle = parent_particle
-
         self._rng = kernel.rng
-
         self._set_parent_tree()
+        self._tree_shell_node_adder = TreeShellNodeAdder(self.parent_tree, self.tree_dist, self.perm_dist)
 
     def _empty_tree(self):
         """Tree has no nodes"""
@@ -140,7 +136,7 @@ class ProposalDistribution(object):
                 self.parent_tree = self.parent_particle.tree
             else:
                 self.parent_tree = parent_tree
-            self._tree_roots = self.parent_particle.tree_roots.copy()
+            self._tree_roots = np.array(self.parent_particle.tree_roots)
             self._num_roots = len(self._tree_roots)
         else:
             self.parent_tree = Tree(self.data_point.grid_size)
@@ -174,8 +170,8 @@ class ProposalDistribution(object):
         tree_holder_builder = self._tree_shell_node_adder.create_tree_holder_with_datapoint_added_to_outliers(
             self.data_point
         )
-        tree_holder = tree_holder_builder.build()
-        return tree_holder
+
+        return tree_holder_builder.build()
 
     def _set_log_p_dist(self, trees):
         log_q = np.array([x.log_p for x in trees])
@@ -192,9 +188,13 @@ class ProposalDistribution(object):
         self._q_dist = q
 
 
-@lru_cache(maxsize=4096)
-def get_cached_new_tree_adder(tree_shell_node_adder: TreeShellNodeAdder, data_point: DataPoint, children):
+@lru_cache(maxsize=1024)
+def get_cached_dp_added_to_new_node_tree_holder(
+    tree_shell_node_adder: TreeShellNodeAdder,
+    data_point: DataPoint,
+    children,
+):
     tree_holder_builder = tree_shell_node_adder.create_tree_holder_with_new_node(children, data_point)
-    tree_container = tree_holder_builder.build()
+    tree_holder = tree_holder_builder.build()
 
-    return tree_container
+    return tree_holder
