@@ -35,6 +35,15 @@ class InputValidator(object):
         with open(schema_file) as f:
             schema = json.load(f)
         return schema
+    
+    @staticmethod
+    def _read_csv(file_path, **kwargs):
+        """Read input while preserving chromosome labels as strings."""
+        return pd.read_csv(
+            file_path,
+            dtype={"chrom": "string"},
+            **kwargs,
+        )
 
     @staticmethod
     def load_df(file_path):
@@ -59,32 +68,48 @@ class InputValidator(object):
                     stacklevel=2,
                     category=UserWarning,
                 )
-                return pd.read_csv(file_path, sep=None, engine="python")
-            else:
+                return InputValidator._read_csv(
+                    file_path,
+                    sep=None,
+                    engine="python",
+                )
 
-                decompression_func = InputValidator._get_decompression_function(file_path)
+            decompression_func = InputValidator._get_decompression_function(
+                file_path
+            )
 
-                if decompression_func is None:
-                    warnings.warn(
-                        "Unknown input file compression type, "
-                        "allowing pandas to infer parser dialect via python engine - could be slow for larger files.\n",
-                        stacklevel=2,
-                        category=UserWarning,
-                    )
-                    return pd.read_csv(file_path, sep=None, engine="python")
+            if decompression_func is None:
+                warnings.warn(
+                    "Unknown input file compression type, "
+                    "allowing pandas to infer parser dialect via python engine - "
+                    "could be slow for larger files.\n",
+                    stacklevel=2,
+                    category=UserWarning,
+                )
+                return InputValidator._read_csv(
+                    file_path,
+                    sep=None,
+                    engine="python",
+                )
 
-                with decompression_func(file_path, "rt") as csv_file:
-                    dialect = csv.Sniffer().sniff(csv_file.readline())
-                    csv_delim = str(dialect.delimiter)
+            with decompression_func(file_path, "rt") as csv_file:
+                dialect = csv.Sniffer().sniff(csv_file.readline())
+                csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
             warnings.warn(
-                "Input should be tab-delimited, supplied file is delimited by {delim}\n"
-                "Will attempt parsing with the current delimiter, {delim}\n".format(delim=repr(csv_delim)),
+                "Input should be tab-delimited, supplied file is delimited "
+                "by {delim}\n"
+                "Will attempt parsing with the current delimiter, "
+                "{delim}\n".format(delim=repr(csv_delim)),
                 stacklevel=2,
                 category=UserWarning,
             )
-        return pd.read_csv(file_path, sep=csv_delim)
+
+        return InputValidator._read_csv(
+            file_path,
+            sep=csv_delim,
+        )
 
     @staticmethod
     def _get_decompression_function(file_path):
