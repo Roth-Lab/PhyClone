@@ -8,6 +8,7 @@ import json
 
 import numpy as np
 import pandas as pd
+from numpy.random import Generator
 
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 from phyclone.data.validator.input_validator import InputValidator
@@ -51,6 +52,196 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df.to_csv(file_path, sep="\t")
             input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            df_dict = {
+                "mutation_id": rng.choice(["m1", "m2", "m3"], size=n_rows),
+                "sample_id": rng.choice(["s1", "s2", "s3"], size=n_rows),
+                "ref_counts": rng.integers(0, 400, size=n_rows),
+                "alt_counts": rng.integers(0, 400, size=n_rows),
+                "major_cn": rng.integers(1, 4, size=n_rows),
+                "minor_cn": rng.integers(0, 4, size=n_rows),
+                "normal_cn": np.full(n_rows, 2, dtype=np.int8),
+                "tumour_content": rng.random(size=n_rows),
+                "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
+                "chrom": rng.integers(1, 23, size=n_rows),
+            }
+            df = pd.DataFrame(df_dict)
+            del df_dict
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            del df
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file_mixed_dtype_col__valid_cols(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            percent_str = 0.1
+
+            df_dict = {
+                "mutation_id": rng.choice(["m1", "m2", "m3"], size=n_rows),
+                "sample_id": rng.choice(["s1", "s2", "s3"], size=n_rows),
+                "ref_counts": rng.integers(0, 400, size=n_rows),
+                "alt_counts": rng.integers(0, 400, size=n_rows),
+                "major_cn": rng.integers(1, 4, size=n_rows),
+                "minor_cn": rng.integers(0, 4, size=n_rows),
+                "normal_cn": np.full(n_rows, 2, dtype=np.int8),
+                "tumour_content": rng.random(size=n_rows),
+                "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
+                "chrom": self._create_int_str_mixed_data(
+                    23,
+                    1,
+                    n_rows,
+                    percent_str,
+                    rng,
+                    ["X", "Y"],
+                ),
+            }
+
+            df = pd.DataFrame(df_dict)
+            del df_dict
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            del df
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file_mixed_dtype_multiple_cols__valid_cols(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            percent_str = 0.1
+
+            df_dict = {
+                "mutation_id": self._create_int_str_mixed_data(
+                    25,
+                    5,
+                    n_rows,
+                    percent_str,
+                    rng,
+                    ["m1", "m2", "m3"],
+                ),
+                "sample_id": self._create_int_str_mixed_data(
+                    4,
+                    1,
+                    n_rows,
+                    percent_str,
+                    rng,
+                    ["s1", "s2", "s3"],
+                ),
+                "ref_counts": rng.integers(0, 400, size=n_rows),
+                "alt_counts": rng.integers(0, 400, size=n_rows),
+                "major_cn": rng.integers(1, 4, size=n_rows),
+                "minor_cn": rng.integers(0, 4, size=n_rows),
+                "normal_cn": np.full(n_rows, 2, dtype=np.int8),
+                "tumour_content": rng.random(size=n_rows),
+                "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
+                "chrom": self._create_int_str_mixed_data(
+                    23,
+                    1,
+                    n_rows,
+                    percent_str,
+                    rng,
+                    ["X", "Y"],
+                ),
+            }
+            df = pd.DataFrame(df_dict)
+            del df_dict
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            del df
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file_mixed_dtype_col__invalid_col(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            percent_str = 0.1
+
+            df_dict = {
+                "mutation_id": rng.choice(["m1", "m2", "m3"], size=n_rows),
+                "sample_id": rng.choice(["s1", "s2", "s3"], size=n_rows),
+                "ref_counts": rng.integers(0, 400, size=n_rows),
+                "alt_counts": rng.integers(0, 400, size=n_rows),
+                "major_cn": self._create_int_float_mixed_data(5, 1, n_rows, percent_str, rng),
+                "minor_cn": self._create_int_bool_mixed_data(4, 0, n_rows, percent_str, rng),
+                "normal_cn": np.full(n_rows, 2, dtype=np.int8),
+                "tumour_content": rng.random(size=n_rows),
+                "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
+                "chrom": self._create_int_str_mixed_data(
+                    23,
+                    1,
+                    n_rows,
+                    percent_str,
+                    rng,
+                    ["X", "Y"],
+                ),
+            }
+
+            df = pd.DataFrame(df_dict)
+            del df_dict
+            file_path = os.path.join(tmp_dir, "data.tsv")
+            df.to_csv(file_path, sep="\t")
+            del df
+            input_validator = create_data_input_validator_instance(file_path)
+
+        with self.assertRaises(InputFormatError) as error:
+            input_validator.validate()
+        print(error.exception)
+
+    def _create_int_str_mixed_data(
+        self,
+        high: int,
+        low: int,
+        n_rows: int,
+        percent_str: float,
+        rng: Generator,
+        strings_to_choose_from: list[str],
+    ) -> list[int | str]:
+        slice_start = int(np.rint(percent_str * n_rows))
+        int_str_mix = rng.integers(low, high, size=n_rows - slice_start).tolist()
+        int_str_mix.extend(rng.choice(strings_to_choose_from, size=slice_start))
+        return int_str_mix
+
+    def _create_int_float_mixed_data(
+        self,
+        high: int,
+        low: int,
+        n_rows: int,
+        percent_float: float,
+        rng: Generator,
+    ) -> list[int | float]:
+        slice_start = int(np.rint(percent_float * n_rows))
+        int_float_mix = rng.integers(low, high, size=n_rows - slice_start).tolist()
+        int_float_mix.extend(rng.uniform(low=low, high=high, size=slice_start))
+        return int_float_mix
+
+    def _create_int_bool_mixed_data(
+        self,
+        high: int,
+        low: int,
+        n_rows: int,
+        percent_float: float,
+        rng: Generator,
+    ) -> list[int | bool]:
+        slice_start = int(np.rint(percent_float * n_rows))
+        int_bool_mix = rng.integers(low, high, size=n_rows - slice_start).tolist()
+        int_bool_mix.extend(rng.choice([True, False], size=slice_start))
+        return int_bool_mix
 
     def test_data_validator_loads__trigger_delim_warning(self):
         with tempfile.TemporaryDirectory() as tmp_dir:

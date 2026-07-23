@@ -72,10 +72,10 @@ class InputValidator(object):
                         category=UserWarning,
                     )
                     return pd.read_csv(file_path, sep=None, engine="python")
-
-                with decompression_func(file_path, "rt") as csv_file:
-                    dialect = csv.Sniffer().sniff(csv_file.readline())
-                    csv_delim = str(dialect.delimiter)
+                else:
+                    with decompression_func(file_path, "rt") as csv_file:
+                        dialect = csv.Sniffer().sniff(csv_file.readline())
+                        csv_delim = str(dialect.delimiter)
 
         if csv_delim != "\t":
             warnings.warn(
@@ -84,7 +84,8 @@ class InputValidator(object):
                 stacklevel=2,
                 category=UserWarning,
             )
-        return pd.read_csv(file_path, sep=csv_delim)
+
+        return pd.read_csv(file_path, sep=csv_delim, low_memory=False)
 
     @staticmethod
     def _get_decompression_function(file_path):
