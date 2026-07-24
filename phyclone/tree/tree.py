@@ -19,8 +19,8 @@ from phyclone.tree.visitors import (
 class Tree(BaseTree):
     __slots__ = ()
 
-    def __init__(self, grid_size: tuple[int, int]):
-        super().__init__(grid_size)
+    def __init__(self, grid_size: tuple[int, int], log_prior: float= None):
+        super().__init__(grid_size, log_prior=log_prior)
         self._add_node(self._root_node_name)
 
     def __copy__(self):

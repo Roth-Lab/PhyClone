@@ -24,8 +24,11 @@ class BaseTree(object):
         "_outlier_node_name",
     )
 
-    def __init__(self, grid_size: tuple[int, int]):
-        self._log_prior = -np.log(grid_size[1])
+    def __init__(self, grid_size: tuple[int, int], log_prior: float= None):
+        if log_prior is None:
+            self._log_prior: float = -np.log(grid_size[1])
+        else:
+            self._log_prior: float = log_prior
         self._node_indices_rev = dict()
         self._node_indices = dict()
         self._graph = rx.PyDiGraph(multigraph=False)
