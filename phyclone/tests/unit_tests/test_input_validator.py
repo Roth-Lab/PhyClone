@@ -9,6 +9,7 @@ import json
 import numpy as np
 import pandas as pd
 from numpy.random import Generator
+from pandas import DataFrame
 
 from phyclone.data.validator import create_cluster_input_validator_instance, create_data_input_validator_instance
 from phyclone.data.validator.input_validator import InputValidator
@@ -123,46 +124,50 @@ class TestInputValidatorLoaders(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             percent_str = 0.1
 
-            df_dict = {
-                "mutation_id": self._create_int_str_mixed_data(
-                    25,
-                    5,
-                    n_rows,
-                    percent_str,
-                    rng,
-                    ["m1", "m2", "m3"],
-                ),
-                "sample_id": self._create_int_str_mixed_data(
-                    4,
-                    1,
-                    n_rows,
-                    percent_str,
-                    rng,
-                    ["s1", "s2", "s3"],
-                ),
-                "ref_counts": rng.integers(0, 400, size=n_rows),
-                "alt_counts": rng.integers(0, 400, size=n_rows),
-                "major_cn": rng.integers(1, 4, size=n_rows),
-                "minor_cn": rng.integers(0, 4, size=n_rows),
-                "normal_cn": np.full(n_rows, 2, dtype=np.int8),
-                "tumour_content": rng.random(size=n_rows),
-                "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
-                "chrom": self._create_int_str_mixed_data(
-                    23,
-                    1,
-                    n_rows,
-                    percent_str,
-                    rng,
-                    ["X", "Y"],
-                ),
-            }
-            df = pd.DataFrame(df_dict)
-            del df_dict
+            df = self._write_large_mixed_dtype_csv(n_rows, percent_str, rng)
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             del df
             input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
+
+    def _write_large_mixed_dtype_csv(self, n_rows: int, percent_str: float, rng: Generator) -> DataFrame:
+        df_dict = {
+            "mutation_id": self._create_int_str_mixed_data(
+                25,
+                5,
+                n_rows,
+                percent_str,
+                rng,
+                ["m1", "m2", "m3"],
+            ),
+            "sample_id": self._create_int_str_mixed_data(
+                4,
+                1,
+                n_rows,
+                percent_str,
+                rng,
+                ["s1", "s2", "s3"],
+            ),
+            "ref_counts": rng.integers(0, 400, size=n_rows),
+            "alt_counts": rng.integers(0, 400, size=n_rows),
+            "major_cn": rng.integers(1, 4, size=n_rows),
+            "minor_cn": rng.integers(0, 4, size=n_rows),
+            "normal_cn": np.full(n_rows, 2, dtype=np.int8),
+            "tumour_content": rng.random(size=n_rows),
+            "error_rate": rng.uniform(low=1e-6, high=1e-3, size=n_rows),
+            "chrom": self._create_int_str_mixed_data(
+                23,
+                1,
+                n_rows,
+                percent_str,
+                rng,
+                ["X", "Y"],
+            ),
+        }
+        df = pd.DataFrame(df_dict)
+        del df_dict
+        return df
 
     def test_data_validator_loads_large_file_mixed_dtype_col__invalid_col(self):
 
@@ -283,6 +288,21 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df = pd.DataFrame(df_dict)
             file_path = os.path.join(tmp_dir, "data.tsv.gz")
             df.to_csv(file_path, sep="\t")
+            input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file_mixed_dtype_multiple_cols__valid_cols_gzip(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            percent_str = 0.1
+
+            df = self._write_large_mixed_dtype_csv(n_rows, percent_str, rng)
+            file_path = os.path.join(tmp_dir, "data.tsv.gz")
+            df.to_csv(file_path, sep="\t")
+            del df
             input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
 
@@ -549,6 +569,28 @@ class TestInputValidatorLoaders(unittest.TestCase):
             df = pd.DataFrame(df_dict)
             file_path = os.path.join(tmp_dir, "data.zip")
             df.to_csv(file_path)
+            with self.assertWarns(UserWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
+        self.assertTrue(
+            str(w.warning).startswith(
+                "Zip file input detected, allowing pandas to infer parser dialect via python engine - "
+            )
+        )
+        print(w.warning)
+        self.assertTrue(input_validator.validate())
+
+    def test_data_validator_loads_large_file_mixed_dtype_multiple_cols__valid_cols__zip_trigger_zip_warning(self):
+
+        n_rows = int(1e7)
+        rng = np.random.default_rng(244310326493402386435613023297139050129)
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            percent_str = 0.1
+
+            df = self._write_large_mixed_dtype_csv(n_rows, percent_str, rng)
+            file_path = os.path.join(tmp_dir, "data.zip")
+            df.to_csv(file_path, sep="\t")
+            del df
             with self.assertWarns(UserWarning) as w:
                 input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(
