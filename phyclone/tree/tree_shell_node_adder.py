@@ -17,7 +17,7 @@ class TreeInfo:
     graph: rx.EdgeList
     node_idx: dict
     node_idx_rev: dict = field(init=False)
-    node_data: defaultdict[list[DataPoint]]
+    node_data: defaultdict[int|str, list[DataPoint]]
     grid_size: tuple[int, int]
     log_prior: float
 
