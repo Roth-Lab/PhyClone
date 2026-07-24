@@ -107,27 +107,17 @@ class Tree(BaseTree):
 
     @classmethod
     def from_dict(cls, tree_dict) -> Tree:
-        grid_size = tree_dict["grid_size"]
-        if "log_prior" in tree_dict:
-            log_prior = tree_dict["log_prior"]
-        else:
-            log_prior = -np.log(grid_size[1])
-        new_graph = rx.PyDiGraph(multigraph=False)
+        grid_size: tuple[int, int] = tree_dict["grid_size"]
 
-        new = cls.__new__(cls)
-        new.grid_size = grid_size
-        new._graph = new_graph
-        new._log_prior = log_prior
-        new._data = defaultdict(list)
+        new = cls(grid_size, log_prior=tree_dict.get("log_prior", None))
 
+        log_prior = new._log_prior
         node_idxs = tree_dict["node_idx"]
-        new._node_indices = node_idxs.copy()
-        new._node_indices_rev = {v: k for k, v in node_idxs.items()}
+        new._node_indices.update(node_idxs)
+        new._node_indices_rev.update({v: k for k, v in node_idxs.items()})
         new._data.update({k: v.copy() for k, v in tree_dict["node_data"].items()})
-        new._root_node_name = cls._ROOT_NODE_NAME
-        new._outlier_node_name = cls._OUTLIER_NODE_NAME
 
-        _ = new_graph.add_node(TreeNode(grid_size, log_prior, cls._ROOT_NODE_NAME))
+        new_graph = new._graph
 
         if len(tree_dict["graph"]) > 0:
 
