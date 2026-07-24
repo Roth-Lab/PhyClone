@@ -111,7 +111,7 @@ def build_tree_dict_from_trace(chain, iteration, fh, datapoints):
         "graph": list(map(tuple, tree_grp["graph"][()])),
         "node_idx": node_idx_dict,
         "node_data": _get_node_data_dict(datapoints, tree_grp),
-        "grid_size": tree_grp.attrs["grid_size"],
+        "grid_size": tuple(tree_grp.attrs["grid_size"]),
         "log_prior": tree_grp.attrs["log_prior"],
     }
 
