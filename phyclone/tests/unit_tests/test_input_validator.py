@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock
 import json
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -77,7 +78,8 @@ class TestInputValidatorLoaders(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             del df
-            input_validator = create_data_input_validator_instance(file_path)
+            with warnings.catch_warnings(action="error", record=True, category=pd.errors.DtypeWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads_large_file_mixed_dtype_col__valid_cols(self):
@@ -113,7 +115,8 @@ class TestInputValidatorLoaders(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             del df
-            input_validator = create_data_input_validator_instance(file_path)
+            with warnings.catch_warnings(action="error", record=True, category=pd.errors.DtypeWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads_large_file_mixed_dtype_multiple_cols__valid_cols(self):
@@ -128,7 +131,8 @@ class TestInputValidatorLoaders(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             del df
-            input_validator = create_data_input_validator_instance(file_path)
+            with warnings.catch_warnings(action="error", record=True, category=pd.errors.DtypeWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
 
     def _write_large_mixed_dtype_csv(self, n_rows: int, percent_str: float, rng: Generator) -> DataFrame:
@@ -202,7 +206,8 @@ class TestInputValidatorLoaders(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv")
             df.to_csv(file_path, sep="\t")
             del df
-            input_validator = create_data_input_validator_instance(file_path)
+            with warnings.catch_warnings(action="error", record=True, category=pd.errors.DtypeWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
 
         with self.assertRaises(InputFormatError) as error:
             input_validator.validate()
@@ -303,7 +308,8 @@ class TestInputValidatorLoaders(unittest.TestCase):
             file_path = os.path.join(tmp_dir, "data.tsv.gz")
             df.to_csv(file_path, sep="\t")
             del df
-            input_validator = create_data_input_validator_instance(file_path)
+            with warnings.catch_warnings(action="error", record=True, category=pd.errors.DtypeWarning) as w:
+                input_validator = create_data_input_validator_instance(file_path)
         self.assertTrue(input_validator.validate())
 
     def test_data_validator_loads__gzip_trigger_delim_warning(self):
