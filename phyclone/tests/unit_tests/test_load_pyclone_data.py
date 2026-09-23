@@ -61,6 +61,9 @@ def tester_get_major_cn_prior(major_cn, minor_cn, normal_cn, error_rate=1e-3):
 
 class TestLoadPyCloneData(unittest.TestCase):
 
+    def setUp(self):
+        self.disable_input_validator = False
+
     def _assert_datapoint_dict_against_df_dict(self, actual_df, data, df_dict, skip_dict):
         self.assertEqual(len(actual_df["mutation_id"].unique()), len(data))
         self.assertListEqual(sorted(actual_df["mutation_id"].unique()), list(data.keys()))
@@ -94,7 +97,7 @@ class TestLoadPyCloneData(unittest.TestCase):
             df.to_csv(file_path, sep="\t", index=False)
             df = df.astype({"mutation_id": "string", "sample_id": "string"})
             df = df.convert_dtypes()
-            actual_df = _create_raw_data_df(file_path)
+            actual_df = _create_raw_data_df(file_path, self.disable_input_validator)
         pd.testing.assert_frame_equal(df, actual_df)
 
     def test_create_raw_data_df__valid_comma_sep(self):
@@ -115,7 +118,7 @@ class TestLoadPyCloneData(unittest.TestCase):
             df.to_csv(file_path, index=False)
             df = df.astype({"mutation_id": "string", "sample_id": "string"})
             df = df.convert_dtypes()
-            actual_df = _create_raw_data_df(file_path)
+            actual_df = _create_raw_data_df(file_path, self.disable_input_validator)
         pd.testing.assert_frame_equal(df, actual_df)
 
     def test_remove_cn_zero_mutations__none_removed(self):
@@ -426,7 +429,7 @@ class TestLoadPyCloneData(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             file_path = os.path.join(tmp_dir, "data.tsv")
             actual_df.to_csv(file_path, sep="\t", index=False)
-            data, samples, data_df = load_pyclone_data(file_path)
+            data, samples, data_df = load_pyclone_data(file_path, self.disable_input_validator)
 
         self._assert_datapoint_dict_against_df_dict(actual_df, data, df_dict, skip_dict)
 
