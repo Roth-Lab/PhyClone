@@ -139,8 +139,7 @@ def _setup_cluster_df(
         else:
             click.echo("Cluster level outlier probability column is present.")
             click.echo("Using user-supplied outlier probability prior values.")
-            # cluster_df.loc[cluster_df["outlier_prob"] == 0, "outlier_prob"] = outlier_prob
-            cluster_df["outlier_prob"].fillna(outlier_prob, inplace=True)
+            cluster_df["outlier_prob"] = cluster_df["outlier_prob"].fillna(outlier_prob)
     else:
         _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob)
 
