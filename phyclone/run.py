@@ -54,6 +54,7 @@ def run(
     high_loss_prob=0.4,
     assign_loss_prob=False,
     user_provided_loss_prob=False,
+    disable_input_validator=False,
 ):
 
     rng_main = instantiate_and_seed_RNG(seed)
@@ -83,6 +84,7 @@ def run(
         grid_size=grid_size,
         outlier_prob=outlier_prob,
         precision=precision,
+        disable_input_validator=disable_input_validator,
     )
 
     results = {}

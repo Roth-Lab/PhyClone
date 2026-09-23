@@ -26,10 +26,11 @@ def load_data(
     outlier_prob=1e-4,
     precision=400,
     min_clust_size=4,
+    disable_input_validator=False,
 ):
     click.echo("Parsing Input Data...\n")
 
-    pyclone_data, samples, data_df = load_pyclone_data(file_name)
+    pyclone_data, samples, data_df = load_pyclone_data(file_name, disable_input_validator)
 
     if cluster_file is None:
         unprocessed_cluster_df = None
@@ -57,6 +58,7 @@ def load_data(
             min_clust_size,
             data_df,
             user_provided_loss_prob,
+            disable_input_validator,
         )
 
         num_samples = len(samples)
@@ -124,8 +126,9 @@ def _setup_cluster_df(
     min_clust_size,
     data_df,
     user_provided_loss_prob,
+    disable_input_validator: bool,
 ):
-    cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df)
+    cluster_df, unprocessed_cluster_df = _get_raw_cluster_df(cluster_file, data_df, disable_input_validator)
     click.echo()
     if assign_loss_prob:
         _assign_loss_prob_priors_from_data(cluster_df, high_loss_prob, min_clust_size, outlier_prob, rng)
@@ -164,14 +167,22 @@ def _set_cluster_outlier_probs_to_global_val(cluster_df, outlier_prob):
     cluster_df.loc[:, "outlier_prob"] = outlier_prob
 
 
-def _get_raw_cluster_df(cluster_file, data_df):
-    cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
-    try:
-        cluster_input_validator.validate()
-    except InputFormatError as e:
-        click.secho(str(e), err=True, fg="red")
-        sys.exit(1)
-    cluster_df = cluster_input_validator.df
+def _get_raw_cluster_df(cluster_file, data_df, disable_input_validator):
+    if disable_input_validator:
+        click.secho(
+            "\nWarning: Input data validator is disabled, potential input errors may not be caught!\n",
+            err=True,
+            fg="bright_yellow",
+        )
+        cluster_df = pd.read_table(cluster_file)
+    else:
+        cluster_input_validator = create_cluster_input_validator_instance(cluster_file)
+        try:
+            cluster_input_validator.validate()
+        except InputFormatError as e:
+            click.secho(str(e), err=True, fg="red")
+            sys.exit(1)
+        cluster_df = cluster_input_validator.df
     unprocessed_cluster_df = cluster_df[["mutation_id", "cluster_id"]].drop_duplicates(inplace=False)
     if "chrom" not in cluster_df.columns:
         if "chrom" in data_df.columns:
@@ -194,8 +205,8 @@ def compute_outlier_prob(outlier_prob, cluster_size):
         return res, res_not
 
 
-def load_pyclone_data(file_name):
-    df = _create_raw_data_df(file_name)
+def load_pyclone_data(file_name, disable_input_validator: bool):
+    df = _create_raw_data_df(file_name, disable_input_validator)
     df = _remove_cn_zero_mutations(df)
 
     samples = sorted(df["sample_id"].unique())
@@ -268,14 +279,22 @@ def _process_required_cols_on_df(df):
         df["tumour_content"] = 1.0
 
 
-def _create_raw_data_df(file_name):
-    data_input_validator = create_data_input_validator_instance(file_name)
-    try:
-        data_input_validator.validate()
-    except InputFormatError as e:
-        click.secho(str(e), err=True, fg="red")
-        sys.exit(1)
-    df = data_input_validator.df
+def _create_raw_data_df(file_name, disable_input_validator: bool):
+    if disable_input_validator:
+        click.secho(
+            "\nWarning: Input data validator is disabled, potential input errors may not be caught!\n",
+            err=True,
+            fg="bright_yellow",
+        )
+        df = pd.read_table(file_name)
+    else:
+        data_input_validator = create_data_input_validator_instance(file_name)
+        try:
+            data_input_validator.validate()
+        except InputFormatError as e:
+            click.secho(str(e), err=True, fg="red")
+            sys.exit(1)
+        df = data_input_validator.df
     df["sample_id"] = df["sample_id"].astype("string")
     return df.drop_duplicates()
 

@@ -445,6 +445,13 @@ def _validate_nullable_positive_value(ctx, param, value):
     help="""Higher loss probability setting. 
     Used when allowing PhyClone to assign loss prior probability from cluster data.""",
 )
+@click.option(
+    "--disable-input-validator",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="""Disables the input validator, use with caution.""",
+)
 def run(**kwargs):
     """Run a new PhyClone analysis."""
     run_prog(**kwargs)
